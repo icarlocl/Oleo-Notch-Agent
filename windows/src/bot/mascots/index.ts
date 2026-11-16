@@ -80,8 +80,6 @@ export interface Skin {
   def: MascotDef;
   body: Levels;
   leaves: Levels;
-  /** The body dyed in a colour, by its `rgb()` key. */
-  dyed: Map<string, Levels>;
 }
 
 function canvas(w: number, h = w): HTMLCanvasElement {
@@ -197,27 +195,6 @@ export function level(ls: Levels, px: number): HTMLCanvasElement {
   return ls[0];
 }
 
-/** The body dyed in `rgb` (0…1 each): its light and its fur kept, its colour changed. */
-export function dyed(skin: Skin, rgb: readonly [number, number, number]): Levels {
-  const key = rgb.map((v) => Math.round(v * 255)).join(",");
-  let ls = skin.dyed.get(key);
-  if (!ls) {
-    const src = skin.body[0];
-    const c = canvas(src.width);
-    const x = ctx(c);
-    x.drawImage(src, 0, 0);
-    x.globalCompositeOperation = "color";
-    x.fillStyle = `rgba(${key},0.85)`;
-    x.fillRect(0, 0, c.width, c.height);
-    x.globalCompositeOperation = "destination-in";
-    x.drawImage(src, 0, 0);
-    ls = levels(c);
-    if (skin.dyed.size > 24) skin.dyed.clear();
-    skin.dyed.set(key, ls);
-  }
-  return ls;
-}
-
 function load(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -231,7 +208,7 @@ async function prepare(def: MascotDef): Promise<Skin | null> {
   try {
     const img = await load(def.image);
     const { body, leaves } = split(eraseFace(cutOut(img, def), def), def);
-    return { def, body: levels(body), leaves: levels(leaves), dyed: new Map() };
+    return { def, body: levels(body), leaves: levels(leaves) };
   } catch {
     return null;
   }

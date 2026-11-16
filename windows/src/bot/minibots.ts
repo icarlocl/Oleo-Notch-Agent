@@ -69,7 +69,7 @@ const isClose = (zone: MascotZone) => zone === "on" || zone === "near";
  *
  * At these sizes — a 13 px slot in the compact grid, 24 px in a pill — the
  * engine draws its simplified bot: see `detailFor` and `faceFor` in engine.ts.
- * Its plush is dyed in the task's colour; its sprout keeps the state's.
+ * The mascot keeps its own colour; its leaves glow in the state's.
  */
 export function createMiniBot(task: AgentTask, bodySize: number): HTMLElement {
   const { slot, engine } = mount(bodySize, task.id);

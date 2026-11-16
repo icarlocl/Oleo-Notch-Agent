@@ -10,7 +10,7 @@
 import { Ease, clamp, lerp, type EaseFn } from "../core/anim";
 import { Sound } from "../core/sound";
 import type { BotEmoteName, BotStateName } from "../core/layout";
-import { DEFAULT_MASCOT, MASCOTS, SKINS, dyed, level, type MascotDef, type MascotId } from "./mascots";
+import { DEFAULT_MASCOT, MASCOTS, SKINS, level, type MascotDef, type MascotId } from "./mascots";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -283,8 +283,9 @@ export class BotEngine {
   static defaultMascot: MascotId = DEFAULT_MASCOT;
   mascot: MascotId = BotEngine.defaultMascot;
   /**
-   * The colour of a mini bot's or a pill's body (null = the theme's own): the
-   * plush is dyed in it, lighter where the light falls, as the themes are.
+   * The colour of the session a bot stands for (null = none). A mascot keeps
+   * its own colour whatever the session: this is kept for the hosts that set
+   * it, and the picture is never dyed in it.
    */
   bodyColor: RGB | null = null;
 
@@ -949,7 +950,7 @@ export class BotEngine {
 
   /**
    * The mascot's picture: its leaves, which sway, droop, perk up and glow in
-   * the state's colour, and its body, dyed when it stands for a session.
+   * the state's colour, and its body, always in its own colour.
    */
   private drawSkin(x: CanvasRenderingContext2D, R: number, k: number, px: number, t: number, m: MascotDef) {
     const s = R / pxPerR(m);
@@ -997,8 +998,8 @@ export class BotEngine {
     if (gl > 0.05 && k < 0.5) x.drawImage(leaves, 0, 0, m.size, m.size);
     x.restore();
 
-    const body = this.bodyColor ? dyed(skin, this.bodyColor) : skin.body;
-    x.drawImage(level(body, devPx), 0, 0, m.size, m.size);
+    // Each mascot keeps its own colour: the state shows in the glow of its leaves.
+    x.drawImage(level(skin.body, devPx), 0, 0, m.size, m.size);
     x.restore();
   }
 

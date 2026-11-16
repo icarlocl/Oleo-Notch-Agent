@@ -219,6 +219,10 @@ export class Island {
   private threadEl!: HTMLElement;
   private threadKey = "";
   private wasThread = false;
+  /** The pointer has rested on the thread this long (ms) and the panel opens, as a click would. */
+  private static readonly THREAD_DWELL_MS = 500;
+  private threadDwell: ReturnType<typeof setTimeout> | null = null;
+  private onThread = false;
   /** When the bot, shown for a moment, goes back into the thread (performance.now()); 0 when it is not out. */
   private peekUntil = 0;
   private peekTimer: ReturnType<typeof setTimeout> | null = null;
@@ -2218,6 +2222,25 @@ export class Island {
     State.mouseInIsland = { x: x - rect.x, y: y - rect.y };
 
     const thread = this.threadFolded;
+    // Resting on the line opens the panel, as a click on it does: not just passing over it.
+    const line = this.threadHitRect();
+    const over = thread && !gone &&
+      x >= line.x - HIT_MARGIN && x <= line.x + line.w + HIT_MARGIN &&
+      y >= line.y - HIT_MARGIN && y <= line.y + line.h + HIT_MARGIN;
+    if (over && !this.onThread) {
+      this.threadDwell = setTimeout(() => {
+        this.threadDwell = null;
+        if (this.threadFolded && this.onThread) {
+          State.lastActivity = performance.now();
+          this.fsm.click();
+        }
+      }, Island.THREAD_DWELL_MS);
+    }
+    if (!over && this.threadDwell != null) {
+      clearTimeout(this.threadDwell);
+      this.threadDwell = null;
+    }
+    this.onThread = over;
     if (thread) {
       // Nothing here takes the pointer: it only fades the peek, to leave what is under it readable.
       const zone = Island.PEEK_ZONE;

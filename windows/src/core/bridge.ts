@@ -16,7 +16,7 @@ async function call<T>(cmd: string, args?: Record<string, unknown>): Promise<T |
   try {
     return await invoke<T>(cmd, args);
   } catch (err) {
-    console.error(`[nook] ${cmd} failed`, err);
+    console.error(`[oleo] ${cmd} failed`, err);
     return null;
   }
 }
@@ -183,7 +183,7 @@ export const Bridge = {
   setShortcut: (which: ShortcutName, accelerator: string, enabled: boolean) =>
     callOrThrow<ShortcutStatus>("set_shortcut", { which, accelerator, enabled }),
 
-  /** Writes to %LOCALAPPDATA%\Nook\nook.log, next to the Rust lines. */
+  /** Writes to %LOCALAPPDATA%\Oleo\oleo.log, next to the Rust lines. */
   log: (message: string) => call<void>("log_line", { message }),
 
   // ── Claude Code hooks ─────────────────────────────────────────────────────
@@ -232,7 +232,7 @@ export const Bridge = {
   // ── end of the usage block ────────────────────────────────────────────────
 
   // ── The reply format, in ~/.claude/CLAUDE.md ──────────────────────────────
-  /** Where Nook's marked block stands in the user's global CLAUDE.md. */
+  /** Where Oleo's marked block stands in the user's global CLAUDE.md. */
   replyFormatStatus: () => call<ReplyFormatStatus>("reply_format_status"),
   /** Diff of CLAUDE.md to show before anything is written. */
   replyFormatPreview: (action: ReplyFormatAction) => callOrThrow<HookPreview>("reply_format_preview", { action }),
@@ -277,7 +277,7 @@ export type ReplyFormatAction = "install" | "update" | "remove";
 /** Where the block stands (src-tauri/src/replyformat.rs). */
 export interface ReplyFormatStatus {
   /**
-   * "outdated": the markers are there, what is between them is not Nook's
+   * "outdated": the markers are there, what is between them is not Oleo's
    * current text. "unmarked": no markers, but the file already has a reply
    * format of its own (`found`). "error": the file cannot be read, or its
    * markers do not make one pair (`error`).
@@ -315,7 +315,7 @@ export interface UsageWindow {
 /**
  * The `usage` event, and what `usageLast` returns: the 5-hour and weekly
  * limits as Claude Code last told its status line. A window it did not report
- * is null; `updatedAt` is when Nook was told (Unix ms).
+ * is null; `updatedAt` is when Oleo was told (Unix ms).
  */
 export interface UsagePayload {
   fiveHour: UsageWindow | null;
@@ -337,7 +337,7 @@ export interface UsageStatus {
   installed: boolean;
   /** And it runs the status line the user had before, which uninstalling puts back. */
   chained: boolean;
-  /** A status line that is not Nook's is there: installing wraps it. */
+  /** A status line that is not Oleo's is there: installing wraps it. */
   otherStatusLine: boolean;
   settingsPath: string;
 }
@@ -374,7 +374,7 @@ export interface HookStatus {
 /** Cursor's hooks (~/.cursor/hooks.json); the hooks follow its sessions for their status only. */
 export interface CursorStatus {
   installed: boolean;
-  /** Every entry is what Nook would write now: the relay has not moved. */
+  /** Every entry is what Oleo would write now: the relay has not moved. */
   current: boolean;
   fileExists: boolean;
   /** ~/.cursor is there: Cursor has run on this account. */
@@ -382,7 +382,7 @@ export interface CursorStatus {
   hooksPath: string;
   hookPath: string;
   hookReady: boolean;
-  /** Why Nook will not write its command (a relay path with a space in it). */
+  /** Why Oleo will not write its command (a relay path with a space in it). */
   refused: string | null;
   /** hooks.json is there but is not plain JSON (comments, a trailing comma): never written over. */
   unreadable: string | null;
@@ -423,7 +423,7 @@ export interface ReplyEnded {
 /** Codex's hooks (~/.codex/hooks.json); its sessions are followed and its permission requests answered. */
 export interface CodexStatus {
   installed: boolean;
-  /** Every entry is what Nook would write now: the relay has not moved. */
+  /** Every entry is what Oleo would write now: the relay has not moved. */
   current: boolean;
   fileExists: boolean;
   /** ~/.codex is there: Codex has run on this account. */
@@ -431,7 +431,7 @@ export interface CodexStatus {
   hooksPath: string;
   hookPath: string;
   hookReady: boolean;
-  /** Why Nook will not write its command (a relay path with a space in it). */
+  /** Why Oleo will not write its command (a relay path with a space in it). */
   refused: string | null;
   /** hooks.json is there but is not plain JSON (comments, a trailing comma): never written over. */
   unreadable: string | null;
@@ -447,7 +447,7 @@ export interface HookPreview {
 
 /** Same as `call`, but surfaces the error so the UI can show what went wrong. */
 async function callOrThrow<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
-  if (!IS_TAURI) throw new Error("not running inside Nook");
+  if (!IS_TAURI) throw new Error("not running inside Oleo");
   return invoke<T>(cmd, args);
 }
 
@@ -465,15 +465,15 @@ export async function onEvent<T>(name: string, handler: (payload: T) => void) {
 // ── The settings window's own commands (src/settings) ─────────────────────────
 
 /** The About section's links. The page names one; its address is a constant in Rust (about.rs). */
-export type AboutLink = "portfolio" | "github" | "linkedin" | "x";
+export type AboutLink = "github";
 
-/** Where Nook keeps its files, as Rust works them out. */
+/** Where Oleo keeps its files, as Rust works them out. */
 export interface DataPaths {
   /** Preferences. */
   settings: string;
   /** The log and the relay. */
   local: string;
-  /** Why the relay pipe is not open (Nook then hears no Claude Code events); null when it is. */
+  /** Why the relay pipe is not open (Oleo then hears no Claude Code events); null when it is. */
   relayError?: string | null;
 }
 
@@ -481,9 +481,9 @@ export const SettingsBridge = {
   /** Opens one of the four fixed addresses in the system browser. */
   openLink: (which: AboutLink) => call<void>("open_link", { which }),
   dataPaths: () => call<DataPaths>("data_paths"),
-  /** Opens the folder the log is in. Takes no path: the folder is Nook's own. */
+  /** Opens the folder the log is in. Takes no path: the folder is Oleo's own. */
   openLogFolder: () => call<void>("open_log_folder"),
-  /** Closes Nook and starts it again: what puts a missing relay back. */
+  /** Closes Oleo and starts it again: what puts a missing relay back. */
   restart: () => call<void>("restart_app"),
 };
 // ── end of the settings window's block ────────────────────────────────────────

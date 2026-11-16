@@ -1,8 +1,8 @@
-// Claude Code's status line, as the way the usage limits reach Nook.
+// Claude Code's status line, as the way the usage limits reach Oleo.
 //
 // Claude Code hands its status line command — the `statusLine` key of
 // ~/.claude/settings.json — a JSON that carries the 5-hour and weekly limits.
-// Installing "usage limits" makes the relay that command (`nook-hook
+// Installing "usage limits" makes the relay that command (`oleo-hook
 // statusline`, hook/src/statusline.rs). It follows the hooks' rules to the
 // letter, through the hooks' own code (hooks.rs `preview_change` /
 // `write_change`): read, refuse what cannot be parsed, show the diff, check
@@ -33,7 +33,7 @@
 use serde::Serialize;
 use serde_json::{json, Value};
 
-use crate::hooks::{self, HookPreview, MARKER};
+use crate::hooks::{self, HookPreview};
 use crate::settings;
 
 /// The key of settings.json this file is about, and no other.
@@ -75,7 +75,7 @@ fn relay_word(relay: &str) -> Result<String, String> {
         Ok(relay.to_string())
     } else {
         Err(format!(
-            "The relay's path ({relay}) has a space or a special character in it. Claude Code runs a status line through Git Bash or PowerShell, which do not read such a path the same way, so Nook won't write one. Nothing was changed."
+            "The relay's path ({relay}) has a space or a special character in it. Claude Code runs a status line through Git Bash or PowerShell, which do not read such a path the same way, so Oleo won't write one. Nothing was changed."
         ))
     }
 }
@@ -91,7 +91,7 @@ fn is_ours(setting: &Value) -> bool {
     setting
         .get("command")
         .and_then(Value::as_str)
-        .is_some_and(|command| command.contains(MARKER) && command.split_whitespace().any(|word| word == MODE))
+        .is_some_and(|command| hooks::runs_relay(command) && command.split_whitespace().any(|word| word == MODE))
 }
 
 /// The setting a status line of ours wraps. `Ok(None)` when it wraps none;
@@ -108,7 +108,7 @@ fn previous_of(ours: &Value) -> Result<Option<Value>, String> {
         .and_then(base64url_decode)
         .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
         .map(Some)
-        .ok_or_else(|| "The status line Nook kept inside its own can't be read back. Nook won't touch it — fix the statusLine entry by hand.".to_string())
+        .ok_or_else(|| "The status line Oleo kept inside its own can't be read back. Oleo won't touch it — fix the statusLine entry by hand.".to_string())
 }
 
 /// Our status line: the relay, and after it the setting it stands in front
@@ -231,7 +231,7 @@ pub(crate) mod tests {
     use super::*;
 
     /// A relay path with nothing to quote, as it is on most machines.
-    const RELAY: &str = "C:/Users/me/AppData/Local/Nook/bin/nook-hook.exe";
+    const RELAY: &str = "C:/Users/me/AppData/Local/Oleo/bin/oleo-hook.exe";
 
     fn command_of(settings: &Value) -> &str {
         settings[KEY]["command"].as_str().unwrap()
@@ -271,7 +271,7 @@ pub(crate) mod tests {
         let after = installed(&before, RELAY).unwrap();
         assert_eq!(after[KEY]["type"], "command");
         assert!(command_of(&after).ends_with(" statusline"), "nothing to chain to: {}", command_of(&after));
-        assert!(command_of(&after).contains(MARKER));
+        assert!(command_of(&after).contains(hooks::MARKER));
         assert_eq!(status_of(&after), (true, false, false));
         // Nothing else moved, and taking it out again leaves what there was.
         assert_eq!(after["hooks"], before["hooks"]);
@@ -322,8 +322,8 @@ pub(crate) mod tests {
             let twice = installed(&once, RELAY).unwrap();
             assert_eq!(pretty(&twice), pretty(&once));
             // The relay moved (another account folder): written again around the same thing.
-            let moved = installed(&once, "D:/Nook/bin/nook-hook.exe").unwrap();
-            assert!(command_of(&moved).contains("D:/Nook/bin/nook-hook.exe") && !command_of(&moved).contains("Users/me"));
+            let moved = installed(&once, "D:/Oleo/bin/oleo-hook.exe").unwrap();
+            assert!(command_of(&moved).contains("D:/Oleo/bin/oleo-hook.exe") && !command_of(&moved).contains("Users/me"));
             assert_eq!(uninstalled(&moved).unwrap(), start);
             assert_eq!(uninstalled(&twice).unwrap(), start);
         }
@@ -346,16 +346,16 @@ pub(crate) mod tests {
         let cut = with(Some(json!({ "type": "command", "command": format!("{RELAY} statusline --previous") })));
         assert!(uninstalled(&cut).is_err());
         // Somebody else's command that only mentions the relay's name is not ours.
-        let mention = json!({ "type": "command", "command": "echo nook-hook" });
-        assert!(!is_ours(&mention) && !is_ours(&json!("nook-hook statusline")));
+        let mention = json!({ "type": "command", "command": "echo oleo-hook" });
+        assert!(!is_ours(&mention) && !is_ours(&json!("oleo-hook statusline")));
     }
 
     #[cfg(windows)]
     #[test]
     fn a_relay_path_that_would_need_quoting_is_refused() {
-        let err = installed(&with(Some(shell_form())), "C:/Users/John Doe/AppData/Local/Nook/bin/nook-hook.exe").unwrap_err();
+        let err = installed(&with(Some(shell_form())), "C:/Users/John Doe/AppData/Local/Oleo/bin/oleo-hook.exe").unwrap_err();
         assert!(err.contains("Nothing was changed"), "got: {err}");
-        for odd in ["C:/Users/a&b/nook-hook.exe", "C:/Users/$x/nook-hook.exe", "C:/Users/é/nook-hook.exe", "C:/Users/(x)/nook-hook.exe", ""] {
+        for odd in ["C:/Users/a&b/oleo-hook.exe", "C:/Users/$x/oleo-hook.exe", "C:/Users/é/oleo-hook.exe", "C:/Users/(x)/oleo-hook.exe", ""] {
             assert!(relay_word(odd).is_err(), "{odd}");
         }
         assert_eq!(relay_word(RELAY).unwrap(), RELAY);
@@ -395,7 +395,7 @@ pub(crate) mod tests {
                 return;
             }
         };
-        assert!(plan.diff.contains("nook-hook") && plan.diff.contains(PREVIOUS_FLAG), "the diff shows the new command");
+        assert!(plan.diff.contains("oleo-hook") && plan.diff.contains(PREVIOUS_FLAG), "the diff shows the new command");
         let changed: Vec<&str> = plan.diff.lines().filter(|line| line.starts_with('+') || line.starts_with('-')).collect();
         assert!(changed.iter().all(|line| line.contains("\"command\"")), "one line changes, the command: {changed:?}");
         // A preview writes nothing.

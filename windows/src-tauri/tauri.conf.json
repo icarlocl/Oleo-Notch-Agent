@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Nook",
+  "productName": "Oleo",
   "version": "0.2.2",
-  "identifier": "io.github.zubairbinshaukat.nook",
+  "identifier": "io.github.icarlocl.oleo",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -18,7 +18,7 @@
     "windows": [
       {
         "label": "island",
-        "title": "Nook",
+        "title": "Oleo",
         "url": "index.html",
         "width": 240,
         "height": 6,
@@ -49,15 +49,15 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "../target/release/nook-hook.exe": "nook-hook.exe",
+      "../target/release/oleo-hook.exe": "oleo-hook.exe",
       "../../LICENSE": "LICENSE",
       "../../NOTICE": "NOTICE"
     },
-    "publisher": "Zubair Bin Shaukat",
+    "publisher": "Franco Ruiz",
     "copyright": "© 2026 Franco Ruiz. Portions © Louis Raillé, Zubair Bin Shaukat and contributors (MIT)",
     "category": "DeveloperTool",
     "shortDescription": "Claude Code sessions at the top of your screen",
-    "longDescription": "Nook shows your Claude Code sessions at the top of your screen and lets you answer their permission requests and questions.",
+    "longDescription": "Oleo shows your Claude Code sessions at the top of your screen and lets you answer their permission requests and questions.",
     "windows": {
       "nsis": {
         "installMode": "currentUser",

@@ -23,17 +23,17 @@ const PACKAGES = {
     {
       dir: "nsis",
       suffix: "-setup.exe",
-      names: [`Nook-Windows-${version}-setup.exe`, "Nook-Windows-setup.exe"],
+      names: [`Oleo-Windows-${version}-setup.exe`, "Oleo-Windows-setup.exe"],
     },
   ],
   linux: [
     {
       dir: "appimage",
       suffix: ".AppImage",
-      names: [`Nook-Linux-${version}-${arch}.AppImage`, `Nook-Linux-${arch}.AppImage`],
+      names: [`Oleo-Linux-${version}-${arch}.AppImage`, `Oleo-Linux-${arch}.AppImage`],
     },
-    { dir: "deb", suffix: ".deb", names: [`Nook-Linux-${version}-${debArch}.deb`] },
-    { dir: "rpm", suffix: ".rpm", names: [`Nook-Linux-${version}-${arch}.rpm`] },
+    { dir: "deb", suffix: ".deb", names: [`Oleo-Linux-${version}-${debArch}.deb`] },
+    { dir: "rpm", suffix: ".rpm", names: [`Oleo-Linux-${version}-${arch}.rpm`] },
   ],
 };
 
@@ -77,7 +77,7 @@ for (const { dir, suffix, names } of packages) {
 // the one this build made. `sha256sum -c` reads the same format.
 const hashed = [...written];
 if (process.platform === "win32") {
-  for (const exe of ["nook.exe", "nook-hook.exe"]) {
+  for (const exe of ["oleo.exe", "oleo-hook.exe"]) {
     const built = join(root, "target", "release", exe);
     if (existsSync(built)) hashed.push(built);
   }

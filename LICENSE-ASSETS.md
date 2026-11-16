@@ -1,30 +1,39 @@
-# Nook: name, character and artwork
+# Oleo: name, character and artwork
 
-Nook is built from Coucou's code (MIT, see [LICENSE](LICENSE) and [NOTICE](NOTICE)).
-None of Coucou's reserved assets are in this repository: its name, the Mochi
-character, its app and menu bar icons, its sounds and its images and videos
-belong to Louis Raillé and are not used here.
+Oleo is built on Nook's code, itself built on Coucou's (both MIT, see
+[LICENSE](LICENSE) and [NOTICE](NOTICE)). None of Coucou's reserved assets are
+in this repository: its name, the Mochi character, its app and menu bar icons,
+its sounds and its images and videos belong to Louis Raillé and are not used
+here. Nook's character, Gullu, and the icons drawn from it are not used either.
 
-What Nook ships instead is its own:
+What Oleo ships as its own:
 
-- **Gullu**, Nook's buddy, drawn in code (`windows/src/bot/engine.ts`) from
-  `design/prototype/nook-buddy.html`, and the app icons drawn from it by
-  `windows/scripts/gen-icons.mjs`;
+- **Durazno**, Oleo's mascot, designed by Franco Ruiz: the picture
+  `windows/src/bot/mascots/durazno.png`, and its face, drawn live over it by
+  `windows/src/bot/engine.ts`;
+- **the app icons** in `windows/src-tauri/icons/`, drawn from Durazno by the
+  engine (`windows/dev/icon-export.html`, written out by
+  `windows/scripts/gen-icons.mjs`), and the website pictures
+  `site/assets/img/durazno-*.png` made from them;
+- **the installer artwork**, `windows/src-tauri/nsis/header.bmp` and
+  `sidebar.bmp`, drawn from Durazno on a canvas by
+  `windows/scripts/make-installer-art.mjs`.
+
+From Nook, under its MIT licence:
+
 - **the sounds** in `windows/sounds/`, synthesized from plain sine and triangle
   tones by `windows/scripts/make-sounds.mjs`; nothing in them is sampled;
-- **the wallpapers** of the screenshot stage, `windows/dev/stage/wallpapers/nook-dark.jpg` and
-  `nook-light.jpg`, drawn procedurally by the shader in `windows/dev/stage/wallpaper-gen/` and rendered by
-  `windows/scripts/make-wallpaper.mjs`; no photo, render or other picture went into them (the optional
-  Windows 11 Bloom wallpaper the stage can show is Microsoft's, stays on the developer's machine and is
-  never committed);
-- **the installer artwork**, `windows/src-tauri/nsis/header.bmp` and `sidebar.bmp` (the pictures on
-  the installer and uninstaller pages), drawn from Gullu and Nook's palette on a canvas by
-  `windows/scripts/make-installer-art.mjs`; no photo, render or other picture went into them;
-- **the interface icons**, which come from Lucide and Simple Icons under their
-  own licences (see [NOTICE](NOTICE)).
+- **the wallpapers** of the screenshot stage,
+  `windows/dev/stage/wallpapers/oleo-dark.jpg` and `oleo-light.jpg`, drawn
+  procedurally by the shader in `windows/dev/stage/wallpaper-gen/` and rendered
+  by `windows/scripts/make-wallpaper.mjs`.
 
-Gullu, the icons, the sounds, the wallpapers and the installer artwork are original to Nook and are covered by the
-same MIT licence as the code. The name "Nook" and the look of Gullu are the
-project's; if you fork Nook to ship your own app, give it your own name and icon.
+The interface icons come from Lucide and Simple Icons under their own licences
+(see [NOTICE](NOTICE)).
 
-Nook is not affiliated with or endorsed by Coucou's author or by Anthropic.
+The name "Oleo", Durazno and the artwork drawn from it are proprietary:
+© 2026 Franco Ruiz, all rights reserved. They are not covered by the MIT
+licence of the parts that come from Nook and Coucou.
+
+Oleo is not affiliated with or endorsed by Nook's or Coucou's authors, or by
+Anthropic.

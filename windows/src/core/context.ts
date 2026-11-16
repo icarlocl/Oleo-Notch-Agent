@@ -4,7 +4,7 @@
 //
 // The size is the one thing a transcript does not say, so it comes, best first,
 // from: what Claude Code's status line reports (`context_window_size`, exact —
-// only when Nook is installed as the status line); a model id that names the
+// only when Oleo is installed as the status line); a model id that names the
 // 1M variant (`[1m]`); the tokens themselves — a context holds more than 200k
 // only in a 1M window; and 200k otherwise. Without the status line, a session
 // in a 1M window with no `[1m]` in its id reads five times too full until it

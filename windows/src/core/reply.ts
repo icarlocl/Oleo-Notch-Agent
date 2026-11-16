@@ -3,7 +3,7 @@
 // It goes where the session runs (src-tauri/src/reply_here.rs): typed into its
 // terminal and sent, or put in the prompt of its editor's Claude Code panel.
 // The conversation carries on in the window it was started in. Where that
-// window cannot be found there is no box to type in; and a reply Nook cannot
+// window cannot be found there is no box to type in; and a reply Oleo cannot
 // be sure of the place for — another tab is showing — is not sent anywhere:
 // what was typed stays in the box, with the reason.
 //
@@ -122,7 +122,7 @@ export const Reply = {
     try {
       const place = await Bridge.sessionReplyHere(id, session.title ?? null, text.slice(0, MAX_REPLY_CHARS));
       if (place === "interrupted") {
-        notes.set(id, "You changed windows while Nook was typing. Part of your reply is in the terminal, and it was not sent.");
+        notes.set(id, "You changed windows while Oleo was typing. Part of your reply is in the terminal, and it was not sent.");
         return false;
       }
       drafts.delete(id);

@@ -1,4 +1,4 @@
-// Renders Nook's stage wallpapers (dev/stage/wallpaper-gen/) to JPEG with a locally installed
+// Renders Oleo's stage wallpapers (dev/stage/wallpaper-gen/) to JPEG with a locally installed
 // Chrome or Edge in headless mode, over DevTools. No dependency, no network, no dev server: the
 // generator page is opened straight from disk and drawn by the browser's software WebGL
 // (SwiftShader), so the pixels do not depend on the GPU.
@@ -56,7 +56,7 @@ if (!browser) fail("no Chrome or Edge found; pass --browser PATH or set CHROME_P
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
 async function render(theme, file) {
-  const profile = mkdtempSync(join(tmpdir(), "nook-wall-"));
+  const profile = mkdtempSync(join(tmpdir(), "oleo-wall-"));
   const child = spawn(browser, [
     "--headless=new", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist",
     "--allow-file-access-from-files", "--hide-scrollbars", "--no-first-run", "--no-default-browser-check", "--disable-extensions",
@@ -116,5 +116,5 @@ async function render(theme, file) {
 }
 
 for (const theme of themes) {
-  await render(theme, resolve(out ?? join(outDir, `nook-${theme}.jpg`)));
+  await render(theme, resolve(out ?? join(outDir, `oleo-${theme}.jpg`)));
 }

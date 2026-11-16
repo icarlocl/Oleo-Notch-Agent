@@ -1,13 +1,13 @@
 // Cursor's agent, as the island knows sessions.
 //
-// `nook-hook --agent cursor <event>` reads one of Cursor's hook payloads
+// `oleo-hook --agent cursor <event>` reads one of Cursor's hook payloads
 // (~/.cursor/hooks.json) and rewrites it in the shape of the Claude Code event
 // it corresponds to, so everything after — the cuts, the diff, the host
 // lookup — is the one path every event takes. What leaves here says
-// `nook_tool: "cursor"`, and its session id is `cursor:<conversation_id>`:
+// `oleo_tool: "cursor"`, and its session id is `cursor:<conversation_id>`:
 // the two tools' ids can never meet.
 //
-// Status only. Nook subscribes to events that cannot change what Cursor does
+// Status only. Oleo subscribes to events that cannot change what Cursor does
 // (none of the before* gates but beforeSubmitPrompt, whose empty output means
 // "continue"), and this relay prints nothing at all, whatever happens.
 
@@ -85,14 +85,14 @@ fn edit_response(edits: &[Value]) -> Value {
     json!({ "structuredPatch": hunks })
 }
 
-/// Cursor's payload as the Claude-shaped event Nook knows. None for an event
-/// Nook does not follow, or one with no conversation to put it under.
+/// Cursor's payload as the Claude-shaped event Oleo knows. None for an event
+/// Oleo does not follow, or one with no conversation to put it under.
 pub fn translate(payload: &Value, arg_event: &str) -> Option<Value> {
     let event = text(payload, "hook_event_name").unwrap_or(arg_event);
     let conversation = text(payload, "conversation_id").or_else(|| text(payload, "session_id"))?;
     let mut out = json!({
         "session_id": format!("{ID_PREFIX}{}", clip(conversation, MAX_ID)),
-        "nook_tool": TOOL,
+        "oleo_tool": TOOL,
     });
     if let Some(cwd) = workspace(payload) {
         out["cwd"] = json!(cwd);
@@ -202,17 +202,17 @@ pub fn runs_in_cursor() -> bool {
     ["CURSOR_VERSION", "CURSOR_PROJECT_DIR"].iter().any(|var| std::env::var_os(var).is_some_and(|v| !v.is_empty()))
 }
 
-/// Whether `~/.cursor/hooks.json` has Nook's own entries, which then tell the
+/// Whether `~/.cursor/hooks.json` has Oleo's own entries, which then tell the
 /// app everything the Claude hooks would say a second time.
 fn native_hooks_installed() -> bool {
     let home = std::env::var_os("USERPROFILE").or_else(|| std::env::var_os("HOME"));
     let Some(home) = home else { return false };
     let path = std::path::Path::new(&home).join(".cursor").join("hooks.json");
-    std::fs::read_to_string(path).is_ok_and(|text| text.contains("nook-hook") && text.contains("--agent cursor"))
+    std::fs::read_to_string(path).is_ok_and(|text| text.contains("oleo-hook") && text.contains("--agent cursor"))
 }
 
 /// An event of Claude Code's own hooks that Cursor ran (it loads them from
-/// ~/.claude/settings.json). With Nook's Cursor hooks installed it is dropped,
+/// ~/.claude/settings.json). With Oleo's Cursor hooks installed it is dropped,
 /// so a conversation is never shown twice; without them it is tagged as
 /// Cursor's, under the id the native hooks would have used. A permission
 /// request is never taken: Cursor sessions have no approval cards.
@@ -225,7 +225,7 @@ pub fn from_claude_hooks(payload: &mut Value) -> bool {
     if let Some(id) = map.get("session_id").and_then(Value::as_str).filter(|s| !s.is_empty()).map(|s| format!("{ID_PREFIX}{}", clip(s, MAX_ID))) {
         map.insert("session_id".into(), json!(id));
     }
-    map.insert("nook_tool".into(), json!(TOOL));
+    map.insert("oleo_tool".into(), json!(TOOL));
     true
 }
 
@@ -256,7 +256,7 @@ mod tests {
         assert_eq!(out["hook_event_name"], "SessionStart");
         assert_eq!(out["session_id"], "cursor:c-1");
         assert_eq!(out["cwd"], "c:/work/app");
-        assert_eq!(out["nook_tool"], "cursor");
+        assert_eq!(out["oleo_tool"], "cursor");
         assert_eq!(out["model"], "gpt-5");
         // Nothing else of Cursor's payload goes on.
         assert!(out.get("user_email").is_none() && out.get("generation_id").is_none());
@@ -360,9 +360,9 @@ mod tests {
         let event = crate::event_of(out, String::new(), String::new()).unwrap();
         let sent: Value = serde_json::from_str(&event.line).unwrap();
         assert_eq!(sent["session_id"], "cursor:c-1");
-        assert_eq!(sent["nook_tool"], "cursor");
+        assert_eq!(sent["oleo_tool"], "cursor");
         assert_eq!(sent["change"]["additions"], 1);
-        assert!(sent.get("nook_agent").is_none());
+        assert!(sent.get("oleo_agent").is_none());
     }
 
     #[test]
@@ -370,11 +370,11 @@ mod tests {
         let mut ask = json!({ "hook_event_name": "PermissionRequest", "session_id": "s" });
         assert!(!from_claude_hooks(&mut ask));
         let mut tool = json!({ "hook_event_name": "PostToolUse", "session_id": "s" });
-        // With no hooks.json of Nook's in this home, the event is Cursor's, under the same id the native hooks use.
+        // With no hooks.json of Oleo's in this home, the event is Cursor's, under the same id the native hooks use.
         if !native_hooks_installed() {
             assert!(from_claude_hooks(&mut tool));
             assert_eq!(tool["session_id"], "cursor:s");
-            assert_eq!(tool["nook_tool"], "cursor");
+            assert_eq!(tool["oleo_tool"], "cursor");
         }
     }
 }

@@ -3,11 +3,11 @@
 // The rule from CLAUDE.md is strict and is followed to the letter:
 // read %USERPROFILE%\.claude\settings.json, take a dated backup, merge without
 // touching anybody else's hooks, show the diff, and write only after an explicit
-// click. Uninstall removes Nook's entries and nothing else.
+// click. Uninstall removes Oleo's entries and nothing else.
 //
 // Each hook is written in Claude Code's exec form — `command` is the relay's
 // path and `args` holds the event name — so no shell is involved at all. The
-// shell form it replaces ("\"C:/…/nook-hook.exe\" Stop") only worked in
+// shell form it replaces ("\"C:/…/oleo-hook.exe\" Stop") only worked in
 // Git Bash: on a PC without Git Bash, Claude Code runs hooks in PowerShell,
 // which reads a quoted path as a string and fails on the event name
 // ("Unexpected token 'Stop'"). Exec form also makes spaces in the path a
@@ -41,13 +41,20 @@ pub const HOOK_EVENTS: &[(&str, u64)] = &[
     ("SubagentStop", 10),
 ];
 
-/// Marker that identifies a Nook entry inside settings.json.
-pub(crate) const MARKER: &str = "nook-hook";
+/// Marker that identifies a Oleo entry inside settings.json.
+pub(crate) const MARKER: &str = "oleo-hook";
 
-/// The relay's name before the rename, when the app was called Coucou. Entries
-/// carrying it are ours to replace and to remove, but never count as installed.
-/// Can be dropped once nobody has the old entries in their settings.json.
-const LEGACY_MARKER: &str = "coucou-hook";
+/// The relay's names before the renames, when the app was called Coucou and
+/// then Nook. Entries carrying one are ours to replace and to remove, but never
+/// count as installed. Can be dropped once nobody has the old entries.
+const LEGACY_MARKERS: [&str; 2] = ["coucou-hook", "nook-hook"];
+#[cfg(test)]
+const LEGACY_MARKER: &str = LEGACY_MARKERS[0];
+
+/// Whether a command runs this app's relay, under its current or a former name.
+pub(crate) fn runs_relay(command: &str) -> bool {
+    command.contains(MARKER) || LEGACY_MARKERS.iter().any(|m| command.contains(m))
+}
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -104,9 +111,9 @@ fn parse_settings(bytes: &[u8], path: &str) -> Result<Value, String> {
     }
     match serde_json::from_slice::<Value>(text) {
         Ok(v) if v.is_object() => Ok(v),
-        Ok(_) => Err(format!("{path} isn't a JSON object — Nook won't touch it.")),
+        Ok(_) => Err(format!("{path} isn't a JSON object — Oleo won't touch it.")),
         Err(err) => Err(format!(
-            "{path} isn't valid JSON ({err}). Fix or move it, then try again — Nook won't overwrite it."
+            "{path} isn't valid JSON ({err}). Fix or move it, then try again — Oleo won't overwrite it."
         )),
     }
 }
@@ -118,7 +125,7 @@ pub(crate) fn read_settings_lossy() -> Value {
     read_settings().unwrap_or_else(|_| json!({}))
 }
 
-/// One Nook hook, in exec form (see the note at the top). The path keeps its
+/// One Oleo hook, in exec form (see the note at the top). The path keeps its
 /// forward slashes: exec form does not mind, and a Claude Code too old to know
 /// `args` falls back to Git Bash, where backslashes would be read as escapes.
 #[cfg(windows)]
@@ -131,21 +138,21 @@ fn hook_entry(event: &str, timeout: u64) -> Value {
     })
 }
 
-/// One Nook hook. On Linux Claude Code's shell is `sh`, where the quoted
+/// One Oleo hook. On Linux Claude Code's shell is `sh`, where the quoted
 /// command below is safe, so the shell form stays.
 #[cfg(unix)]
 fn hook_entry(event: &str, timeout: u64) -> Value {
     json!({ "type": "command", "command": hook_command(event), "timeout": timeout })
 }
 
-/// A Nook entry. One left by Coucou is ours (and is replaced on install), but
+/// A Oleo entry. One left by Coucou is ours (and is replaced on install), but
 /// not current.
 #[cfg(unix)]
 fn entry_is_current(entry: &Value) -> bool {
     entry_has(entry, MARKER) && !entry_is_legacy(entry)
 }
 
-/// A Nook entry written the current way. Entries left by Coucou, and entries
+/// A Oleo entry written the current way. Entries left by Coucou, and entries
 /// in the old shell form, still count as ours (and are replaced on install),
 /// but not as current.
 #[cfg(windows)]
@@ -189,12 +196,12 @@ fn entry_has(entry: &Value, marker: &str) -> bool {
         .unwrap_or(false)
 }
 
-/// An entry written by Coucou, before the rename.
+/// An entry written by Coucou or Nook, before the renames.
 fn entry_is_legacy(entry: &Value) -> bool {
-    entry_has(entry, LEGACY_MARKER)
+    LEGACY_MARKERS.iter().any(|m| entry_has(entry, m))
 }
 
-/// Ours to replace or remove: a Nook entry, or one left by Coucou.
+/// Ours to replace or remove: a Oleo entry, or one left by Coucou.
 fn entry_is_ours(entry: &Value) -> bool {
     entry_has(entry, MARKER) || entry_is_legacy(entry)
 }
@@ -218,7 +225,7 @@ fn installed_and_legacy(settings: &Value) -> (bool, bool) {
     (installed, legacy)
 }
 
-/// Settings with Nook's hooks added; everything else is left untouched.
+/// Settings with Oleo's hooks added; everything else is left untouched.
 fn merged(existing: &Value) -> Value {
     let mut root = existing.as_object().cloned().unwrap_or_default();
     let mut hooks = root
@@ -242,7 +249,7 @@ fn merged(existing: &Value) -> Value {
     Value::Object(root)
 }
 
-/// Settings with every Nook entry removed, and nothing else changed.
+/// Settings with every Oleo entry removed, and nothing else changed.
 fn without_ours(existing: &Value) -> Value {
     let mut root = existing.as_object().cloned().unwrap_or_default();
     let Some(hooks) = root.get("hooks").and_then(Value::as_object).cloned() else {
@@ -285,7 +292,7 @@ fn stamp() -> String {
     )
 }
 
-/// Where a file is copied to before Nook changes it: beside it, under its own
+/// Where a file is copied to before Oleo changes it: beside it, under its own
 /// name and the time — `settings.json.bak-20261004-101500`, `CLAUDE.md.bak-…`.
 fn backup_of(path: &Path) -> PathBuf {
     let name = path.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default();
@@ -567,7 +574,7 @@ fn create_temp(path: &Path, bytes: &[u8]) -> std::io::Result<PathBuf> {
     let name = path.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default();
     create_temp_with(path, bytes, |attempt| {
         let counter = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-        path.with_file_name(format!("{name}.nook-{}-{counter}-{attempt}", std::process::id()))
+        path.with_file_name(format!("{name}.oleo-{}-{counter}-{attempt}", std::process::id()))
     })
 }
 
@@ -589,7 +596,7 @@ fn create_temp_with(
     Err(last_collision.unwrap_or_else(|| std::io::Error::other("too many temporary file name collisions")))
 }
 
-/// Copies the relay (nook-hook.exe / nook-hook) into the local data dir's
+/// Copies the relay (oleo-hook.exe / oleo-hook) into the local data dir's
 /// bin/ on launch. In a bundled install it comes from the app resources; in
 /// `tauri dev` it sits next to the app binary in the workspace target directory.
 ///
@@ -759,7 +766,7 @@ mod tests {
         fn new() -> Self {
             static NEXT: AtomicU64 = AtomicU64::new(0);
             let path = std::env::temp_dir().join(format!(
-                "nook-hooks-fixture-{}-{}",
+                "oleo-hooks-fixture-{}-{}",
                 std::process::id(),
                 NEXT.fetch_add(1, Ordering::Relaxed)
             ));
@@ -920,7 +927,7 @@ mod tests {
     #[test]
     fn unreadable_content_is_an_error_never_an_empty_object() {
         // This is the whole bug: returning {} here meant `merged()` produced a
-        // file containing nothing but Nook's hooks, and the write replaced
+        // file containing nothing but Oleo's hooks, and the write replaced
         // everything the user had.
         for bad in [&b"{ not json"[..], &b"[1,2,3]"[..], &b"\"a string\""[..]] {
             assert!(
@@ -980,7 +987,7 @@ mod tests {
             assert_eq!(hook["type"], "command");
             // Just the relay's path: nothing a shell would have to parse.
             let command = hook["command"].as_str().unwrap();
-            assert!(command.ends_with("nook-hook.exe"), "got {command}");
+            assert!(command.ends_with("oleo-hook.exe"), "got {command}");
             assert!(!command.contains('"'), "no shell quoting in exec form: {command}");
             assert_eq!(hook["args"], json!([event]));
             assert_eq!(hook["timeout"], json!(timeout));
@@ -992,7 +999,7 @@ mod tests {
     fn an_old_shell_form_install_is_replaced_not_duplicated() {
         // The shell form: fine in Git Bash, a syntax error in PowerShell.
         let old = json!({ "hooks": { "Stop": [
-            { "hooks": [{ "type": "command", "command": "\"C:/Users/me/AppData/Local/Nook/bin/nook-hook.exe\" Stop" }] }
+            { "hooks": [{ "type": "command", "command": "\"C:/Users/me/AppData/Local/Oleo/bin/oleo-hook.exe\" Stop" }] }
         ] } });
         assert!(old["hooks"]["Stop"].as_array().unwrap().iter().all(|e| !entry_is_current(e)));
         let after = merged(&old);
@@ -1026,7 +1033,7 @@ mod tests {
         json!({ "model": "opus", "hooks": hooks })
     }
 
-    /// After an install over Coucou's entries: one Nook entry per event, no
+    /// After an install over Coucou's entries: one Oleo entry per event, no
     /// Coucou entry anywhere, and the other tool's hook still in place.
     fn assert_legacy_replaced(after: &Value) {
         assert_eq!(after["model"], "opus");
@@ -1034,7 +1041,7 @@ mod tests {
             let list = after["hooks"][*event].as_array().unwrap();
             let ours: Vec<&Value> = list.iter().filter(|e| entry_is_ours(e)).collect();
             assert_eq!(ours.len(), 1, "{event}: exactly one relay entry");
-            assert!(entry_is_current(ours[0]), "{event}: the entry left must be Nook's");
+            assert!(entry_is_current(ours[0]), "{event}: the entry left must be Oleo's");
             assert!(!list.iter().any(entry_is_legacy), "{event}: a Coucou entry survived");
             let others = if *event == "PreToolUse" { vec![foreign()] } else { vec![] };
             let kept: Vec<Value> = list.iter().filter(|e| !entry_is_ours(e)).cloned().collect();
@@ -1055,8 +1062,8 @@ mod tests {
     }
 
     #[test]
-    fn uninstalling_removes_nook_and_legacy_entries_only() {
-        // Both kinds side by side: Coucou's entries, plus a Nook entry added
+    fn uninstalling_removes_oleo_and_legacy_entries_only() {
+        // Both kinds side by side: Coucou's entries, plus a Oleo entry added
         // next to them the way a build without the migration would have.
         let mut both = legacy_settings(true);
         for (event, timeout) in HOOK_EVENTS {
@@ -1109,7 +1116,7 @@ mod tests {
     #[test]
     fn rewriting_settings_never_widens_its_permissions() {
         use std::os::unix::fs::PermissionsExt;
-        let dir = std::env::temp_dir().join(format!("nook-perm-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("oleo-perm-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         let original = dir.join("settings.json");
@@ -1137,7 +1144,7 @@ mod tests {
     /// the home directory at a temp directory, and that is process-wide.
     #[test]
     fn writing_backs_up_preserves_and_refuses_a_changed_file() {
-        let tmp = std::env::temp_dir().join(format!("nook-hooks-{}", std::process::id()));
+        let tmp = std::env::temp_dir().join(format!("oleo-hooks-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&tmp);
         std::fs::create_dir_all(tmp.join(".claude")).unwrap();
         std::env::set_var(platform::HOME_VAR, &tmp);
@@ -1153,7 +1160,7 @@ mod tests {
 
         // Install.
         let plan = preview(true).expect("a BOM must not stop the preview");
-        assert!(plan.diff.contains("nook-hook"), "the diff must show what changes");
+        assert!(plan.diff.contains("oleo-hook"), "the diff must show what changes");
         let backup = write(true, &plan.fingerprint).expect("install should succeed");
 
         // The backup holds the original bytes, BOM and all.

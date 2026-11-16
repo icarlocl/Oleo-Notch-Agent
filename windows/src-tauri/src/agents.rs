@@ -270,7 +270,7 @@ pub fn create_window(app: &AppHandle) {
     let url = crate::page_url(app, "agents.html");
     let built = WebviewWindowBuilder::new(app, WINDOW_LABEL, url)
         .additional_browser_args(crate::BROWSER_ARGS)
-        .title("Agents — Nook")
+        .title("Agents — Oleo")
         .inner_size(WIDTH, MIN_HEIGHT)
         .resizable(false)
         .decorations(false)
@@ -464,7 +464,7 @@ fn save_soon(app: &AppHandle) {
         }
         let current = app.state::<Shared>().settings.lock().unwrap().clone();
         if let Err(err) = settings::save(&current) {
-            eprintln!("[nook] could not save settings: {err}");
+            eprintln!("[oleo] could not save settings: {err}");
         }
     });
 }

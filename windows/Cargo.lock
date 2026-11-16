@@ -2163,33 +2163,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
 
 [[package]]
-name = "nook"
-version = "0.2.2"
-dependencies = [
- "gtk",
- "libc",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-autostart",
- "tauri-plugin-global-shortcut",
- "tauri-plugin-single-instance",
- "tokio",
- "windows 0.61.3",
-]
-
-[[package]]
-name = "nook-hook"
-version = "0.2.2"
-dependencies = [
- "libc",
- "serde_json",
- "tauri-winres",
- "windows 0.61.3",
-]
-
-[[package]]
 name = "num-conv"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2420,6 +2393,33 @@ dependencies = [
  "objc2-app-kit",
  "objc2-core-foundation",
  "objc2-foundation",
+]
+
+[[package]]
+name = "oleo"
+version = "0.2.2"
+dependencies = [
+ "gtk",
+ "libc",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-autostart",
+ "tauri-plugin-global-shortcut",
+ "tauri-plugin-single-instance",
+ "tokio",
+ "windows 0.61.3",
+]
+
+[[package]]
+name = "oleo-hook"
+version = "0.2.2"
+dependencies = [
+ "libc",
+ "serde_json",
+ "tauri-winres",
+ "windows 0.61.3",
 ]
 
 [[package]]

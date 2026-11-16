@@ -1,7 +1,7 @@
 // The launch greeting — port of GreetingCanvasView.swift.
 // Everything is laid out in the same 640×150 reference space as on macOS.
 //
-// The sequence and its timing are the original's; the character is the Nook
+// The sequence and its timing are the original's; the character is the Oleo
 // bot, drawn by the engine itself from the pose of each frame. Where the
 // original waved a hand, the bot waves its arm, grinning; where a badge popped
 // up, its sprout lights up; where the body took a tint, its sprout does.

@@ -66,10 +66,10 @@ export const notify = () => {
 };
 
 // ── Order and hidden cards ────────────────────────────────────────────────────
-// The plan saves these in %APPDATA%\Nook\shelf.json; the preview uses localStorage.
+// The plan saves these in %APPDATA%\Oleo\shelf.json; the preview uses localStorage.
 
-const ORDER_KEY = "nook.shelf-preview.order.v2";
-const HIDDEN_KEY = "nook.shelf-preview.hidden.v2";
+const ORDER_KEY = "oleo.shelf-preview.order.v2";
+const HIDDEN_KEY = "oleo.shelf-preview.hidden.v2";
 
 function read(key: string): unknown {
   try {
@@ -355,7 +355,7 @@ export interface Project {
 }
 
 export const PROJECTS: Project[] = [
-  { id: 1, name: "nook", path: "D:\\work\\personal\\nook", ago: "2 min ago" },
+  { id: 1, name: "oleo", path: "D:\\work\\personal\\oleo", ago: "2 min ago" },
   { id: 2, name: "korus", path: "D:\\work\\korus", ago: "1 h ago" },
   { id: 3, name: "sbe-hub", path: "D:\\work\\clients\\sbe-hub", ago: "yesterday" },
   { id: 4, name: "morning-ai-brief", path: "D:\\work\\personal\\morning-ai-brief", ago: "3 d ago" },

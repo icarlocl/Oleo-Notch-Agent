@@ -126,7 +126,7 @@ function findBrowser() {
 }
 
 async function startBrowser(exe) {
-  const profile = mkdtempSync(join(tmpdir(), "nook-import-"));
+  const profile = mkdtempSync(join(tmpdir(), "oleo-import-"));
   const args = ["--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check", "--disable-extensions", "--force-color-profile=srgb", `--user-data-dir=${profile}`, "--remote-debugging-port=0", "about:blank"];
   const child = spawn(exe, args, { stdio: "ignore" });
   let port = null;

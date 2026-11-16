@@ -1,6 +1,6 @@
-// What the Shelf's widgets ask of Nook, in one place: the commands of
+// What the Shelf's widgets ask of Oleo, in one place: the commands of
 // core/bridge.ts that they use. Outside the app, on a dev server, a made-up
-// Nook answers instead (fake.ts: the browser's own storage, a made-up player);
+// Oleo answers instead (fake.ts: the browser's own storage, a made-up player);
 // a build leaves that file out altogether.
 
 import { Bridge, IS_TAURI, type MediaInfo, type ProjectInfo } from "../core/bridge";

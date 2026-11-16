@@ -1,15 +1,16 @@
-// The Nook bot — "Nook Buddy", a port of design/prototype/nook-buddy.html to
-// the island's engine: a soft gumdrop with a sprout on its head that glows in
-// the colour of what the agent is doing. Same proportions, colours, gradients,
-// eyes, mouths, brows and bubble as the prototype (the visual source of truth);
-// the tweens, the state machine and the update/draw split are the island's own.
+// The Oleo mascot's engine: its moods, its moves and its face. The body is the
+// mascot's own picture (mascots/), whose leaves glow in the colour of what the
+// agent is doing; the face is drawn on it, so it can change with every state
+// and emote. The tweens, the state machine and the update/draw split are the
+// island's own.
 //
-// The prototype runs its own frame loop for ever. Here nothing does: `update`
-// is called by the island's loop, and `busy` tells that loop when it may stop.
+// Nothing runs a frame loop here: `update` is called by the island's loop, and
+// `busy` tells that loop when it may stop.
 
 import { Ease, clamp, lerp, type EaseFn } from "../core/anim";
 import { Sound } from "../core/sound";
 import type { BotEmoteName, BotStateName } from "../core/layout";
+import { DEFAULT_MASCOT, MASCOTS, SKINS, dyed, level, type MascotDef, type MascotId } from "./mascots";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -30,8 +31,6 @@ export type BrowShape = "raise" | "worry" | "angry";
 
 /** What the little bubble beside the head says. */
 export type BadgeShape = "dots" | "q" | "bang" | "check" | "x" | "hour";
-
-export type BotTheme = "cream" | "peach" | "mint" | "lilac" | "sky" | "cocoa";
 
 export type RGB = readonly [number, number, number]; // components 0…1
 
@@ -85,19 +84,7 @@ interface Particle {
   age: number; life: number; rot: number; size: number;
 }
 
-/** One hair of the plush: where on the outline, how long, which way it bends. */
-interface Hair { a: number; l: number; b: number }
-
-// ── Constants (the prototype's SKINS / STATES / EMOTES) ───────────────────────
-
-export const BOT_THEMES: Record<BotTheme, { label: string; a: string; b: string }> = {
-  cream: { label: "Cream", a: "#FFF8EE", b: "#EBD3BC" },
-  peach: { label: "Peach", a: "#FFEFE6", b: "#F2BBA2" },
-  mint: { label: "Mint", a: "#F0FBF4", b: "#B8E2C8" },
-  lilac: { label: "Lilac", a: "#F6F1FF", b: "#CBBDF0" },
-  sky: { label: "Sky", a: "#F0F7FF", b: "#B6D0F0" },
-  cocoa: { label: "Cocoa", a: "#F2E2D2", b: "#C09878" },
-};
+// ── Constants (STATES / EMOTES) ───────────────────────────────────────────────
 
 const C = {
   idle: hexToRGB("#8FD3A0"),
@@ -192,20 +179,15 @@ const MOUTH_FOR_EYE: Partial<Record<EyeShape, MouthShape>> = {
 };
 const BROW_FOR_EYE: Partial<Record<EyeShape, BrowShape>> = { flat: "angry" };
 
-/** The bot's `R` for a canvas `W` wide: the body is 2.36 R across, 1.84 R tall. */
+/** The bot's `R` for a canvas `W` wide. Every mascot's body, feet to head, is `BODY_H` R tall. */
 export const BOT_R = 0.29;
-/** The body, in R: its half-width, and its height above and below its widest line. */
-const RW = 1.18;
-const HT = 1.0;
-const HB = 0.84;
-export const BODY_W = RW * 2;
-export const BODY_H = HT + HB;
+export const BODY_H = 2.0;
+/** Pixels of a mascot's picture to one R. */
+const pxPerR = (m: MascotDef) => (m.ground - m.top) / BODY_H;
+/** The default mascot's width, arms included, in R. */
+export const BODY_W = (MASCOTS[DEFAULT_MASCOT].right - MASCOTS[DEFAULT_MASCOT].left) / pxPerR(MASCOTS[DEFAULT_MASCOT]);
 
-const INK = "#2B1E1A";
-const INK_LIGHT = "#53392F";
-const WHITE: RGB = [1, 1, 1];
 const BLACK: RGB = [0, 0, 0];
-const STEM_GREEN: RGB = [70 / 255, 110 / 255, 80 / 255];
 const HEART = "#FF5C8A";
 const STAR = "#FFC53D";
 const TONGUE = "#E9727F";
@@ -239,10 +221,6 @@ const rgba = (c: RGB, a = 1) =>
 const mix3 = (a: RGB, b: RGB, t: number): RGB => [
   lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t),
 ];
-
-const THEME_RGB = Object.fromEntries(
-  Object.entries(BOT_THEMES).map(([name, t]) => [name, { a: hexToRGB(t.a), b: hexToRGB(t.b) }]),
-) as Record<BotTheme, { a: RGB; b: RGB }>;
 
 /**
  * How much of the bot's surroundings a bot of this size gets, 0…1: its arms and
@@ -295,42 +273,15 @@ function starPath(x: CanvasRenderingContext2D, ro: number, ri: number) {
   x.closePath();
 }
 
-/**
- * A point of the gumdrop's outline, for a body of size R standing on y = 0:
- * rounder on top, flatter underneath, a little wider at the hips.
- */
-function bodyPoint(a: number, R: number): [number, number] {
-  const c = Math.cos(a);
-  const s = Math.sin(a);
-  const ex = s < 0 ? 2 / 2.25 : 2 / 3.2;
-  const px = R * RW * Math.sign(c) * Math.pow(Math.abs(c), ex) * (1 + 0.05 * s);
-  const py = s < 0 ? -R * HT * Math.pow(-s, 2 / 2.2) : R * HB * Math.pow(s, 2 / 3.6);
-  return [px, py - R * HB];
-}
-
-function bodyPath(R: number): Path2D {
-  const p = new Path2D();
-  // A small body needs fewer corners to look round.
-  const N = R < 12 ? 48 : 120;
-  for (let i = 0; i <= N; i++) {
-    const [px, py] = bodyPoint((i / N) * Math.PI * 2, R);
-    if (i) p.lineTo(px, py);
-    else p.moveTo(px, py);
-  }
-  p.closePath();
-  return p;
-}
-
 const FONT = `system-ui, "Segoe UI Variable Text", "Segoe UI", sans-serif`;
 
 // ── Engine ────────────────────────────────────────────────────────────────────
 
 export class BotEngine {
   isMini = false;
-  /** Which plush the body is made of, when nothing tints it. */
-  /** The plush every bot made from now on wears: the one chosen in Settings. */
-  static defaultTheme: BotTheme = "cream";
-  theme: BotTheme = BotEngine.defaultTheme;
+  /** The mascot every bot made from now on is: the one chosen in Settings. */
+  static defaultMascot: MascotId = DEFAULT_MASCOT;
+  mascot: MascotId = BotEngine.defaultMascot;
   /**
    * The colour of a mini bot's or a pill's body (null = the theme's own): the
    * plush is dyed in it, lighter where the light falls, as the themes are.
@@ -437,11 +388,12 @@ export class BotEngine {
   private beatUntil = 0;
   private beatFrom = 0;
 
-  private path: Path2D | null = null;
-  private pathR = 0;
-  private hairs: Hair[] | null = null;
-
   /** Fired when three slaps land inside 1.7 s (→ dizzy + confused view). */
+  /** The face's colours, the drawn mascot's: set as the face is drawn. */
+  private faceInk = "#2A1712";
+  private mouthInk = "#7A4232";
+  private eyeGlass: readonly [string, string, string] = ["#5E2C22", "#2A1411", "#140907"];
+
   onDizzy: (() => void) | null = null;
 
   // ── Public API ──────────────────────────────────────────────────────────────
@@ -924,25 +876,23 @@ export class BotEngine {
     const k = detailFor(R);
     const f = faceFor(R);
     const t = now() - this.t0;
+    const m = MASCOTS[this.mascot];
+    const halfW = (m.right - m.left) / 2 / pxPerR(m);
     const cx = W / 2 + this.ox * R;
-    // The ground the bot stands on: the whole figure, sprout included, is some
-    // 2.3 R tall (taller when small, where the sprout is drawn bigger).
-    const ground = H / 2 + this.particleOverhang / 2 + R * lerp(1.2, 1.13, k);
+    // The ground the mascot stands on: the whole figure, leaves included, is
+    // some 2.2 R tall, centred on the canvas less the overhang.
+    const ground = H / 2 + this.particleOverhang / 2 + R * 1.1;
     const gy = ground + this.oy * R;
     // A shadow's blur is counted in pixels of the bitmap, whatever the transform.
-    const m = x.getTransform();
-    const px = Math.hypot(m.a, m.b);
-
-    const skin = this.bodyColor
-      ? { a: mix3(this.bodyColor, WHITE, 0.45), b: this.bodyColor }
-      : THEME_RGB[this.theme];
+    const mt = x.getTransform();
+    const px = Math.hypot(mt.a, mt.b);
 
     if (k > 0) {
       // Its shadow on the ground, smaller as it leaves it.
       const lift = clamp(1 + this.oy * 1.4, 0.4, 1.2);
       x.fillStyle = `rgba(0,0,0,${0.3 * lift * k})`;
       x.beginPath();
-      x.ellipse(cx, ground + R * 0.13, R * RW * 0.82 * lift, R * 0.1 * lift, 0, 0, Math.PI * 2);
+      x.ellipse(cx, ground + R * 0.03, R * halfW * 0.8 * lift, R * 0.09 * lift, 0, 0, Math.PI * 2);
       x.fill();
     }
 
@@ -950,9 +900,9 @@ export class BotEngine {
     x.translate(cx, gy);
     // Leaning, it pivots on its feet; tilting, on its middle.
     if (this.lean !== 0) x.rotate(this.lean);
-    x.translate(0, -R * 0.9);
+    x.translate(0, -R);
     if (this.tilt !== 0) x.rotate(this.tilt);
-    x.translate(0, R * 0.9);
+    x.translate(0, R);
     x.scale(this.sx, this.sy);
     if (this.poke !== 0) {
       // Pressed in from one side: shorter along the finger, fatter across it,
@@ -960,307 +910,227 @@ export class BotEngine {
       const p = this.poke;
       const ca = Math.cos(this.pokeAngle);
       const sa = Math.sin(this.pokeAngle);
-      x.translate(-ca * R * 0.12 * p, -R * 0.9 - sa * R * 0.12 * p);
+      x.translate(-ca * R * 0.12 * p, -R - sa * R * 0.12 * p);
       x.rotate(this.pokeAngle);
       x.scale(1 - 0.24 * p, 1 + 0.13 * p);
       x.rotate(-this.pokeAngle);
-      x.translate(0, R * 0.9);
+      x.translate(0, R);
     }
-    // Turned round: a gumdrop is as round from the side, so it is the face that
-    // tells — it slides off one edge, is gone, and comes back from the other.
+    // Turned round: the picture only has a front, so the body narrows and the
+    // face slides off one edge, is gone, and comes back from the other.
     const turned = this.spin !== 0;
     const spinC = turned ? Math.cos(this.spin) : 1;
-    if (turned) x.scale(1 - 0.08 * Math.abs(Math.sin(this.spin)), 1);
+    if (turned) x.scale(1 - 0.12 * Math.abs(Math.sin(this.spin)), 1);
 
-    this.drawSprout(x, R, k, px, t);
-    if (k > 0) this.drawToes(x, R, k, skin.b);
-    this.drawBody(x, R, k, skin);
-    if (!turned) this.drawFace(x, R, k, f, t);
-    else if (spinC > 0.05 && this.path) {
+    this.drawSkin(x, R, k, px, t, m);
+    if (!turned) this.drawFace(x, R, k, f, t, m);
+    else if (spinC > 0.05) {
       x.save();
-      x.clip(this.path);
-      x.translate(Math.sin(this.spin) * R * 1.05, 0);
+      x.beginPath();
+      x.ellipse(0, -R * 1.05, R * halfW * 0.78, R * 0.95, 0, 0, Math.PI * 2);
+      x.clip();
+      x.translate(Math.sin(this.spin) * R * 0.9, 0);
       x.scale(spinC, 1);
-      this.drawFace(x, R, k, f, t);
+      this.drawFace(x, R, k, f, t, m);
       x.restore();
     }
-    if (k > 0) this.drawArms(x, R, k, t, skin, spinC);
 
     x.restore();
 
     const headTop = gy - R * BODY_H * this.sy;
     if (this.badge && this.badgeS * k > 0.01) {
       this.drawBubble(
-        x, cx + R * RW * 1.02, headTop + R * 0.04 + Math.sin(this.clock * 2) * R * 0.03,
+        x, cx + R * halfW * 1.02, headTop + R * 0.04 + Math.sin(this.clock * 2) * R * 0.03,
         R, this.badgeS * k, t, px,
       );
     }
     this.drawParticles(x, R, cx, headTop);
   }
 
-  /** The stem behind the head and its two leaves, which glow with the state. */
-  private drawSprout(x: CanvasRenderingContext2D, R: number, k: number, px: number, t: number) {
-    const base = -R * BODY_H + R * 0.12;
+  /**
+   * The mascot's picture: its leaves, which sway, droop, perk up and glow in
+   * the state's colour, and its body, dyed when it stands for a session.
+   */
+  private drawSkin(x: CanvasRenderingContext2D, R: number, k: number, px: number, t: number, m: MascotDef) {
+    const s = R / pxPerR(m);
+    const skin = SKINS[m.id];
+    x.save();
+    x.scale(s, s);
+    x.translate(-m.centerX, -m.ground);
+    if (!skin) {
+      // The picture could not be prepared: a plain silhouette stands in for it.
+      x.fillStyle = "#F4AA86";
+      x.beginPath();
+      x.ellipse(m.centerX, (m.top + m.ground) / 2, (m.right - m.left) * 0.4, (m.ground - m.top) / 2, 0, 0, Math.PI * 2);
+      x.fill();
+      x.restore();
+      return;
+    }
+    // How many pixels of the bitmap the whole picture spans: which copy to draw.
+    const devPx = m.size * s * px;
+
+    const L = m.leaves;
     const perk = this.sproutPerk;
-    const L = R * lerp(0.5, 0.44, k) * (1 + 0.5 * perk);
     const droop = this.sproutDroop !== 0 ? clamp(this.droop + this.sproutDroop, 0, 1) : this.droop;
-    // Standing up straight, it sways less; pushed or shaken, more.
+    // Standing up straight, they sway less; pushed or shaken, more. A wave
+    // (the picture's arms don't move) shakes them too.
     const sway =
       this.sway * (1 - 0.75 * clamp(perk, 0, 1)) + this.sproutSwing +
-      (this.sproutWiggle !== 0 ? Math.sin(t * 17) * this.sproutWiggle * 0.85 : 0);
-    const tipX = sway * R * 0.32 + droop * R * 0.3;
-    const tipY = base - L * (1 - droop * 0.45);
-    const ctrlX = tipX * 0.1;
-    const ctrlY = base - L * 0.6;
-
-    x.strokeStyle = rgba(mix3(mix3(this.col, STEM_GREEN, 0.35), BLACK, 0.12));
-    x.lineWidth = R * lerp(0.12, 0.07, k);
-    x.lineCap = "round";
-    x.beginPath();
-    x.moveTo(0, base);
-    x.quadraticCurveTo(ctrlX, ctrlY, tipX, tipY);
-    x.stroke();
-
-    const ang = Math.atan2(tipY - ctrlY, tipX - ctrlX);
-    const ll = R * lerp(0.42, 0.32, k) * (1 + 0.18 * perk);
+      (this.sproutWiggle !== 0 ? Math.sin(t * 17) * this.sproutWiggle * 0.85 : 0) +
+      (this.wave > 0.01 ? Math.sin(t * 13) * 0.3 * this.wave : 0) +
+      // At work they fidget, as the arms did on the drawn bot.
+      (this.cfg.fidgets && this.looping ? Math.sin(t * 7) * 0.3 * this.beatEnv() : 0);
+    x.save();
+    x.translate(L.pivotX, L.pivotY);
+    x.rotate(sway * 0.35 + droop * 0.5);
+    if (this.sproutSpin !== 0) x.scale(Math.cos(this.sproutSpin), 1);
+    x.scale(1, 1 + 0.25 * perk - 0.2 * droop);
+    x.translate(-L.pivotX, -L.pivotY);
     const gl = clamp(this.glow, 0, 1);
-    // Perked up, the leaves rise towards the stem's line, like ears.
-    const spread = 0.78 + droop * 0.25 - 0.26 * perk;
-    for (const sd of [-1, 1]) {
-      x.save();
-      x.translate(tipX, tipY);
-      if (this.sproutSpin === 0) x.rotate(ang + sd * spread);
-      else {
-        // Turning round the stem: seen from the front, the leaves close up,
-        // cross, and open again on the other side.
-        x.rotate(ang);
-        x.scale(1, Math.cos(this.sproutSpin));
-        x.rotate(sd * spread);
-      }
-      if (gl > 0.05) {
-        x.shadowColor = rgba(this.col, 0.9 * gl);
-        x.shadowBlur = R * lerp(0.25, 0.45, k) * gl * px;
-      }
-      const lg = x.createLinearGradient(0, 0, ll, 0);
-      lg.addColorStop(0, rgba(mix3(this.col, BLACK, 0.08)));
-      lg.addColorStop(1, rgba(mix3(this.col, WHITE, 0.35 + 0.2 * gl)));
-      x.fillStyle = lg;
-      x.beginPath();
-      x.moveTo(0, 0);
-      x.quadraticCurveTo(ll * 0.5, -ll * 0.5, ll, 0);
-      x.quadraticCurveTo(ll * 0.5, ll * 0.5, 0, 0);
-      x.fill();
-      x.shadowColor = "transparent";
-      if (k > 0) {
-        x.strokeStyle = `rgba(255,255,255,${0.35 * k})`;
-        x.lineWidth = R * 0.018;
-        x.beginPath();
-        x.moveTo(ll * 0.12, 0);
-        x.lineTo(ll * 0.8, 0);
-        x.stroke();
-      }
-      x.restore();
+    if (gl > 0.05) {
+      x.shadowColor = rgba(this.col, 0.95 * gl);
+      x.shadowBlur = R * lerp(0.35, 0.5, k) * gl * px;
     }
-  }
+    const leaves = level(skin.leaves, devPx);
+    x.drawImage(leaves, 0, 0, m.size, m.size);
+    // Small, one glow is lost in the dark: a second one keeps the state readable.
+    if (gl > 0.05 && k < 0.5) x.drawImage(leaves, 0, 0, m.size, m.size);
+    x.restore();
 
-  private drawToes(x: CanvasRenderingContext2D, R: number, k: number, dark: RGB) {
-    x.save();
-    x.globalAlpha = k;
-    const g = x.createLinearGradient(0, -R * 0.15, 0, R * 0.14);
-    g.addColorStop(0, rgba(mix3(dark, BLACK, 0.04)));
-    g.addColorStop(1, rgba(mix3(dark, BLACK, 0.14)));
-    x.fillStyle = g;
-    for (const sd of [-1, 1]) {
-      x.beginPath();
-      x.ellipse(sd * R * 0.48, -R * 0.01, R * 0.27, R * 0.14, 0, 0, Math.PI * 2);
-      x.fill();
-    }
+    const body = this.bodyColor ? dyed(skin, this.bodyColor) : skin.body;
+    x.drawImage(level(body, devPx), 0, 0, m.size, m.size);
     x.restore();
   }
 
-  /** The gumdrop: its hairs, its plush, the shade under it and the light on it. */
-  private drawBody(x: CanvasRenderingContext2D, R: number, k: number, skin: { a: RGB; b: RGB }) {
-    if (!this.path || this.pathR !== R) {
-      this.path = bodyPath(R);
-      this.pathR = R;
-    }
-    const path = this.path;
-    const rw = R * RW;
-    const ht = R * HT;
-    const hb = R * HB;
-
-    if (k > 0) {
-      this.hairs ??= makeHairs();
-      x.strokeStyle = rgba(mix3(skin.a, skin.b, 0.6), k);
-      x.lineWidth = R * 0.035;
-      x.lineCap = "round";
-      x.beginPath();
-      for (const hair of this.hairs) {
-        const [hx, hy] = bodyPoint(hair.a, R);
-        let nx = hx;
-        let ny = hy + hb * 0.95;
-        const len = Math.hypot(nx, ny) || 1;
-        nx /= len;
-        ny /= len;
-        const L = R * 0.075 * hair.l;
-        x.moveTo(hx - nx * R * 0.03, hy - ny * R * 0.03);
-        x.quadraticCurveTo(
-          hx + nx * L * 0.5 - ny * L * 0.4 * hair.b, hy + ny * L * 0.5 + nx * L * 0.4 * hair.b,
-          hx + nx * L, hy + ny * L,
-        );
-      }
-      x.stroke();
-    }
-
-    const bg = x.createRadialGradient(-rw * 0.35, -hb - ht * 0.55, R * 0.1, -rw * 0.1, -hb * 0.8, R * 1.7);
-    bg.addColorStop(0, rgba(mix3(skin.a, WHITE, 0.5)));
-    bg.addColorStop(0.5, rgba(mix3(skin.a, skin.b, 0.3)));
-    bg.addColorStop(1, rgba(skin.b));
-    x.fillStyle = bg;
-    x.fill(path);
-
+  /** The blush, the eyes with their brows, and the mouth, where the picture had its own. */
+  private drawFace(x: CanvasRenderingContext2D, R: number, k: number, f: number, t: number, m: MascotDef) {
+    const u = pxPerR(m);
+    const s = R / u;
+    this.faceInk = m.ink;
+    this.mouthInk = m.mouthInk;
+    this.eyeGlass = m.eyeGlass;
     x.save();
-    x.clip(path);
-    const sh = x.createLinearGradient(0, -hb * 0.7, 0, 0);
-    sh.addColorStop(0, "rgba(120,70,40,0)");
-    sh.addColorStop(1, "rgba(120,70,40,0.16)");
-    x.fillStyle = sh;
-    x.fill(path);
-
-    // The state's colour, coming up from under it with the glow.
-    const tn = x.createRadialGradient(0, R * 0.1, R * 0.2, 0, R * 0.1, R * 1.3);
-    tn.addColorStop(0, rgba(this.col, 0.22 * clamp(this.glow, 0, 1)));
-    tn.addColorStop(1, rgba(this.col, 0));
-    x.fillStyle = tn;
-    x.fill(path);
-
-    if (k > 0) {
-      const rim = x.createLinearGradient(-rw, -hb - ht, rw * 0.4, 0);
-      rim.addColorStop(0, `rgba(255,255,255,${0.75 * k})`);
-      rim.addColorStop(1, "rgba(255,255,255,0)");
-      x.strokeStyle = rim;
-      x.lineWidth = R * 0.07;
-      x.stroke(path);
-    }
-
-    x.save();
-    x.translate(-rw * 0.4, -hb - ht * 0.55);
-    x.rotate(-0.55);
-    const hl = x.createRadialGradient(0, 0, 0, 0, 0, R * 0.36);
-    hl.addColorStop(0, "rgba(255,255,255,0.6)");
-    hl.addColorStop(1, "rgba(255,255,255,0)");
-    x.fillStyle = hl;
-    x.scale(1, 0.6);
-    x.beginPath();
-    x.arc(0, 0, R * 0.36, 0, Math.PI * 2);
-    x.fill();
-    x.restore();
-    x.restore();
-  }
-
-  /** The cheeks, the eyes with their brows, and the mouth. */
-  private drawFace(x: CanvasRenderingContext2D, R: number, k: number, f: number, t: number) {
-    const fx = this.lx * R * 0.2 * this.lookRange;
-    const fy = -this.ly * R * 0.12 * this.lookRange;
-    const eyeY = -R * 0.86 + fy;
-    // Small, the eyes are drawn bigger, and bigger still once they are all the face has.
-    const ek = lerp(1.3, 1, k) + 0.25 * (1 - f);
-    const narrow = 1 - 0.1 * Math.abs(this.lx);
+    x.scale(s, s);
+    x.translate(-m.centerX, -m.ground);
+    const fx = this.lx * u * 0.12 * this.lookRange;
+    const fy = -this.ly * u * 0.08 * this.lookRange;
 
     const eye: EyeShape = this.eyeOverride ?? this.cfg.eye;
     // Eyes put on over the state's own bring their mouth and brow with them.
     const worn = this.eyeOverride != null && this.eyeOverride !== this.cfg.eye;
-    const mouth: MouthShape =
+    const said: MouthShape =
       this.mouthOverride ?? (worn ? MOUTH_FOR_EYE[eye] ?? this.cfg.mouth : this.cfg.mouth);
+    // The picture's own mouth is a small ω: its smile is that one.
+    const mouth: MouthShape = said === "smile" ? "w" : said;
     const brow: BrowShape | null =
       this.browOverride ?? (worn ? BROW_FOR_EYE[eye] ?? null : this.cfg.brow);
 
     if (f > 0) {
-      const ca = (0.32 + 0.5 * this.blush) * f;
-      for (const sd of [-1, 1]) {
-        const kx = sd * R * 0.66 * narrow + fx * 0.9;
-        const ky = eyeY + R * 0.2;
-        const g = x.createRadialGradient(kx, ky, 0, kx, ky, R * 0.18);
-        g.addColorStop(0, `rgba(255,128,150,${ca})`);
-        g.addColorStop(1, "rgba(255,128,150,0)");
+      const ca = (0.55 + 0.4 * this.blush) * f;
+      for (const c of m.cheeks) {
+        const kx = c.x + fx * 0.9;
+        const ky = c.y + fy;
+        const g = x.createRadialGradient(kx, ky, 0, kx, ky, c.r);
+        g.addColorStop(0, rgba(hexToRGB(m.cheek), Math.min(ca, 0.9)));
+        g.addColorStop(1, rgba(hexToRGB(m.cheek), 0));
         x.fillStyle = g;
         x.beginPath();
-        x.ellipse(kx, ky, R * 0.19, R * 0.12, 0, 0, Math.PI * 2);
+        x.arc(kx, ky, c.r, 0, Math.PI * 2);
         x.fill();
       }
     }
 
-    const w = R * 0.115 * this.es * ek;
-    const h = R * 0.15 * this.es * ek;
-    for (const sd of [-1, 1]) {
+    // An eye under a pixel and a half across is lost: small, they grow, and move apart a little.
+    for (let i = 0; i < 2; i++) {
+      const E = m.eyes[i];
+      const sd = i === 0 ? -1 : 1;
+      const grow = clamp(1.4 / (E.ry * s), 1, 2.6) * this.es;
+      const ex = m.mouth.x + (E.x - m.mouth.x) * (1 + (grow - 1) * 0.35) + fx;
+      const ey = E.y + fy + (grow - 1) * E.ry * 0.4;
       // The eye on the far side of a glance is seen a little from the side.
       const shrink = 1 - 0.22 * Math.max(0, -sd * this.lx);
       x.save();
-      x.translate(sd * R * 0.42 * narrow + fx, eyeY);
+      x.translate(ex, ey);
+      if (f > 0 && k > 0.3 && (eye === "bead" || eye === "wide" || eye === "bar")) {
+        // Set into the plush: a soft shade round it.
+        const r = E.ry * grow;
+        const g = x.createRadialGradient(0, 1, r * 0.8, 0, 1, r * 1.7);
+        g.addColorStop(0, `rgba(140,60,40,${0.3 * k})`);
+        g.addColorStop(1, "rgba(140,60,40,0)");
+        x.fillStyle = g;
+        x.beginPath();
+        x.ellipse(0, 1, E.rx * grow * 1.7, r * 1.7, 0, 0, Math.PI * 2);
+        x.fill();
+      }
       x.scale(shrink, 1);
-      this.drawEye(x, eye, w, h, sd, shineFor(R), t);
-      if (brow && f > 0) this.drawBrow(x, brow, sd, w, h, f);
+      this.drawEye(x, eye, E.rx * grow, E.ry * grow, sd, shineFor(R), t);
+      if (brow && f > 0) this.drawBrow(x, brow, sd, E.ry * grow * 0.9, E.ry * grow, f);
       x.restore();
     }
 
     if (f > 0) {
       x.save();
       x.globalAlpha = f;
-      x.translate(fx, eyeY + R * 0.21);
+      x.translate(m.mouth.x + fx, m.mouth.y + fy);
       // Small, the mouth is drawn bigger and with a thicker line, to stay a mouth.
-      this.drawMouth(x, mouth, R * lerp(1.3, 1, k), lerp(1.5, 1, k));
-      // The tongue, out and a little to one side. On a bot a dozen pixels
-      // across it would be a pink smudge under the mouth: there it is not drawn.
+      const mr = u * 0.63 * lerp(1.5, 1, k);
+      this.drawMouth(x, mouth, mr, lerp(1.3, 0.55, k));
+      // The tongue, out and a little to one side; not on a bot too small for it.
       if (this.tongue > 0.01 && k > 0.35) {
-        const tw = R * 0.085;
-        const tl = R * 0.25 * Math.min(this.tongue, 1.15);
+        const tw = mr * 0.085;
+        const tl = mr * 0.25 * Math.min(this.tongue, 1.15);
         x.fillStyle = TONGUE;
         x.strokeStyle = "rgba(120,40,50,0.55)";
-        x.lineWidth = R * 0.022;
+        x.lineWidth = mr * 0.022;
         x.beginPath();
-        x.moveTo(R * 0.025 - tw, R * 0.02);
-        x.lineTo(R * 0.025 - tw, tl - tw);
-        x.arc(R * 0.025, tl - tw, tw, Math.PI, 0, true);
-        x.lineTo(R * 0.025 + tw, R * 0.02);
+        x.moveTo(mr * 0.025 - tw, mr * 0.02);
+        x.lineTo(mr * 0.025 - tw, tl - tw);
+        x.arc(mr * 0.025, tl - tw, tw, Math.PI, 0, true);
+        x.lineTo(mr * 0.025 + tw, mr * 0.02);
         x.closePath();
         x.fill();
         x.stroke();
         x.beginPath();
-        x.moveTo(R * 0.025, R * 0.05);
-        x.lineTo(R * 0.025, tl - tw * 0.9);
+        x.moveTo(mr * 0.025, mr * 0.05);
+        x.lineTo(mr * 0.025, tl - tw * 0.9);
         x.stroke();
       }
       x.restore();
     }
+    x.restore();
   }
 
   private drawEye(
     x: CanvasRenderingContext2D, shape: EyeShape, w: number, h: number, sd: number,
     shine: number, t: number,
   ) {
-    // Small, an eye drawn as a line gets a thicker one: half a pixel of ink is a grey smudge.
+    // Small, an eye drawn as a line gets a thicker one: half a pixel of this.faceInk is a grey smudge.
     const thick = lerp(1.7, 1, shine);
+    // A bead of dark glass: lighter and warmer low down, the light caught high on its right.
     const bead = (bw: number, bh: number, open = this.open) => {
       const hh = Math.max(bh * open, bh * 0.1);
-      const g = x.createRadialGradient(0, hh * 0.5, 0, 0, 0, Math.max(bw, hh) * 1.2);
-      g.addColorStop(0, INK_LIGHT);
-      g.addColorStop(1, INK);
+      const [mid, low, rim] = this.eyeGlass;
+      const g = x.createRadialGradient(0, hh * 0.45, 0, 0, hh * 0.2, Math.max(bw, hh) * 1.05);
+      g.addColorStop(0, mid);
+      g.addColorStop(0.55, low);
+      g.addColorStop(1, rim);
       x.fillStyle = g;
       x.beginPath();
       x.ellipse(0, 0, bw, hh, 0, 0, Math.PI * 2);
       x.fill();
       if (open > 0.45 && shine > 0) {
-        x.fillStyle = `rgba(255,255,255,${0.95 * shine})`;
+        x.fillStyle = `rgba(255,255,255,${0.92 * shine})`;
         x.beginPath();
-        x.arc(-bw * 0.3, -hh * 0.36, bw * 0.33, 0, Math.PI * 2);
+        x.ellipse(bw * 0.28, -hh * 0.38, bw * 0.24, hh * 0.2, -0.4, 0, Math.PI * 2);
         x.fill();
+        x.fillStyle = `rgba(255,220,200,${0.35 * shine})`;
         x.beginPath();
-        x.arc(bw * 0.32, hh * 0.36, bw * 0.14, 0, Math.PI * 2);
+        x.ellipse(-bw * 0.3, hh * 0.42, bw * 0.18, hh * 0.1, 0.3, 0, Math.PI * 2);
         x.fill();
       }
     };
     const arcUp = () => {
-      x.strokeStyle = INK;
+      x.strokeStyle = this.faceInk;
       x.lineWidth = w * 0.5 * thick;
       x.lineCap = "round";
       x.beginPath();
@@ -1283,7 +1153,7 @@ export class BotEngine {
         arcUp();
         break;
       case "closed":
-        x.strokeStyle = INK;
+        x.strokeStyle = this.faceInk;
         x.lineWidth = w * 0.42 * thick;
         x.lineCap = "round";
         x.beginPath();
@@ -1295,7 +1165,7 @@ export class BotEngine {
         x.translate(0, h * 0.15);
         bead(w, h * 0.55);
         x.restore();
-        x.strokeStyle = INK;
+        x.strokeStyle = this.faceInk;
         x.lineWidth = w * 0.28 * thick;
         x.lineCap = "round";
         x.beginPath();
@@ -1304,14 +1174,14 @@ export class BotEngine {
         x.stroke();
         break;
       case "flat":
-        x.fillStyle = INK;
+        x.fillStyle = this.faceInk;
         x.beginPath();
         roundRectPath(x, -w, -w * 0.3, w * 2, w * 0.6, w * 0.3);
         x.fill();
         break;
       case "x": {
         const d = w * 0.75;
-        x.strokeStyle = INK;
+        x.strokeStyle = this.faceInk;
         x.lineWidth = w * 0.45;
         x.lineCap = "round";
         x.beginPath();
@@ -1345,7 +1215,7 @@ export class BotEngine {
         break;
       case "squeeze":
         // > < : each eye a chevron pointing at the nose.
-        x.strokeStyle = INK;
+        x.strokeStyle = this.faceInk;
         x.lineWidth = w * 0.5 * thick;
         x.lineCap = "round";
         x.lineJoin = "round";
@@ -1356,7 +1226,7 @@ export class BotEngine {
         x.stroke();
         break;
       case "spiral": {
-        x.strokeStyle = INK;
+        x.strokeStyle = this.faceInk;
         x.lineWidth = w * 0.22 * thick;
         x.lineCap = "round";
         x.beginPath();
@@ -1389,7 +1259,7 @@ export class BotEngine {
     x.globalAlpha = f;
     x.translate(0, -h * 1.55 + dy);
     x.rotate(r);
-    x.strokeStyle = INK;
+    x.strokeStyle = this.faceInk;
     x.lineWidth = w * 0.34;
     x.lineCap = "round";
     x.beginPath();
@@ -1400,8 +1270,8 @@ export class BotEngine {
   }
 
   private drawMouth(x: CanvasRenderingContext2D, mouth: MouthShape, R: number, thick: number) {
-    x.strokeStyle = INK;
-    x.fillStyle = INK;
+    x.strokeStyle = this.mouthInk;
+    x.fillStyle = this.mouthInk;
     x.lineWidth = R * 0.042 * thick;
     x.lineCap = "round";
     x.lineJoin = "round";
@@ -1502,37 +1372,6 @@ export class BotEngine {
         tongue(R * 0.17, R * 0.09, R * 0.06);
         break;
     }
-  }
-
-  /** The two little arms; at work they fidget, and the right one can wave. */
-  private drawArms(
-    x: CanvasRenderingContext2D, R: number, k: number, t: number, skin: { a: RGB; b: RGB },
-    /** The cosine of a spin: the arms go round with the body. 1 when it faces us. */
-    spinC = 1,
-  ) {
-    x.save();
-    x.globalAlpha = k;
-    for (const sd of [-1, 1]) {
-      let ang = -sd * 0.42;
-      if (this.cfg.fidgets && this.looping) ang += -sd * Math.sin(t * 7 + sd * 1.3) * 0.12 * this.beatEnv();
-      if (sd === 1 && this.wave > 0.01) ang = lerp(ang, -2.5 + Math.sin(t * 13) * 0.35, this.wave);
-      if (spinC < 0) ang = -ang;
-      x.save();
-      x.translate(sd * R * RW * 0.93 * spinC, -R * HB * 0.95);
-      x.rotate(ang);
-      const g = x.createLinearGradient(-R * 0.16, 0, R * 0.16, R * 0.45);
-      g.addColorStop(0, rgba(mix3(skin.a, skin.b, 0.2)));
-      g.addColorStop(1, rgba(skin.b));
-      x.fillStyle = g;
-      x.beginPath();
-      x.ellipse(0, R * 0.2, R * 0.16, R * 0.24, 0, 0, Math.PI * 2);
-      x.fill();
-      x.strokeStyle = "rgba(120,70,40,0.12)";
-      x.lineWidth = R * 0.02;
-      x.stroke();
-      x.restore();
-    }
-    x.restore();
   }
 
   /** The thought bubble beside the head, and the sign of the state in it. */
@@ -1677,13 +1516,3 @@ export class BotEngine {
 /** The arm's wave: up with a little overshoot, a second of waving, and down. */
 const WAVE: TweenKey[] = [[1, 280, Ease.back], [1, 1000, Ease.lin], [0, 320, Ease.inOut]];
 
-/** The plush's hairs, all round the outline but not under it. */
-function makeHairs(): Hair[] {
-  const hairs: Hair[] = [];
-  while (hairs.length < 170) {
-    const a = Math.random() * Math.PI * 2;
-    if (Math.sin(a) > 0.55) continue;
-    hairs.push({ a, l: 0.55 + Math.random() * 0.75, b: Math.random() * 2 - 1 });
-  }
-  return hairs;
-}

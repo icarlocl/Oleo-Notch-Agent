@@ -1,6 +1,6 @@
 // Where a Claude Code session runs, and which window the island's ↗ goes to.
 //
-// nook-hook says what it knows on the events that start a session and a turn:
+// oleo-hook says what it knows on the events that start a session and a turn:
 // `CLAUDE_CODE_ENTRYPOINT`, a few variables of the terminal, and — on Windows —
 // the processes it was started under, each as a pid and an image name
 // (`ancestors`, nearest first). From that, `decide` names one target, and the
@@ -377,7 +377,7 @@ fn is_main(window: &Window) -> bool {
 
 /// True when a title names a folder as one of its parts: VS Code and Cursor
 /// write "file - folder - Visual Studio Code", the folder sometimes followed
-/// by what it is ("nook (Workspace)", "nook [WSL: Ubuntu]").
+/// by what it is ("oleo (Workspace)", "oleo [WSL: Ubuntu]").
 fn title_names(title: &str, folder: &str) -> bool {
     let folder = folder.to_lowercase();
     title.to_lowercase().split(" - ").flat_map(|part| part.split(" — ")).any(|part| {
@@ -625,7 +625,7 @@ mod tests {
     }
 
     fn event(session: &str, name: &str, extra: Value) -> Value {
-        let mut payload = json!({ "session_id": session, "hook_event_name": name, "cwd": "D:\\work\\nook", "entrypoint": "cli", "term_program": "", "wt_session": "" });
+        let mut payload = json!({ "session_id": session, "hook_event_name": name, "cwd": "D:\\work\\oleo", "entrypoint": "cli", "term_program": "", "wt_session": "" });
         payload.as_object_mut().unwrap().extend(extra.as_object().unwrap().clone());
         payload
     }
@@ -656,12 +656,12 @@ mod tests {
         let plan = sessions.plan("a").unwrap();
         assert_eq!(plan.target.pid, Some(50));
         assert_eq!(plan.chain.len(), 3);
-        assert_eq!(plan.cwd.as_deref(), Some("D:\\work\\nook"));
+        assert_eq!(plan.cwd.as_deref(), Some("D:\\work\\oleo"));
 
         // The events that follow carry no chain: the session keeps the one it has.
-        let mut tool = event("a", "PreToolUse", json!({ "wt_session": "guid", "cwd": "D:\\work\\nook\\windows" }));
+        let mut tool = event("a", "PreToolUse", json!({ "wt_session": "guid", "cwd": "D:\\work\\oleo\\windows" }));
         assert_eq!(sessions.note(&mut tool, false, nobody).label, "Windows Terminal");
-        assert_eq!(sessions.plan("a").unwrap().cwd.as_deref(), Some("D:\\work\\nook\\windows"));
+        assert_eq!(sessions.plan("a").unwrap().cwd.as_deref(), Some("D:\\work\\oleo\\windows"));
         // Another session is another target, and knows nothing of the first one's.
         assert!(sessions.plan("b").is_none());
 
@@ -742,43 +742,43 @@ mod tests {
     fn an_editor_comes_forward_on_the_window_of_the_sessions_folder() {
         let windows = [
             window(1, 21, "code.exe", "main.rs - atlas - Visual Studio Code"),
-            window(2, 21, "code.exe", "hooks.ts - nook - Visual Studio Code"),
-            window(3, 21, "code.exe", "notes.md - nook-site (Workspace) - Visual Studio Code"),
-            window(4, 41, "cursor.exe", "island.ts - nook - Cursor"),
-            window(5, 90, "chrome.exe", "nook - Google Chrome"),
+            window(2, 21, "code.exe", "hooks.ts - oleo - Visual Studio Code"),
+            window(3, 21, "code.exe", "notes.md - oleo-site (Workspace) - Visual Studio Code"),
+            window(4, 41, "cursor.exe", "island.ts - oleo - Cursor"),
+            window(5, 90, "chrome.exe", "oleo - Google Chrome"),
         ];
         let pick = |image: &str, cwd: &str| editor_window(&windows, image, Some(cwd), &[21]);
-        assert_eq!(pick("code.exe", "D:\\work\\nook"), Some(2));
+        assert_eq!(pick("code.exe", "D:\\work\\oleo"), Some(2));
         assert_eq!(pick("code.exe", "D:\\work\\atlas"), Some(1));
-        assert_eq!(pick("code.exe", "D:/work/nook-site"), Some(3));
+        assert_eq!(pick("code.exe", "D:/work/oleo-site"), Some(3));
         // Cursor's window, not VS Code's on the same folder — and never another program's.
-        assert_eq!(editor_window(&windows, "cursor.exe", Some("D:\\work\\nook"), &[41]), Some(4));
+        assert_eq!(editor_window(&windows, "cursor.exe", Some("D:\\work\\oleo"), &[41]), Some(4));
         // A session in a subfolder of the workspace: the folder above is in the title.
-        assert_eq!(pick("code.exe", "D:\\work\\nook\\windows"), Some(2));
+        assert_eq!(pick("code.exe", "D:\\work\\oleo\\windows"), Some(2));
         // No title says anything of it: the window of the process named, the one last used.
         assert_eq!(pick("code.exe", "C:\\elsewhere\\project"), Some(1));
         assert_eq!(editor_window(&windows, "code.exe", None, &[21]), Some(1));
         // Not that process's, not a window of its folder: none, and the launcher takes over.
         assert_eq!(editor_window(&windows, "code.exe", Some("C:\\elsewhere\\project"), &[77]), None);
-        assert_eq!(editor_window(&[], "code.exe", Some("D:\\work\\nook"), &[21]), None);
+        assert_eq!(editor_window(&[], "code.exe", Some("D:\\work\\oleo"), &[21]), None);
     }
 
     #[test]
     fn only_a_real_window_of_the_editor_counts() {
-        let mut hidden = window(1, 21, "code.exe", "nook - Visual Studio Code");
+        let mut hidden = window(1, 21, "code.exe", "oleo - Visual Studio Code");
         hidden.visible = false;
-        let mut owned = window(2, 21, "code.exe", "nook - Visual Studio Code");
+        let mut owned = window(2, 21, "code.exe", "oleo - Visual Studio Code");
         owned.owner = 9;
         let untitled = window(3, 21, "code.exe", " ");
-        assert_eq!(editor_window(&[hidden, owned, untitled], "code.exe", Some("D:\\nook"), &[21]), None);
-        // A title is read by its parts: "nook" is not "nook-hook", though it is in it.
-        let near = [window(1, 21, "code.exe", "a.rs - nook-hook - Visual Studio Code"), window(2, 21, "code.exe", "b.rs - nook - Visual Studio Code")];
-        assert_eq!(editor_window(&near, "code.exe", Some("D:\\nook"), &[21]), Some(2));
+        assert_eq!(editor_window(&[hidden, owned, untitled], "code.exe", Some("D:\\oleo"), &[21]), None);
+        // A title is read by its parts: "oleo" is not "oleo-hook", though it is in it.
+        let near = [window(1, 21, "code.exe", "a.rs - oleo-hook - Visual Studio Code"), window(2, 21, "code.exe", "b.rs - oleo - Visual Studio Code")];
+        assert_eq!(editor_window(&near, "code.exe", Some("D:\\oleo"), &[21]), Some(2));
         // With no window of that very folder, the name anywhere in a title will do.
-        assert_eq!(editor_window(&near[..1], "code.exe", Some("D:\\nook"), &[]), Some(1));
-        assert!(title_names("x — nook [WSL: Ubuntu] — Visual Studio Code", "Nook"));
-        assert!(!title_names("x - nookery - Visual Studio Code", "nook"));
-        assert_eq!(folder_names("C:\\Users\\me\\code\\nook\\windows\\src"), ["src", "windows", "nook", "code"]);
+        assert_eq!(editor_window(&near[..1], "code.exe", Some("D:\\oleo"), &[]), Some(1));
+        assert!(title_names("x — oleo [WSL: Ubuntu] — Visual Studio Code", "Oleo"));
+        assert!(!title_names("x - oleoery - Visual Studio Code", "oleo"));
+        assert_eq!(folder_names("C:\\Users\\me\\code\\oleo\\windows\\src"), ["src", "windows", "oleo", "code"]);
     }
 
     fn pseudo(hwnd: isize, pid: u32, owner: isize) -> Window {
@@ -789,7 +789,7 @@ mod tests {
     fn a_terminal_comes_forward_on_the_window_that_hosts_the_session() {
         let terminal = |hwnd: isize, title: &str| Window { class: "CASCADIA_HOSTING_WINDOW_CLASS".to_string(), ..window(hwnd, 50, "windowsterminal.exe", title) };
         // Two Windows Terminal windows of one process: the session's shell is in the second.
-        let windows = [terminal(1, "atlas"), terminal(2, "Nook setup"), pseudo(11, 14, 1), pseudo(12, 15, 2)];
+        let windows = [terminal(1, "atlas"), terminal(2, "Oleo setup"), pseudo(11, 14, 1), pseudo(12, 15, 2)];
         let chain = [p(10, "claude.exe"), p(15, "pwsh.exe"), p(50, "WindowsTerminal.exe")];
         assert_eq!(terminal_window(&windows, &chain, Some("D:\\work\\atlas")), Some(2));
         // Windows Terminal hosts a shell it did not start: found all the same, and named.
@@ -801,11 +801,11 @@ mod tests {
         assert_eq!(terminal_window(&stranger, &aside, None), None);
         assert_eq!(hosting_terminal(&stranger, &aside), None);
         // No pseudo-console to go by: the named terminal's window with the folder in its title, else the one last used.
-        let plain = [terminal(1, "atlas"), terminal(2, "PS D:\\work\\nook")];
-        assert_eq!(terminal_window(&plain, &chain, Some("D:\\work\\nook")), Some(2));
+        let plain = [terminal(1, "atlas"), terminal(2, "PS D:\\work\\oleo")];
+        assert_eq!(terminal_window(&plain, &chain, Some("D:\\work\\oleo")), Some(2));
         assert_eq!(terminal_window(&plain, &chain, Some("D:\\work\\other")), Some(1));
         // The terminal has gone from the chain (its pid changed hands): nothing of it is touched.
-        assert_eq!(terminal_window(&plain, &chain[..2], Some("D:\\work\\nook")), None);
+        assert_eq!(terminal_window(&plain, &chain[..2], Some("D:\\work\\oleo")), None);
     }
 
     #[test]

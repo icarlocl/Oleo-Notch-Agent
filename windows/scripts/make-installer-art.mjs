@@ -52,9 +52,9 @@ const drawing = `(async () => {
   };
   const header = make(150, 57, (g, w, h) => {
     g.fillStyle = "#ffffff"; g.fillRect(0, 0, w, h);
-    // Soft mint glow behind the character, then the character on white.
+    // Soft peach glow behind the character, then the character on white.
     const glow = g.createRadialGradient(w / 2, h / 2 + 2, 2, w / 2, h / 2 + 2, 30);
-    glow.addColorStop(0, "rgba(61,220,151,0.18)"); glow.addColorStop(1, "rgba(61,220,151,0)");
+    glow.addColorStop(0, "rgba(244,170,134,0.22)"); glow.addColorStop(1, "rgba(244,170,134,0)");
     g.fillStyle = glow; g.fillRect(0, 0, w, h);
     const s = 49;
     g.drawImage(img, (w - s) / 2, (h - s) / 2 + 1, s, s);
@@ -70,7 +70,7 @@ const drawing = `(async () => {
     };
     glow(w * 0.2, 70, 150, "90,169,255", 0.22);
     glow(w * 0.9, 150, 150, "169,139,250", 0.2);
-    glow(w * 0.5, h, 170, "61,220,151", 0.22);
+    glow(w * 0.5, h, 170, "244,170,134", 0.24);
     // The island pill the app lives in, the character under it.
     g.fillStyle = "#000"; g.strokeStyle = "rgba(255,255,255,0.12)"; g.lineWidth = 1;
     g.beginPath(); g.roundRect(w / 2 - 38, 22, 76, 14, 7); g.fill(); g.stroke();
@@ -79,7 +79,7 @@ const drawing = `(async () => {
     g.fillStyle = "#a98bfa"; g.beginPath(); g.arc(w / 2 - 12, 29, 2.5, 0, 7); g.fill();
     g.drawImage(img, w / 2 - 55, 62, 110, 110);
     g.fillStyle = "#ffffff"; g.font = FONT; g.textAlign = "center"; g.textBaseline = "alphabetic";
-    g.fillText("Nook", w / 2, 218);
+    g.fillText("Oleo", w / 2, 218);
     g.fillStyle = "rgba(255,255,255,0.62)"; g.font = '400 11px "Segoe UI Variable Text", "Segoe UI", sans-serif';
     g.fillText("Claude Code sessions,", w / 2, 242);
     g.fillText("at the top of your screen", w / 2, 257);
@@ -118,7 +118,7 @@ function bmp(w, h, rgba) {
 }
 
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
-const profile = mkdtempSync(join(tmpdir(), "nook-art-"));
+const profile = mkdtempSync(join(tmpdir(), "oleo-art-"));
 const child = spawn(browser, [
   "--headless=new", "--no-first-run", "--no-default-browser-check", "--disable-extensions",
   `--user-data-dir=${profile}`, "--remote-debugging-port=0", "about:blank",

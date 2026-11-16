@@ -35,7 +35,7 @@ html, body { margin: 0; background: var(--page-bg, #2a2d34) !important; }
 }
 
 .wall { position: absolute; inset: 0; background: var(--wall); }
-/* The wallpaper picture (Nook's, or the local Bloom photo), over a plain gradient that only shows until it loads. */
+/* The wallpaper picture (Oleo's, or the local Bloom photo), over a plain gradient that only shows until it loads. */
 .wall-photo { position: absolute; inset: 0; background: center / cover no-repeat; }
 
 /* ── Desktop icons ── */

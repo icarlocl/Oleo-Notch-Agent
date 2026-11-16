@@ -1,14 +1,14 @@
-// Relay server for nook-hook.
+// Relay server for oleo-hook.
 //
-// Windows: the named pipe `\\.\pipe\nook-<sid>`, one instance per connection.
-// Linux: the Unix socket `$XDG_RUNTIME_DIR/nook.sock`. Every hook event is
+// Windows: the named pipe `\\.\pipe\oleo-<sid>`, one instance per connection.
+// Linux: the Unix socket `$XDG_RUNTIME_DIR/oleo.sock`. Every hook event is
 // forwarded to the island as a `hook` event — but for `StatusLine`, which is no
 // hook and goes to usage.rs instead. `PermissionRequest` is the only one
 // that keeps its connection open: it waits for the island's decision and writes
 // it back on the same connection, which is how approving from the island works.
 //
 // Claude Code is never blocked by us. Three things guarantee it:
-//   * nook-hook gives the connection 300 ms and exits cleanly if we are closed;
+//   * oleo-hook gives the connection 300 ms and exits cleanly if we are closed;
 //   * we only wait for a human once the island has *confirmed* the card is on
 //     screen, so a paused island or a webview that is not listening costs a few
 //     hundred milliseconds, not two minutes;
@@ -16,7 +16,7 @@
 //     the terminal takes over.
 //
 // What we write back is the bare word `allow` or `deny`. Turning that into the
-// documented hookSpecificOutput JSON is nook-hook's job, so the wire format
+// documented hookSpecificOutput JSON is oleo-hook's job, so the wire format
 // Claude Code expects lives in exactly one place.
 //
 // One line carries more than a word: `answer {…}`, the answers picked on the
@@ -39,7 +39,7 @@ use crate::island::WINDOW_LABEL;
 use crate::target::{self, Sessions};
 use crate::{log, platform, usage, visibility};
 
-/// Slightly under nook-hook's own 110 s wait, so we always answer first.
+/// Slightly under oleo-hook's own 110 s wait, so we always answer first.
 const DECISION_TIMEOUT: Duration = Duration::from_secs(108);
 /// How long the island gets to say "the card is up". This is the whole of B4:
 /// without it, an island that is paused, hidden behind a crashed webview or
@@ -67,12 +67,12 @@ pub struct Pending(pub Mutex<HashMap<String, mpsc::Sender<Reply>>>);
 
 static COUNTER: AtomicU64 = AtomicU64::new(1);
 
-/// `\\.\pipe\nook-<sid>` — must match nook-hook's `pipe_path()` exactly.
+/// `\\.\pipe\oleo-<sid>` — must match oleo-hook's `pipe_path()` exactly.
 #[cfg(windows)]
 pub fn pipe_name() -> String {
     let key = crate::platform::current_user_sid()
         .unwrap_or_else(|| std::env::var("USERNAME").unwrap_or_else(|_| "user".into()));
-    format!(r"\\.\pipe\nook-{key}")
+    format!(r"\\.\pipe\oleo-{key}")
 }
 
 /// Why the relay pipe could not be opened, for Settings; None while it is up.
@@ -187,11 +187,11 @@ pub fn start(app: AppHandle) {
             return;
         };
         // A socket file left behind by a crash answers nothing and can go. One
-        // that answers belongs to a Nook that is still running: like
+        // that answers belongs to a Oleo that is still running: like
         // first_pipe_instance on Windows, we refuse to serve on top of it.
         if path.exists() {
             if std::os::unix::net::UnixStream::connect(&path).is_ok() {
-                log::line("another Nook already serves the relay socket");
+                log::line("another Oleo already serves the relay socket");
                 return;
             }
             let _ = std::fs::remove_file(&path);
@@ -379,8 +379,8 @@ async fn handle(app: AppHandle, mut pipe: impl Relay) {
     // Over, however it ended: an island that came up for it may go.
     drop(card);
 
-    // No decision: say nothing at all. nook-hook then writes nothing to stdout
-    // and Claude Code asks in the terminal, exactly as if Nook were closed.
+    // No decision: say nothing at all. oleo-hook then writes nothing to stdout
+    // and Claude Code asks in the terminal, exactly as if Oleo were closed.
     if let Some(d) = decision {
         let _ = pipe.write_all(format!("{d}\n").as_bytes()).await;
         let _ = pipe.flush().await;
@@ -482,7 +482,7 @@ pub fn decline(app: &AppHandle, request_id: &str) {
 }
 
 /// Called by the island's Allow / Deny buttons. Only ever a bare word: turning
-/// it into Claude Code's JSON is nook-hook's job.
+/// it into Claude Code's JSON is oleo-hook's job.
 pub fn answer(app: &AppHandle, request_id: &str, decision: &str) {
     let word = match decision {
         "allow" => "allow",
@@ -496,7 +496,7 @@ pub fn answer(app: &AppHandle, request_id: &str, decision: &str) {
 }
 
 /// Called when the island answers a question Claude asked: what was picked,
-/// keyed by the question's own words. nook-hook puts it back in the tool's
+/// keyed by the question's own words. oleo-hook puts it back in the tool's
 /// input, which is how Claude Code takes an answer.
 pub fn answer_question(app: &AppHandle, request_id: &str, answers: &serde_json::Map<String, Value>) {
     log::line(format!("decision id={request_id} answer"));

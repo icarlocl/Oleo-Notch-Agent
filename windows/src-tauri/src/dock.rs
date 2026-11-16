@@ -3,7 +3,7 @@
 // island.rs only has to ask the display and apply the answer, and every dock
 // and every taskbar position can be tested without a window.
 //
-// The top dock is what Nook always did: the window hangs from the display's top
+// The top dock is what Oleo always did: the window hangs from the display's top
 // edge, centred on the whole display, over a top taskbar if there is one. The
 // others sit inside the work area (what the taskbar leaves free), flush with the
 // edge they dock to. With an auto-hiding taskbar the work area is the whole

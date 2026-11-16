@@ -356,7 +356,7 @@ function buildReminders(ctx: WidgetContext): Widget {
     list,
     h("div", { class: "fc-add" }, shared(add.field, "rem-add", "text"), when,
       h("button", { class: "btn secondary", text: "Add", onclick: add.commit })),
-    h("div", { class: "fc-note", text: "Click a reminder's words to edit them. Reminders fire only while Nook is running." }));
+    h("div", { class: "fc-note", text: "Click a reminder's words to edit them. Reminders fire only while Oleo is running." }));
 
   let shown = "";
   let shownNext = "";

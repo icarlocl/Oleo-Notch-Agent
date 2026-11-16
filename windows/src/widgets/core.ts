@@ -34,7 +34,7 @@ const SAVE_DELAY_MS = 500;
 
 const waiting = new Map<string, { value: unknown; timer: number }>();
 
-/** A widget's saved part, or null when it has none (or none that Nook could read). */
+/** A widget's saved part, or null when it has none (or none that Oleo could read). */
 export function loadWidget(widget: ShelfWidgetId): Promise<unknown> {
   return ShelfBackend.load(widget);
 }

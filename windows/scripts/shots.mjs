@@ -80,7 +80,7 @@ const budgetFlag = val("--budget") === null ? null : Number(val("--budget"));
 if (budgetFlag !== null && !(budgetFlag > 0)) fail("--budget is a number of KB");
 const startQuality = Math.min(100, Math.max(QUALITY_FLOOR, Number(val("--quality") ?? 90) || 90));
 const keepServer = has("--keep-server");
-const baseFlag = (val("--base-url") ?? process.env.NOOK_DEV ?? "").replace(/\/$/, "");
+const baseFlag = (val("--base-url") ?? process.env.OLEO_DEV ?? "").replace(/\/$/, "");
 
 // ── The manifest ─────────────────────────────────────────────────────────────
 
@@ -95,7 +95,7 @@ function loadManifest() {
   } catch (e) {
     fail(`cannot read ${MANIFEST}: ${e.message}`);
   }
-  const d = { size: "1920x1080", scale: 100, wallpaper: "nook", variants: THEMES, budgetKB: 150, ...(raw.defaults ?? {}) };
+  const d = { size: "1920x1080", scale: 100, wallpaper: "oleo", variants: THEMES, budgetKB: 150, ...(raw.defaults ?? {}) };
   const problems = [];
   const seen = new Set();
   const files = new Set();
@@ -116,7 +116,7 @@ function loadManifest() {
     if (e.kind === "auto") {
       if (!(e.page in PAGES)) bad(`page must be one of ${Object.keys(PAGES).join(", ")} (got ${JSON.stringify(e.page)})`);
       if (!e.variants.length) bad("an auto shot needs at least one variant");
-      if (!["nook", "bloom"].includes(e.wallpaper)) bad(`wallpaper must be nook or bloom (got ${JSON.stringify(e.wallpaper)})`);
+      if (!["oleo", "bloom"].includes(e.wallpaper)) bad(`wallpaper must be oleo or bloom (got ${JSON.stringify(e.wallpaper)})`);
       if (typeof e.params !== "string" && (typeof e.params !== "object" || e.params === null || Array.isArray(e.params))) bad("params must be an object or a query string");
       if (!(Number(e.scale) >= 100 && Number(e.scale) <= 300)) bad("scale is a percent, 100..300");
       const c = e.crop;
@@ -190,7 +190,7 @@ if (!toCapture.length) fail("nothing to capture (the selection has only manual s
 // Microsoft's artwork may only be used for pictures that stay on this machine.
 const inRepo = !relative(repoRoot, outDir).startsWith("..");
 const bloom = toCapture.filter((s) => s.wallpaper === "bloom");
-if (bloom.length && inRepo) fail(`${bloom.map((s) => s.id).join(", ")} use wallpaper "bloom" (Microsoft artwork, local only), but the output folder is inside the repo. Use wallpaper "nook", or --out a folder outside the repo.`);
+if (bloom.length && inRepo) fail(`${bloom.map((s) => s.id).join(", ")} use wallpaper "bloom" (Microsoft artwork, local only), but the output folder is inside the repo. Use wallpaper "oleo", or --out a folder outside the repo.`);
 
 // ── Browser and dev server ───────────────────────────────────────────────────
 
@@ -281,7 +281,7 @@ class Tab {
 }
 
 async function startBrowser(exe) {
-  const profile = mkdtempSync(join(tmpdir(), "nook-shots-"));
+  const profile = mkdtempSync(join(tmpdir(), "oleo-shots-"));
   const flags = ["--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run", "--no-default-browser-check", "--disable-extensions", "--mute-audio",
     "--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--force-color-profile=srgb", `--user-data-dir=${profile}`, "--remote-debugging-port=0", "about:blank"];
   const child = spawn(exe, flags, { stdio: "ignore" });

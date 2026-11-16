@@ -1,4 +1,4 @@
-// Writes windows/sounds/*.wav: Nook's own short, soft sounds, made here from
+// Writes windows/sounds/*.wav: Oleo's own short, soft sounds, made here from
 // sine and triangle tones with an attack and a decay. Nothing is sampled or
 // taken from anywhere. Run it from windows/: `node scripts/make-sounds.mjs`.
 //

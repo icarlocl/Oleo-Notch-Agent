@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 /// A field a settings file does not have takes its default: a file written by
-/// an older Nook still loads, with everything it did say.
+/// an older Oleo still loads, with everything it did say.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Settings {
@@ -69,10 +69,10 @@ pub struct Settings {
     /// "system" (follow the OS), "on" (nothing travels or fades), "off".
     #[serde(default = "default_follow_system")]
     pub reduce_motion: String,
-    /// The bot's colours: one of BOT_THEMES.
-    #[serde(default = "default_bot_theme")]
-    pub bot_theme: String,
-    /// Gullu reacts to the mouse and to clicks. Off: the status faces only.
+    /// The mascot: one of BOT_MASCOTS. A file from before reads its old `botTheme` (a colour) here, held to the default.
+    #[serde(default = "default_bot_mascot", alias = "botTheme")]
+    pub bot_mascot: String,
+    /// The mascot reacts to the mouse and to clicks. Off: the status faces only.
     #[serde(default = "default_true")]
     pub playful_reactions: bool,
     /// The Shelf's widgets, all of them, in the order they stand in.
@@ -104,7 +104,7 @@ pub struct Settings {
     /// always did.
     #[serde(default = "default_finished_notice")]
     pub finished_notice: String,
-    /// Settings → About: Nook asks GitHub for its latest release once a day
+    /// Settings → About: Oleo asks GitHub for its latest release once a day
     /// (update.rs). Off until the user switches it on: it is the one thing that
     /// uses the network.
     #[serde(default)]
@@ -173,7 +173,7 @@ fn default_compact_metrics() -> Vec<String> {
     ["cpu", "ram", "usage5h"].map(String::from).to_vec()
 }
 
-/// A choice of compact metrics as it is kept: the ones Nook knows, each once,
+/// A choice of compact metrics as it is kept: the ones Oleo knows, each once,
 /// in the order they were picked, and no more than there is room for. A page
 /// — or a file edited by hand — says what it likes; this is what is saved.
 pub fn compact_metrics(picked: &[String]) -> Vec<String> {
@@ -189,8 +189,8 @@ pub fn compact_metrics(picked: &[String]) -> Vec<String> {
 /// What `theme` can say, and `reduce_motion`: the first of each is the default.
 pub const THEMES: &[&str] = &["system", "light", "dark"];
 pub const REDUCE_MOTION: &[&str] = &["system", "on", "off"];
-/// The bot's colours (src/bot/engine.ts `BOT_THEMES`): the first is the default.
-pub const BOT_THEMES: &[&str] = &["cream", "peach", "mint", "lilac", "sky", "cocoa"];
+/// The mascots (src/bot/mascots `MASCOTS`): the first is the default.
+pub const BOT_MASCOTS: &[&str] = &["durazno"];
 /// How a turn's end is told while the island is folded (src/core/state.ts
 /// `FINISHED_NOTICES`): the first is the default.
 pub const FINISHED_NOTICES: &[&str] = &["mark", "card"];
@@ -205,8 +205,8 @@ fn default_dock() -> String {
     crate::dock::DOCKS[0].into()
 }
 
-fn default_bot_theme() -> String {
-    BOT_THEMES[0].into()
+fn default_bot_mascot() -> String {
+    BOT_MASCOTS[0].into()
 }
 
 fn default_finished_notice() -> String {
@@ -217,12 +217,12 @@ fn default_shelf_order() -> Vec<String> {
     SHELF_WIDGETS.iter().map(|id| id.to_string()).collect()
 }
 
-/// One of `known`, or the first of them: a word Nook does not know is not kept.
+/// One of `known`, or the first of them: a word Oleo does not know is not kept.
 pub fn one_of(known: &[&str], said: &str) -> String {
     known.iter().find(|word| **word == said).unwrap_or(&known[0]).to_string()
 }
 
-/// The widgets Nook knows among `said`, each once, in the order said.
+/// The widgets Oleo knows among `said`, each once, in the order said.
 fn known_widgets(said: &[String]) -> Vec<String> {
     let mut kept: Vec<String> = Vec::new();
     for id in said {
@@ -256,7 +256,7 @@ impl Settings {
         crate::dock::Dock::parse(&self.dock)
     }
 
-    /// Holds what a page, or a file edited by hand, said to what Nook knows.
+    /// Holds what a page, or a file edited by hand, said to what Oleo knows.
     /// Nothing that fails here is an error: the nearest valid choice is kept.
     pub fn validated(mut self) -> Self {
         self.weather_location = self.weather_location.filter(|location| {
@@ -269,7 +269,7 @@ impl Settings {
         self.dock = one_of(crate::dock::DOCKS, &self.dock);
         self.theme = one_of(THEMES, &self.theme);
         self.reduce_motion = one_of(REDUCE_MOTION, &self.reduce_motion);
-        self.bot_theme = one_of(BOT_THEMES, &self.bot_theme);
+        self.bot_mascot = one_of(BOT_MASCOTS, &self.bot_mascot);
         self.finished_notice = one_of(FINISHED_NOTICES, &self.finished_notice);
         self.shelf_order = shelf_order(&self.shelf_order);
         self.shelf_hidden = shelf_hidden(&self.shelf_hidden);
@@ -319,7 +319,7 @@ impl Default for Settings {
             compact_metrics: default_compact_metrics(),
             theme: default_follow_system(),
             reduce_motion: default_follow_system(),
-            bot_theme: default_bot_theme(),
+            bot_mascot: default_bot_mascot(),
             playful_reactions: true,
             shelf_order: default_shelf_order(),
             shelf_hidden: Vec::new(),
@@ -343,6 +343,34 @@ pub fn hook_exe_path() -> PathBuf {
 
 fn settings_path() -> PathBuf {
     config_dir().join("settings.json")
+}
+
+/// The app was called Nook before: on the first start under the new name, its
+/// preferences folder (settings, Shelf, reminders…) is copied over, once. The
+/// old folder is left as it was.
+pub fn adopt_former_folder() {
+    let dir = config_dir();
+    let former = dir.with_file_name(if cfg!(windows) { "Nook" } else { "nook" });
+    if dir.exists() || !former.is_dir() {
+        return;
+    }
+    if let Err(err) = copy_tree(&former, &dir) {
+        crate::log::line(format!("could not bring the former settings over: {err}"));
+    }
+}
+
+fn copy_tree(from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
+    crate::platform::ensure_private_dir(to)?;
+    for entry in std::fs::read_dir(from)? {
+        let entry = entry?;
+        let target = to.join(entry.file_name());
+        if entry.file_type()?.is_dir() {
+            copy_tree(&entry.path(), &target)?;
+        } else {
+            std::fs::copy(entry.path(), target)?;
+        }
+    }
+    Ok(())
 }
 
 pub fn load() -> Settings {
@@ -521,7 +549,7 @@ mod tests {
         let json = serde_json::to_string(&card).unwrap();
         assert!(json.contains(r#""finishedNotice":"card""#));
         assert_eq!(serde_json::from_str::<Settings>(&json).unwrap().validated().finished_notice, "card");
-        // A word Nook does not know (a file edited by hand) is the mark.
+        // A word Oleo does not know (a file edited by hand) is the mark.
         let odd: Settings = serde_json::from_str(r#"{"finishedNotice":"loud"}"#).unwrap();
         assert_eq!(odd.validated().finished_notice, "mark");
     }
@@ -534,19 +562,19 @@ mod tests {
         assert_eq!(old.compact_metrics, words(&["ram"]));
         assert_eq!(old.theme, "system");
         assert_eq!(old.reduce_motion, "system");
-        assert_eq!(old.bot_theme, "cream");
+        assert_eq!(old.bot_mascot, "durazno");
         assert_eq!(old.shelf_order, words(SHELF_WIDGETS));
         assert_eq!(old.shelf_hidden, words(&[]));
         // The defaults are valid as they are, and are written in camelCase.
         let json = serde_json::to_string(&Settings::default().validated()).unwrap();
-        for key in [r#""theme":"system""#, r#""reduceMotion":"system""#, r#""botTheme":"cream""#, r#""shelfHidden":[]"#] {
+        for key in [r#""theme":"system""#, r#""reduceMotion":"system""#, r#""botMascot":"durazno""#, r#""shelfHidden":[]"#] {
             assert!(json.contains(key), "{key} in {json}");
         }
         assert!(json.contains(r#""shelfOrder":["media","todo","timer","reminders","mirror","projects"]"#));
     }
 
     #[test]
-    fn what_a_page_says_is_held_to_what_nook_knows() {
+    fn what_a_page_says_is_held_to_what_oleo_knows() {
         let words = |list: &[&str]| list.iter().map(|s| s.to_string()).collect::<Vec<_>>();
         // A word that is one of the choices is kept; any other falls back to the default.
         for theme in ["light", "dark", "system"] {
@@ -559,10 +587,10 @@ mod tests {
             assert_eq!(one_of(REDUCE_MOTION, motion), motion);
         }
         assert_eq!(one_of(REDUCE_MOTION, "reduce"), "system");
-        for bot in BOT_THEMES {
-            assert_eq!(one_of(BOT_THEMES, bot), *bot);
+        for bot in BOT_MASCOTS {
+            assert_eq!(one_of(BOT_MASCOTS, bot), *bot);
         }
-        assert_eq!(one_of(BOT_THEMES, "#ff0000"), "cream");
+        assert_eq!(one_of(BOT_MASCOTS, "#ff0000"), "durazno");
 
         // The order always holds every widget once: unknown ids go, a repeat
         // counts once, and what was left out follows in the usual order.
@@ -576,7 +604,7 @@ mod tests {
         let said = Settings {
             theme: "neon".into(),
             reduce_motion: "on".into(),
-            bot_theme: "lilac".into(),
+            bot_mascot: "lilac".into(),
             shelf_order: words(&["mirror", "nope"]),
             shelf_hidden: words(&["nope", "media"]),
             compact_metrics: words(&["disk", "cpu", "gpu"]),
@@ -585,7 +613,7 @@ mod tests {
         .validated();
         assert_eq!(said.theme, "system");
         assert_eq!(said.reduce_motion, "on");
-        assert_eq!(said.bot_theme, "lilac");
+        assert_eq!(said.bot_mascot, "durazno");
         assert_eq!(said.shelf_order[0], "mirror");
         assert_eq!(said.shelf_order.len(), SHELF_WIDGETS.len());
         assert_eq!(said.shelf_hidden, words(&["media"]));
@@ -622,6 +650,14 @@ mod tests {
         assert_eq!((back.folded_auto_hide, back.hide_only_when_idle, back.hide_in_fullscreen), (0.0, true, false));
         // A page that sends whole numbers is read too.
         assert_eq!(serde_json::from_str::<Settings>(r#"{"foldedAutoHide":10}"#).unwrap().folded_auto_hide, 10.0);
+    }
+
+    #[test]
+    fn a_nook_file_with_a_colour_wears_the_default_mascot() {
+        let old: Settings = serde_json::from_str(r#"{"botTheme":"mint"}"#).unwrap();
+        assert_eq!(old.validated().bot_mascot, "durazno");
+        let json = serde_json::to_string(&Settings::default().validated()).unwrap();
+        assert!(json.contains(r#""botMascot":"durazno""#) && !json.contains("botTheme"), "{json}");
     }
 
     #[test]

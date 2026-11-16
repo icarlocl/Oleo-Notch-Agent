@@ -1,4 +1,4 @@
-// Nook for Windows — app wiring and the commands the island calls.
+// Oleo for Windows — app wiring and the commands the island calls.
 
 mod about;
 mod agents;
@@ -67,7 +67,7 @@ pub struct BootInfo {
 
 #[tauri::command]
 fn boot(app: AppHandle, window: tauri::Window, shared: State<Shared>) -> BootInfo {
-    // An island that boots while Nook already knows the usage limits — its
+    // An island that boots while Oleo already knows the usage limits — its
     // page was reloaded — is told them again. (`usage_last` asks for the same.)
     if window.label() == island::WINDOW_LABEL {
         usage::tell_island(&app);
@@ -104,7 +104,7 @@ fn save_settings(app: AppHandle, shared: State<Shared>, settings: Settings) {
         let autostart_changed = current.autostart != settings.autostart;
         // The global shortcuts are not preferences a page writes: they change
         // through `set_shortcut` alone, which registers one before it saves it.
-        // The rest is held to what Nook knows (settings.rs `validated`): the
+        // The rest is held to what Oleo knows (settings.rs `validated`): the
         // compact metrics, three at most; the theme, the motion and the bot's
         // colours, one of their choices; the Shelf's widgets, known ones, once.
         let settings = Settings {
@@ -134,7 +134,7 @@ fn save_settings(app: AppHandle, shared: State<Shared>, settings: Settings) {
         (screen_changed, autostart_changed, theme_changed, agents_changed, settings)
     };
     if let Err(err) = settings::save(&settings) {
-        eprintln!("[nook] could not save settings: {err}");
+        eprintln!("[oleo] could not save settings: {err}");
     }
     if theme_changed {
         wear_theme(&app, &settings.theme);
@@ -143,7 +143,7 @@ fn save_settings(app: AppHandle, shared: State<Shared>, settings: Settings) {
         let manager = app.autolaunch();
         let result = if settings.autostart { manager.enable() } else { manager.disable() };
         if let Err(err) = result {
-            eprintln!("[nook] autostart: {err}");
+            eprintln!("[oleo] autostart: {err}");
         }
     }
     if screen_changed {
@@ -497,7 +497,7 @@ fn usage_last(app: AppHandle) -> Option<usage::Usage> {
 }
 
 /// Whether the relay is Claude Code's status line command, which is how the
-/// usage limits reach Nook.
+/// usage limits reach Oleo.
 #[tauri::command]
 fn usage_status() -> UsageStatus {
     statusline::status()
@@ -518,7 +518,7 @@ fn usage_apply(install: bool, fingerprint: String) -> Result<String, String> {
 
 // ── The reply format, in the user's CLAUDE.md ─────────────────────────────────
 
-/// Where Nook's reply-format block stands in ~/.claude/CLAUDE.md.
+/// Where Oleo's reply-format block stands in ~/.claude/CLAUDE.md.
 #[tauri::command]
 fn reply_format_status() -> replyformat::ReplyFormatStatus {
     replyformat::status()
@@ -636,7 +636,7 @@ fn shortcut_status(app: AppHandle) -> shortcut::Statuses {
 
 /// The settings window picks another combination for one of the five shortcuts,
 /// or switches it on or off. It is saved only once it is registered: one that
-/// is not a combination, that is reserved, that is another Nook shortcut's, or
+/// is not a combination, that is reserved, that is another Oleo shortcut's, or
 /// that another program holds comes back as the reason why, and what was there
 /// before stays.
 #[tauri::command]
@@ -646,7 +646,7 @@ fn set_shortcut(app: AppHandle, shared: State<Shared>, which: shortcut::Which, a
         let mut current = shared.settings.lock().unwrap();
         which.save(&mut current, &status);
         if let Err(err) = settings::save(&current) {
-            eprintln!("[nook] could not save settings: {err}");
+            eprintln!("[oleo] could not save settings: {err}");
         }
         current.clone()
     };
@@ -683,7 +683,7 @@ fn create_settings_window(app: &AppHandle) {
     let url = page_url(app, "settings.html");
     match WebviewWindowBuilder::new(app, "settings", url)
         .additional_browser_args(BROWSER_ARGS)
-        .title("Settings — Nook")
+        .title("Settings — Oleo")
         .inner_size(800.0, 760.0)
         .min_inner_size(460.0, 480.0)
         .resizable(true)
@@ -746,19 +746,19 @@ fn open_link(which: about::Link) {
     about::open_link(which);
 }
 
-/// Where Nook keeps its files, as the About section shows them.
+/// Where Oleo keeps its files, as the About section shows them.
 #[tauri::command]
 fn data_paths() -> about::DataPaths {
     about::data_paths()
 }
 
-/// Opens the folder the log is in. No argument: the folder is Nook's own.
+/// Opens the folder the log is in. No argument: the folder is Oleo's own.
 #[tauri::command]
 fn open_log_folder() {
     about::open_log_folder();
 }
 
-/// Closes Nook and starts it again: what puts a missing relay back in place
+/// Closes Oleo and starts it again: what puts a missing relay back in place
 /// (hooks.rs `ensure_hook_exe` runs at launch). It goes through the ordinary
 /// way out, so the global shortcuts and the single-instance lock are let go
 /// before the new process asks for them.
@@ -770,6 +770,7 @@ fn restart_app(app: AppHandle) {
 
 pub fn run() {
     platform::prepare_environment();
+    settings::adopt_former_folder();
     let loaded = settings::load();
     let gate = Arc::new(PollGate::new());
 
@@ -884,7 +885,7 @@ pub fn run() {
             island::spawn_cursor_poll(handle.clone(), gate.clone());
             metrics::spawn(handle.clone(), gate.clone());
 
-            log::line(format!("--- Nook {} started ---", env!("CARGO_PKG_VERSION")));
+            log::line(format!("--- Oleo {} started ---", env!("CARGO_PKG_VERSION")));
             hooks::ensure_hook_exe(&handle);
             pipe::start(handle.clone());
             shortcut::start(&handle, &loaded);
@@ -893,7 +894,7 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error while running Nook")
+        .expect("error while running Oleo")
         .run(|app, event| {
             // Quitting: the OS gets the global shortcuts back.
             if let tauri::RunEvent::Exit = event {

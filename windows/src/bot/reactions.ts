@@ -1,4 +1,4 @@
-// Gullu's reactions — the layer between the pointer and the bot.
+// The mascot's reactions — the layer between the pointer and the bot.
 //
 // The engine (engine.ts) draws: states, tweens, a face. This decides what the
 // bot does about the cursor coming near, staying, circling, leaving, clicking —
@@ -9,23 +9,23 @@
 //
 // Its hosts: island/island.ts, for the island's bot — the loop, the one timer,
 // the sounds — and bot/minibots.ts, for a session's mini, which answers the
-// cursor only. dev/gullu-playground.ts is the reference host.
+// cursor only. dev/antics-playground.ts is the reference host.
 //
 // ── The host's contract ───────────────────────────────────────────────────────
 //
-//   const gullu = new GulluReactions(engine);
-//   gullu.onCue = (cue) => …;          // a named moment a sound could go with
-//   gullu.onChange = () => { if (gullu.busy) startLoop(); armTimer(); };
+//   const antics = new MascotReactions(engine);
+//   antics.onCue = (cue) => …;          // a named moment a sound could go with
+//   antics.onChange = () => { if (antics.busy) startLoop(); armTimer(); };
 //
-//   bot moved or resized      gullu.place(cx, cy, diameter)   (same space as the pointer)
-//   cursor moved              gullu.pointerMove(x, y)
-//   cursor gone (no position) gullu.pointerLeave()
-//   click on the bot          gullu.click(x, y)               (the host does the hit test: gullu.hit(x, y))
-//   status changed            gullu.setStatus(state)          INSTEAD OF engine.setState(state)
-//   island shown / hidden     gullu.setVisible(bool)
-//   every frame drawn         gullu.update(dt); engine.update(dt); engine.draw(…)
-//   loop may stop when        !gullu.busy                     (it includes engine.busy)
-//   when the loop stops       armTimer(): const due = gullu.nextDue();
+//   bot moved or resized      antics.place(cx, cy, diameter)   (same space as the pointer)
+//   cursor moved              antics.pointerMove(x, y)
+//   cursor gone (no position) antics.pointerLeave()
+//   click on the bot          antics.click(x, y)               (the host does the hit test: antics.hit(x, y))
+//   status changed            antics.setStatus(state)          INSTEAD OF engine.setState(state)
+//   island shown / hidden     antics.setVisible(bool)
+//   every frame drawn         antics.update(dt); engine.update(dt); engine.draw(…)
+//   loop may stop when        !antics.busy                     (it includes engine.busy)
+//   when the loop stops       armTimer(): const due = antics.nextDue();
 //                             if (due != null) setTimeout(startLoop, due - performance.now())
 //
 // Hidden, `busy` is false and `nextDue()` is null: nothing runs. Between two
@@ -38,7 +38,7 @@ import {
   type BotEngine, type BrowShape, type EyeShape, type MouthShape, type RGB, type TweenKey,
 } from "./engine";
 
-/** Everything Gullu can do on its own. `play(name)` does it on demand. */
+/** Everything the mascot can do on its own. `play(name)` does it on demand. */
 export const REACTIONS = [
   // the cursor
   "perk", "hoverHappy", "hearts", "dizzy", "sigh",
@@ -51,17 +51,17 @@ export const REACTIONS = [
 export type ReactionName = (typeof REACTIONS)[number];
 
 /** A moment a sound could go with. The controller plays none itself. */
-export type GulluCue =
+export type MascotCue =
   | "perk" | "happy" | "love" | "dizzy" | "sigh"
   | "gasp" | "giggle" | "laugh" | "boop" | "annoyed" | "whee" | "raspberry"
   | "yawn" | "sleep" | "wake"
   // Playful reactions off: today's two, which the island plays itself for now.
   | "hover";
 
-export type GulluZone = "on" | "near" | "aware" | "far";
+export type MascotZone = "on" | "near" | "aware" | "far";
 
 /** What the status allows: everything, everything but idling, or a second at most. */
-export type GulluTier = "free" | "busy" | "alert" | "none";
+export type MascotTier = "free" | "busy" | "alert" | "none";
 
 type MoveProp =
   | "oy" | "ox" | "sx" | "sy" | "tilt" | "spin" | "poke" | "sproutSwing" | "sproutWiggle" | "sproutSpin";
@@ -76,7 +76,7 @@ const ALERT: ReadonlySet<BotStateName> = new Set<BotStateName>(["approval", "que
 const QUICK_OK: ReadonlySet<ReactionName> = new Set<ReactionName>([
   "perk", "hoverHappy", "dizzy", "surprised", "naughty", "ticklish", "boop", "annoyed",
 ]);
-/** What only an idle Gullu does. */
+/** What only an idle mascot does. */
 const IDLE_ONLY: ReadonlySet<ReactionName> = new Set<ReactionName>([
   "lookAround", "doubleBlink", "yawn", "sproutSway", "glance", "fallAsleep", "sleepBreath", "wake",
 ]);
@@ -112,17 +112,17 @@ const IDLE_SET = ["lookAround", "doubleBlink", "yawn", "sproutSway", "glance"] a
 
 const now = () => botNowMs() / 1000;
 
-export class GulluReactions {
+export class MascotReactions {
   readonly engine: BotEngine;
 
-  onCue: ((cue: GulluCue) => void) | null = null;
+  onCue: ((cue: MascotCue) => void) | null = null;
   /** Something changed outside a frame: check `busy` and `nextDue()` again. */
   onChange: (() => void) | null = null;
   random: () => number = Math.random;
   /** The status plays its beats (see BEAT_EVERY). A mini's are the home view's to schedule, staggered: it turns them off here. */
   beats = true;
 
-  /** Seconds without the cursor near, a click or a change of status before Gullu naps. */
+  /** Seconds without the cursor near, a click or a change of status before the mascot naps. */
   napAfter = 180;
   /** An idle behaviour comes this many seconds after the last thing that happened: between the two. */
   idleEvery: readonly [number, number] = [10, 20];
@@ -140,7 +140,7 @@ export class GulluReactions {
   private px = 0;
   private py = 0;
   private known = false;
-  private _zone: GulluZone = "far";
+  private _zone: MascotZone = "far";
 
   // What is playing.
   private current: { name: ReactionName; at: number; until: number } | null = null;
@@ -266,7 +266,7 @@ export class GulluReactions {
     this.touch();
   }
 
-  get tier(): GulluTier {
+  get tier(): MascotTier {
     if (this.status === "dizzy") return "none";
     if (ALERT.has(this.status) || this.status === "sleeping") return "alert";
     return this.status === "idle" ? "free" : "busy";
@@ -301,7 +301,7 @@ export class GulluReactions {
 
   get reaction(): ReactionName | null { return this.current?.name ?? null; }
   get napping() { return this._napping; }
-  get zone(): GulluZone { return this._zone; }
+  get zone(): MascotZone { return this._zone; }
   /** Drawn a dozen pixels across: no tongue, no particles, simpler moves. */
   get small(): boolean { return detailFor(this.engine.drawnR) < 0.5; }
 
@@ -543,7 +543,7 @@ export class GulluReactions {
 
   // ── Internals: pointer ──────────────────────────────────────────────────────
 
-  private zoneAt(x: number, y: number): GulluZone {
+  private zoneAt(x: number, y: number): MascotZone {
     const dist = Math.hypot(x - this.cx, y - this.cy);
     const d = this.d;
     // A zone, once entered, is left a little further out than it was entered.
@@ -782,7 +782,7 @@ export class GulluReactions {
     this.timeline.push({ at: now() + seconds, fn });
   }
 
-  private cue(cue: GulluCue) {
+  private cue(cue: MascotCue) {
     this.onCue?.(cue);
   }
 
@@ -849,7 +849,7 @@ export class GulluReactions {
   }
 
   private tint(color: RGB) {
-    // Only an idle Gullu changes colour: any other status keeps its own, readable.
+    // Only an idle mascot changes colour: any other status keeps its own, readable.
     if (this.tier !== "free") return;
     this.engine.colT = color;
     this.tinted = true;

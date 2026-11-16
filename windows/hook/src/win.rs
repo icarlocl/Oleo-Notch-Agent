@@ -1,7 +1,7 @@
 //! The little bit of Win32 the relay needs: who we are, who is on the other
 //! end of the pipe, and which processes we were started under.
 //!
-//! Named pipes live in a machine-wide namespace, so `\\.\pipe\nook-<name>` can
+//! Named pipes live in a machine-wide namespace, so `\\.\pipe\oleo-<name>` can
 //! be created by *any* account that gets there first. Two defences, both cheap:
 //! the pipe name carries our SID, and once connected we check the server process
 //! really belongs to us before sending anything.
@@ -27,13 +27,13 @@ use crate::{Proc, CONNECT_TIMEOUT};
 /// the one error worth retrying: the server exists and a slot will free up.
 const ERROR_PIPE_BUSY: i32 = 231;
 
-/// `\\.\pipe\nook-<sid>`. The SID keeps two accounts on the same machine from
+/// `\\.\pipe\oleo-<sid>`. The SID keeps two accounts on the same machine from
 /// ever meeting on the same pipe; the name falls back to the user name only if
 /// the SID cannot be read at all, which should not happen.
 fn pipe_path() -> String {
     let key = current_user_sid()
         .unwrap_or_else(|| std::env::var("USERNAME").unwrap_or_else(|_| "user".into()));
-    format!(r"\\.\pipe\nook-{key}")
+    format!(r"\\.\pipe\oleo-{key}")
 }
 
 /// Opens the pipe. Retries only while the server is busy: any other error means
@@ -47,7 +47,7 @@ pub fn connect() -> Option<std::fs::File> {
             Ok(file) => {
                 let handle = HANDLE(file.as_raw_handle());
                 // Somebody else's server on our pipe name gets nothing from us.
-                return pipe_server_is_nook(handle).then_some(file);
+                return pipe_server_is_oleo(handle).then_some(file);
             }
             Err(err) => {
                 if err.raw_os_error() != Some(ERROR_PIPE_BUSY) || Instant::now() >= deadline {
@@ -64,20 +64,20 @@ pub fn current_user_sid() -> Option<String> {
     unsafe { token_sid(GetCurrentProcess()) }
 }
 
-/// True when the process serving `handle` looks like Nook: our own user, an
-/// image called nook.exe, and an integrity level no lower than ours.
+/// True when the process serving `handle` looks like Oleo: our own user, an
+/// image called oleo.exe, and an integrity level no lower than ours.
 ///
 /// The same-user check stops another account. The other two narrow what a
 /// process of our own account can pass for: the app's path is not known to the
 /// relay (the installer may put it anywhere), so its file name stands in, and
-/// a server below our integrity level can never be Nook run by us (it matters
+/// a server below our integrity level can never be Oleo run by us (it matters
 /// when Claude Code runs elevated). This cannot stop code that runs as us at
-/// our own level and is called nook.exe.
+/// our own level and is called oleo.exe.
 ///
-/// A failure to answer is treated as "not Nook": refusing costs one hook event
+/// A failure to answer is treated as "not Oleo": refusing costs one hook event
 /// and Claude Code asks in the terminal, while trusting could hand the contents
 /// of every tool call to a stranger.
-pub fn pipe_server_is_nook(handle: HANDLE) -> bool {
+pub fn pipe_server_is_oleo(handle: HANDLE) -> bool {
     let Some(mine) = current_user_sid() else { return false };
     unsafe {
         let mut pid = 0u32;
@@ -92,13 +92,13 @@ pub fn pipe_server_is_nook(handle: HANDLE) -> bool {
         let theirs = integrity_level(process);
         let _ = CloseHandle(process);
         let ours = integrity_level(GetCurrentProcess());
-        same_user && image.as_deref().is_some_and(is_nook_image) && integrity_not_lower(theirs, ours)
+        same_user && image.as_deref().is_some_and(is_oleo_image) && integrity_not_lower(theirs, ours)
     }
 }
 
-/// `nook.exe`, whatever folder it sits in and however it is cased.
-fn is_nook_image(path: &str) -> bool {
-    path.rsplit(['\\', '/']).next().is_some_and(|name| name.eq_ignore_ascii_case("nook.exe"))
+/// `oleo.exe`, whatever folder it sits in and however it is cased.
+fn is_oleo_image(path: &str) -> bool {
+    path.rsplit(['\\', '/']).next().is_some_and(|name| name.eq_ignore_ascii_case("oleo.exe"))
 }
 
 /// The server must be at our level or above; an unreadable level is a refusal.
@@ -241,12 +241,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn only_a_file_called_nook_exe_passes_for_nook() {
-        assert!(is_nook_image(r"C:\Program Files\Nook\nook.exe"));
-        assert!(is_nook_image(r"D:\work\nook\target\release\NOOK.EXE"));
-        assert!(!is_nook_image(r"C:\Users\me\AppData\Local\Temp\evil.exe"));
-        assert!(!is_nook_image(r"C:\x\not-nook.exe"));
-        assert!(!is_nook_image(r"C:\nook.exe\payload.exe"));
+    fn only_a_file_called_oleo_exe_passes_for_oleo() {
+        assert!(is_oleo_image(r"C:\Program Files\Oleo\oleo.exe"));
+        assert!(is_oleo_image(r"D:\work\oleo\target\release\OLEO.EXE"));
+        assert!(!is_oleo_image(r"C:\Users\me\AppData\Local\Temp\evil.exe"));
+        assert!(!is_oleo_image(r"C:\x\not-oleo.exe"));
+        assert!(!is_oleo_image(r"C:\oleo.exe\payload.exe"));
     }
 
     #[test]

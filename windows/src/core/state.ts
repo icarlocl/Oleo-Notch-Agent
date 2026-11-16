@@ -82,7 +82,7 @@ export const isQuestion = (request: SessionRequest): request is QuestionInfo => 
 /**
  * Where a Claude Code session runs, and so where its ↗ goes: an editor's
  * window, a terminal's, the Claude app — or nowhere the island knows of.
- * Decided once, in Rust, from what nook-hook reports (src-tauri/src/target.rs
+ * Decided once, in Rust, from what oleo-hook reports (src-tauri/src/target.rs
  * has the table); every event carries its session's as `target`.
  */
 export type TargetKind = "vscode" | "cursor" | "terminal" | "claude" | "unknown";
@@ -148,7 +148,7 @@ export function targetWords(target: SessionTarget): string | null {
 /** What the Claude pill is called until a session says where it runs. */
 export const CLIENT_UNKNOWN = "Claude Code";
 
-/** One edit Claude made to a file: its unified diff, as nook-hook built it. */
+/** One edit Claude made to a file: its unified diff, as oleo-hook built it. */
 export interface FileEdit {
   patch: string;
   additions: number;
@@ -170,7 +170,7 @@ export interface ChangedFile {
   at: number;
 }
 
-/** A few lines of what a tool gave back, as nook-hook forwards them. */
+/** A few lines of what a tool gave back, as oleo-hook forwards them. */
 export interface StepResult {
   text: string;
   /** For a file: the number of its first line. */
@@ -616,9 +616,9 @@ export interface Settings {
   theme: "light" | "dark" | "system";
   /** "system" follows the OS; "on": nothing travels or fades; "off": full motion. */
   reduceMotion: "system" | "on" | "off";
-  /** The bot's colours: a key of bot/engine.ts `BOT_THEMES`. */
-  botTheme: string;
-  /** Gullu reacts to the mouse and to clicks (bot/reactions.ts). Off: the status faces, and nothing else. */
+  /** The mascot: a key of bot/mascots `MASCOTS`. */
+  botMascot: string;
+  /** The mascot reacts to the mouse and to clicks (bot/reactions.ts). Off: the status faces, and nothing else. */
   playfulReactions: boolean;
   /** The Shelf's widgets, all six, in their order; and the ones switched off. */
   shelfOrder: string[];
@@ -640,7 +640,7 @@ export interface Settings {
    * and nothing opens by itself. "card": the card comes up, as it always did.
    */
   finishedNotice: FinishedNotice;
-  /** Settings → About: once a day, ask GitHub whether a newer Nook is out. Off unless the user switches it on. */
+  /** Settings → About: once a day, ask GitHub whether a newer Oleo is out. Off unless the user switches it on. */
   checkUpdates: boolean;
   weatherLocation: WeatherLocation | null;
 }
@@ -717,7 +717,7 @@ export const USAGE_OLD_MS = 2 * 60 * 60_000;
 export const USAGE_RESET_WORDS = "reset, waiting for new data";
 /** Why the numbers are as old as they are: the tooltip of the usage block, and of a usage cell. */
 export const USAGE_SOURCE_WORDS =
-  "Usage only updates while Claude Code runs. Usage from claude.ai and the desktop app counts toward the same limits but isn't visible to Nook.";
+  "Usage only updates while Claude Code runs. Usage from claude.ai and the desktop app counts toward the same limits but isn't visible to Oleo.";
 
 /** "resets in 2h 14m", "resets in 3d 4h", "resets in 14m", "resets in <1m": how long until a window starts again. */
 export function resetCountdown(ms: number): string {
@@ -863,7 +863,7 @@ export const DEFAULT_SETTINGS: Settings = {
   compactMetrics: ["cpu", "ram", "usage5h"],
   theme: "system",
   reduceMotion: "system",
-  botTheme: "cream",
+  botMascot: "durazno",
   playfulReactions: true,
   shelfOrder: ["media", "todo", "timer", "reminders", "mirror", "projects"],
   shelfHidden: [],

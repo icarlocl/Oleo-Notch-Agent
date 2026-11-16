@@ -1,8 +1,8 @@
 // What the settings window's About section reaches outside the app for: the
-// owner's links, and the folders Nook keeps its files in.
+// owner's links, and the folders Oleo keeps its files in.
 //
 // The page never says where to go. A link is named by an id, and the address
-// it stands for is a constant here; the folder that is opened is the one Nook
+// it stands for is a constant here; the folder that is opened is the one Oleo
 // works out for itself. There is no command that opens an address or a path a
 // page hands over.
 
@@ -10,30 +10,21 @@ use serde::{Deserialize, Serialize};
 
 use crate::{platform, settings};
 
-const PORTFOLIO_URL: &str = "https://zubyr.dev";
-const GITHUB_URL: &str = "https://github.com/zubairbinshaukat";
-const LINKEDIN_URL: &str = "https://www.linkedin.com/in/zubairbinshaukat";
-const X_URL: &str = "https://x.com/zubyrdev";
+const GITHUB_URL: &str = "https://github.com/icarlocl";
 
 /// The links of the About section. A name that is not one of these does not
 /// reach the command: it fails to deserialize, and nothing is opened.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Link {
-    Portfolio,
     Github,
-    Linkedin,
-    X,
 }
 
 impl Link {
     /// The address the link stands for.
     pub fn url(self) -> &'static str {
         match self {
-            Link::Portfolio => PORTFOLIO_URL,
             Link::Github => GITHUB_URL,
-            Link::Linkedin => LINKEDIN_URL,
-            Link::X => X_URL,
         }
     }
 }
@@ -43,7 +34,7 @@ pub fn open_link(which: Link) {
     platform::open_url(which.url());
 }
 
-/// Where Nook keeps its files, for the About section to show.
+/// Where Oleo keeps its files, for the About section to show.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DataPaths {
@@ -51,7 +42,7 @@ pub struct DataPaths {
     pub settings: String,
     /// The log and the relay.
     pub local: String,
-    /// Why the relay pipe is not open, when it is not: Nook then gets no events.
+    /// Why the relay pipe is not open, when it is not: Oleo then gets no events.
     pub relay_error: Option<String>,
 }
 
@@ -83,12 +74,10 @@ mod tests {
 
     #[test]
     fn each_link_id_opens_its_own_constant_address() {
-        assert_eq!(link("portfolio").unwrap().url(), "https://zubyr.dev");
-        assert_eq!(link("github").unwrap().url(), "https://github.com/zubairbinshaukat");
-        assert_eq!(link("linkedin").unwrap().url(), "https://www.linkedin.com/in/zubairbinshaukat");
-        assert_eq!(link("x").unwrap().url(), "https://x.com/zubyrdev");
+        assert_eq!(link("github").unwrap().url(), "https://github.com/icarlocl");
+        assert!(link("portfolio").is_err() && link("x").is_err());
         // Every one is a plain https address: nothing a shell or a handler would read as more.
-        for which in [Link::Portfolio, Link::Github, Link::Linkedin, Link::X] {
+        for which in [Link::Github] {
             let url = which.url();
             assert!(url.starts_with("https://"), "{url}");
             assert!(url.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, ':' | '/' | '.' | '-')), "{url}");
@@ -103,7 +92,7 @@ mod tests {
     }
 
     #[test]
-    fn the_data_paths_are_the_folders_nook_uses() {
+    fn the_data_paths_are_the_folders_oleo_uses() {
         let paths = data_paths();
         assert_eq!(paths.settings, settings::config_dir().to_string_lossy());
         assert_eq!(paths.local, settings::local_dir().to_string_lossy());

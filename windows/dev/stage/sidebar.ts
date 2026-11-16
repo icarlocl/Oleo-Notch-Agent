@@ -62,7 +62,7 @@ export function mountSidebar(initial: StageOptions, host: SidebarHost) {
   const head = el("div", "sb-head");
   const close = el("button", "sb-x", "×", { type: "button", "aria-label": "Close" });
   close.onclick = () => setOpen(false);
-  head.append(el("b", "", "Screenshot stage"), el("span", "", "Nook preview"), close);
+  head.append(el("b", "", "Screenshot stage"), el("span", "", "Oleo preview"), close);
   const scroll = el("div", "sb-scroll");
   panel.append(head, scroll);
 
@@ -186,7 +186,7 @@ export function mountSidebar(initial: StageOptions, host: SidebarHost) {
   seg(scene, "Scene", "scene", [["desktop", "Desktop"], ["browser", "Browser"], ["editor", "Editor"], ["terminal", "Terminal"], ["none", "None"]]);
   seg(scene, "Theme", "theme", [["dark", "Dark"], ["light", "Light"]]);
   seg(scene, "Taskbar", "taskbar", [["bottom", "Bottom"], ["top", "Top"], ["hidden", "Hidden"]]);
-  seg(scene, "Wallpaper", "wallpaper", [["nook", "Nook"], ["bloom", "Bloom"]]);
+  seg(scene, "Wallpaper", "wallpaper", [["oleo", "Oleo"], ["bloom", "Bloom"]]);
   text(scene, "Clock", "time", "10:09", "70px");
   text(scene, "Date", "date", "10/6/2026", "110px");
   text(scene, "Page colour", "bg", "#2a2d34 or transparent", "150px");

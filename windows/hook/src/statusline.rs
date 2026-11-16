@@ -1,14 +1,14 @@
-//! `nook-hook statusline` — the relay as Claude Code's status line command.
+//! `oleo-hook statusline` — the relay as Claude Code's status line command.
 //!
 //! Claude Code hands its status line command a JSON on stdin that carries, on a
 //! subscription plan, how much of the 5-hour and weekly limits is used. This
-//! mode sends Nook those two windows and the name of the session's model, and
+//! mode sends Oleo those two windows and the name of the session's model, and
 //! nothing else of that JSON — it also holds the cost, the folder and the
 //! transcript's path, and none of them leaves this process.
 //!
 //! What Claude Code shows as the status line is this command's stdout, so:
 //! * with no status line of the user's own, nothing is printed at all;
-//! * with one (`--previous`, put there by Nook's installer), it is run with the
+//! * with one (`--previous`, put there by Oleo's installer), it is run with the
 //!   same bytes on stdin, writes straight to our stdout, and its exit code is
 //!   ours. Past PREVIOUS_BUDGET it is stopped and we exit 0.
 //!
@@ -22,10 +22,10 @@ use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
 
-/// The argument that selects this mode. Nook's installer writes it
+/// The argument that selects this mode. Oleo's installer writes it
 /// (src-tauri/src/statusline.rs), and it is the first argument or it is not this mode.
 pub const MODE: &str = "statusline";
-/// Followed by the user's own status line setting — the JSON value Nook found
+/// Followed by the user's own status line setting — the JSON value Oleo found
 /// under `statusLine`, in base64url — to run after the numbers are sent.
 const PREVIOUS_FLAG: &str = "--previous";
 /// The name the app knows this event by. Never a hook: Claude Code has none of that name.
@@ -52,7 +52,7 @@ pub fn run(args: &[String]) -> ! {
     let raw = read_stdin().unwrap_or_default();
 
     // Fire and forget, on its own thread: the user's status line does not wait
-    // for Nook, and a closed Nook costs nothing.
+    // for Oleo, and a closed Oleo costs nothing.
     let (sent_tx, sent_rx) = mpsc::channel::<()>();
     if let Some(line) = usage_line(&raw) {
         std::thread::spawn(move || {
@@ -84,7 +84,7 @@ fn read_stdin() -> Option<Vec<u8>> {
     rx.recv_timeout(STDIN_BUDGET).ok().flatten()
 }
 
-/// One window as it goes to Nook: its two numbers, when both are numbers.
+/// One window as it goes to Oleo: its two numbers, when both are numbers.
 fn window_of(limits: &Value, name: &str) -> Option<Value> {
     let window = limits.get(name)?.as_object()?;
     let mut out = serde_json::Map::new();
@@ -104,7 +104,7 @@ fn limits_of(status: &Value) -> Option<Value> {
     (!windows.is_empty()).then_some(Value::Object(windows))
 }
 
-/// The session's model as it goes to Nook: its id and the name Claude Code
+/// The session's model as it goes to Oleo: its id and the name Claude Code
 /// shows for it, each a short single line. None when neither is there.
 fn model_of(status: &Value) -> Option<Value> {
     let model = status.get("model")?.as_object()?;
@@ -127,7 +127,7 @@ fn context_window_of(status: &Value) -> Option<u64> {
     (MIN_CONTEXT_WINDOW..=MAX_CONTEXT_WINDOW).contains(&size).then_some(size)
 }
 
-/// The one line Nook gets from a status line call: the event's name, the
+/// The one line Oleo gets from a status line call: the event's name, the
 /// session it came from, the limits, the model and its context window. Built
 /// field by field — nothing of the status JSON is copied that is not named
 /// here. None when there is neither a limit nor a model to tell.
@@ -160,7 +160,7 @@ fn usage_line(raw: &[u8]) -> Option<String> {
 
 // ── The user's own status line ────────────────────────────────────────────────
 
-/// The status line the user had before Nook's, as its setting said it.
+/// The status line the user had before Oleo's, as its setting said it.
 #[derive(Debug, PartialEq)]
 struct Previous {
     command: String,

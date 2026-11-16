@@ -75,7 +75,7 @@ function arm() {
   }, Math.min(Math.max(0, timer.endsAt - Date.now()), 2_000_000_000));
 }
 
-/** It reached zero. `loud`: it did so while Nook was running (a sound, the island); otherwise it is only said. */
+/** It reached zero. `loud`: it did so while Oleo was running (a sound, the island); otherwise it is only said. */
 function finish(loud: boolean) {
   timer.running = false;
   timer.remainingMs = 0;
@@ -87,7 +87,7 @@ function finish(loud: boolean) {
   ShelfHooks.alert("timer");
 }
 
-/** At start: a timer that was running goes on; one that ran out while Nook was not running is only shown as finished. */
+/** At start: a timer that was running goes on; one that ran out while Oleo was not running is only shown as finished. */
 export async function startTimer() {
   Object.assign(timer, readTimer(await loadWidget("timer")));
   if (timer.running && timer.endsAt <= Date.now()) finish(false);

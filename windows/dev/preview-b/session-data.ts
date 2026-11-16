@@ -53,7 +53,7 @@ function session(id: string, project: string, title: string, state: BotStateName
   return { ...newSession(id), target: { kind: "terminal", label: "Windows Terminal", tabbed: true }, title, project, cwd: `D:\\work\\${project}`, state, heardAt: ago(heardSecondsAgo) };
 }
 
-// ── The session on show: nook, with its subagents ─────────────────────────────
+// ── The session on show: oleo, with its subagents ─────────────────────────────
 
 const explore: Subagent = {
   id: "a1f08c03f03bd405d", type: "Explore", description: "Map where hook events are routed", state: "done",
@@ -157,8 +157,8 @@ const HOOKS_PATCH = [
   "   switch (payload.hook_event_name) {",
 ].join("\n");
 
-const nook: PreviewSession = {
-  session: session("s-nook", "nook", "Show subagents in the sidebar", "working", 4),
+const oleo: PreviewSession = {
+  session: session("s-oleo", "oleo", "Show subagents in the sidebar", "working", 4),
   items: [
     item(step("Prompt", "prompt", "Give each subagent its own view, reached from the sidebar, and name the subagent on approval cards.", 372)),
     item(step("Grep", "search", "agent_id|SubagentStart|SubagentStop", 362, {
@@ -166,7 +166,7 @@ const nook: PreviewSession = {
     })),
     { kind: "launch", agent: explore },
     item(step("Edit", "edit", "windows/src/core/state.ts", 236, { patch: STATE_PATCH })),
-    item(step("Bash", "command", "cargo test -p nook-hook -- --nocapture && cargo clippy --workspace --all-targets -- -D warnings && npx tsc --noEmit -p windows/tsconfig.json", 196, {
+    item(step("Bash", "command", "cargo test -p oleo-hook -- --nocapture && cargo clippy --workspace --all-targets -- -D warnings && npx tsc --noEmit -p windows/tsconfig.json", 196, {
       result: printed([
         "running 12 tests",
         "test tests::an_edit_becomes_a_diff_with_its_line_numbers ... ok",
@@ -269,8 +269,8 @@ export const EXAMPLE_REPLY = [
   "### Where to look",
   "",
   "1. `windows/src-tauri/src/openfile.rs:98` resolves a path to one existing file",
-  "2. `C:\\Users\\nook\\code\\nook\\NOTICE` is absolute, and opens wherever it is",
-  "3. A long one may break: `windows/src-tauri/target/release/bundle/nsis/Nook_0.2.2_x64-setup.exe`",
+  "2. `C:\\Users\\oleo\\code\\oleo\\NOTICE` is absolute, and opens wherever it is",
+  "3. A long one may break: `windows/src-tauri/target/release/bundle/nsis/Oleo_0.2.2_x64-setup.exe`",
   "",
   "| Alert | Colour | Says |",
   "|---|---|---|",
@@ -289,7 +289,7 @@ export const EXAMPLE_REPLY = [
   "> `open_session_file` opens **any** existing file given by its absolute path, not only files of the project.",
   "",
   "> [!CAUTION]",
-  "> Do not run `cargo build --release` while the app is running: the build cannot replace `nook.exe`.",
+  "> Do not run `cargo build --release` while the app is running: the build cannot replace `oleo.exe`.",
   "",
   "#### The small print",
   "",
@@ -393,7 +393,7 @@ const auditor: Subagent = {
 /** In VS Code, so the paths of its reply open; and its reply waits on a decision. */
 const docs: PreviewSession = {
   session: {
-    ...session("s-docs", "nook-docs", "Render replies properly", "finished", 40),
+    ...session("s-docs", "oleo-docs", "Render replies properly", "finished", 40),
     target: { kind: "vscode", label: "VS Code", tabbed: false },
     decision: true,
   },
@@ -411,9 +411,9 @@ const docs: PreviewSession = {
 export const EXAMPLE_ID = docs.session.id;
 export const EXAMPLE_AGENT = auditor.id;
 
-export const SESSIONS: PreviewSession[] = [nook, api, atlas, web, docs];
+export const SESSIONS: PreviewSession[] = [oleo, api, atlas, web, docs];
 /** The session the scenarios are about. */
-export const MAIN_ID = nook.session.id;
+export const MAIN_ID = oleo.session.id;
 export const LONG_FOLDER = "client-with-an-unreasonably-long-repository-name-2026";
 
 /** The subagents the preview's controls open by name. */
@@ -455,7 +455,7 @@ export interface Request {
 }
 
 /** The request of the default scenario: the subagent that checks the relay wants to run its test. */
-export const REQUEST_SUBAGENT: Request = { agentId: checker.id, tool: "Bash", kind: "command", target: "cargo test -p nook-hook forwards_agent" };
+export const REQUEST_SUBAGENT: Request = { agentId: checker.id, tool: "Bash", kind: "command", target: "cargo test -p oleo-hook forwards_agent" };
 /** The request waiting behind it, when two subagents ask at once. */
 export const REQUEST_QUEUED: Request = { agentId: finder.id, tool: "Bash", kind: "command", target: 'rg -n "jr-step" windows/src' };
 export const REQUEST_MAIN: Request = { agentId: null, tool: "Bash", kind: "command", target: "git commit -m \"Show subagents in the sidebar\"" };

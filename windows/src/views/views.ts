@@ -161,8 +161,8 @@ function sessionWho(label: string): HTMLElement {
  * Who is asking, on a request's card. The session itself: as `sessionWho`
  * says it. One of its subagents: by what it was launched to do, then its kind
  * and the session it belongs to — "Write a note (general-purpose subagent) of
- * nook needs permission" — or, when nothing named it, "A general-purpose
- * subagent of nook needs permission". When a request does not say who it comes
+ * oleo needs permission" — or, when nothing named it, "A general-purpose
+ * subagent of oleo needs permission". When a request does not say who it comes
  * from (an older Claude Code) while subagents are at work, the card says only
  * what it knows: that one of them may be asking.
  */
@@ -264,7 +264,7 @@ export function buildHeader(actions: ViewActions): ViewHost {
   const gearBtn = h("button", { class: "ha", title: "Ajustes", "aria-label": "Ajustes", onclick: () => go("settings") }, lucide(LUCIDE.slidersHorizontal, 15, 1.75));
   const soundBtn = h("button", { class: "ha", title: "Silenciar", "aria-label": "Silenciar", onclick: () => actions.toggleSound() });
   let soundKey = "";
-  // A newer Nook is out, and the user asked to be told (core/update.ts): the way to its release page.
+  // A newer Oleo is out, and the user asked to be told (core/update.ts): the way to its release page.
   const updateBtn = h("button", { class: "ha ha-update", onclick: () => {
     actions.blip();
     Update.open();
@@ -323,7 +323,7 @@ export function buildHeader(actions: ViewActions): ViewHost {
       if (nextUpdate !== updateKey) {
         updateKey = nextUpdate;
         updateBtn.style.display = offered ? "" : "none";
-        updateBtn.title = updateBtn.ariaLabel = offered ? `Nook ${offered.latest} is out. Opens its download page.` : "";
+        updateBtn.title = updateBtn.ariaLabel = offered ? `Oleo ${offered.latest} is out. Opens its download page.` : "";
       }
       stats.draw();
       el.style.opacity = v === "confused" ? "0" : "1";

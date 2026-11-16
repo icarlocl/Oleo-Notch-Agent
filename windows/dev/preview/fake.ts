@@ -58,13 +58,13 @@ const session = (
   cwd: string, state: BotStateName, doing: string, minutes: number, seen = false,
 ): FakeSession => ({ id: `s${nextId++}`, cwd, state, doing, since: ago(minutes), seen, subagents: [] });
 
-const NOOK = "D:/work/personal/nook";
+const OLEO = "D:/work/personal/oleo";
 
 const eight = (): FakeSession[] => [
-  session(NOOK, "working", "Shell · cargo test --workspace", 2),
+  session(OLEO, "working", "Shell · cargo test --workspace", 2),
   session("D:/work/acme/api", "approval", "Bash · rm -rf dist && npm run build", 4),
   session("D:/work/acme/web", "finished", "Done · 3 files changed", 1),
-  session(NOOK, "thinking", "Thinking about the relay's statusline mode", 6),
+  session(OLEO, "thinking", "Thinking about the relay's statusline mode", 6),
   session("D:/work/docs-site", "question", "Asks · Which sidebar layout?", 9),
   session("D:/work/ml-pipeline", "error", "Failed · pytest tests/test_loader.py", 3),
   session("D:/work/infra", "finished", "Done · terraform plan is clean", 3, true),

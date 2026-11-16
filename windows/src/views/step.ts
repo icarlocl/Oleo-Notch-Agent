@@ -3,7 +3,7 @@
 // at what it did: the lines of the file it read, the diff of its edit, the
 // command it ran with the end of what that printed.
 //
-// Everything here comes with the hooks. nook-hook forwards a few lines of a
+// Everything here comes with the hooks. oleo-hook forwards a few lines of a
 // tool's result and no more; none of it is fetched, and none of it is kept
 // once the session is gone.
 

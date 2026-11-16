@@ -133,9 +133,9 @@ windows/
 
 ## Character art and sounds
 
-The character is Gullu, Nook's buddy: Nook's own, drawn in code
-(`src/bot/engine.ts`) from `design/prototype/nook-buddy.html`, and the icons are
-drawn from it by `scripts/gen-icons.mjs`. Gullu wears the status of your
+The character is Durazno, Oleo's peach plush: its picture is `src/bot/mascots/durazno.png`,
+its face is drawn live by `src/bot/engine.ts`, and the icons are drawn from it by
+`scripts/gen-icons.mjs`. Durazno wears the status of your
 sessions, and reacts to the pointer and to clicks (`src/bot/reactions.ts`);
 Settings → Appearance → Playful reactions turns that off. The sounds are
 Nook's own: synthesized from plain tones by `scripts/make-sounds.mjs` (see

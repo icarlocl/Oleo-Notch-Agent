@@ -4,7 +4,7 @@
 //
 // Nothing here asks anybody anything. The relay, installed as Claude Code's
 // status line command (statusline.rs), forwards the numbers Claude Code already
-// has; the latest are kept in memory, shown on the island, and gone when Nook
+// has; the latest are kept in memory, shown on the island, and gone when Oleo
 // closes. Nothing is written to disk, and nothing leaves this machine.
 
 use std::sync::Mutex;
@@ -44,7 +44,7 @@ pub struct Window {
 pub struct Usage {
     pub five_hour: Option<Window>,
     pub seven_day: Option<Window>,
-    /// When Nook was told (Unix ms).
+    /// When Oleo was told (Unix ms).
     pub updated_at: u64,
 }
 
@@ -66,7 +66,7 @@ pub struct SessionModel {
     pub context_window: Option<u64>,
 }
 
-/// The latest usage Claude Code reported, kept for as long as Nook runs.
+/// The latest usage Claude Code reported, kept for as long as Oleo runs.
 #[derive(Default)]
 pub struct Latest(Mutex<Option<Usage>>);
 
@@ -168,13 +168,13 @@ pub fn receive(app: &AppHandle, payload: &Value) {
     }
 }
 
-/// The latest usage, if Claude Code has reported any since Nook started.
+/// The latest usage, if Claude Code has reported any since Oleo started.
 pub fn last(app: &AppHandle) -> Option<Usage> {
     *app.state::<Latest>().0.lock().unwrap()
 }
 
 /// The island has just booted: what is already known is told again, for a
-/// page that was reloaded while Nook kept running.
+/// page that was reloaded while Oleo kept running.
 pub fn tell_island(app: &AppHandle) {
     if let Some(usage) = last(app) {
         let _ = app.emit_to(WINDOW_LABEL, "usage", usage);

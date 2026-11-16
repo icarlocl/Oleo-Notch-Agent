@@ -27,7 +27,7 @@ document.addEventListener("visibilitychange", () => {
 const MESSAGES: Record<string, [string, string]> = {
   denied: [
     "Camera access was refused",
-    "Allow it for Nook: Windows Settings → Privacy & security → Camera, and let desktop apps use your camera. If you chose Block when asked, that choice is remembered. Then try again.",
+    "Allow it for Oleo: Windows Settings → Privacy & security → Camera, and let desktop apps use your camera. If you chose Block when asked, that choice is remembered. Then try again.",
   ],
   missing: ["No camera found", "Plug one in, or check that Windows can see it, then try again."],
   busy: ["The camera is busy", "Another app may be using it. Close it, then try again."],
@@ -63,7 +63,7 @@ export function buildMirror(ctx: WidgetContext): Widget {
       case "starting":
         title.textContent = "Esperando la cámara…";
         sub.textContent = camera.slow
-          ? "No answer yet. If no question appeared, allow the camera for Nook in Windows Settings → Privacy & security → Camera, then go back and try again."
+          ? "No answer yet. If no question appeared, allow the camera for Oleo in Windows Settings → Privacy & security → Camera, then go back and try again."
           : "Windows may be asking for permission.";
         break;
       case "off":

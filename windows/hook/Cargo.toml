@@ -1,12 +1,12 @@
 [package]
-name = "nook-hook"
-description = "Relays Claude Code hook events to Nook over a named pipe (Windows) or a Unix socket (Linux)"
+name = "oleo-hook"
+description = "Relays Claude Code hook events to Oleo over a named pipe (Windows) or a Unix socket (Linux)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [[bin]]
-name = "nook-hook"
+name = "oleo-hook"
 path = "src/main.rs"
 
 [dependencies]

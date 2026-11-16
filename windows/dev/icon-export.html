@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Oleo — icon export</title>
+<style>
+  body { margin: 0; padding: 16px; background: #1b1d22; color: #ddd; font: 13px "Segoe UI", sans-serif; }
+  #out { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; }
+  #out canvas { background: repeating-conic-gradient(#2a2d33 0 25%, #22252a 0 50%) 0 0 / 16px 16px; }
+</style>
+</head>
+<body>
+<p>The app icons, drawn by the engine (scripts/gen-icons.mjs reads them from <code>window.renderIcons</code>).</p>
+<div id="out"></div>
+<script type="module" src="./icon-export.ts"></script>
+</body>
+</html>

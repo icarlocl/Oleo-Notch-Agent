@@ -45,7 +45,7 @@ const EVENT: &str = "shortcut";
 const REPEAT: Duration = Duration::from_millis(250);
 
 const TAKEN: &str = "Already used by another app — pick another";
-const TWICE: &str = "Already another Nook shortcut — pick another";
+const TWICE: &str = "Already another Oleo shortcut — pick another";
 
 /// Which of the five.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -251,7 +251,7 @@ fn take(app: &AppHandle, which: Which, accelerator: &str, shortcut: Shortcut) ->
 
 /// At launch: each saved shortcut is registered, if it is on. One that cannot
 /// be — another program got there first — is logged and said in the settings
-/// window; Nook runs on without it, and the other is not held back by it.
+/// window; Oleo runs on without it, and the other is not held back by it.
 pub fn start(app: &AppHandle, settings: &Settings) {
     let hotkeys = app.state::<Hotkeys>();
     let mut held = hotkeys.0.lock().unwrap();
@@ -363,7 +363,7 @@ pub fn allow_agents(app: &AppHandle, allowed: bool) {
     }
 }
 
-/// Nook quits: the OS is given the shortcuts back.
+/// Oleo quits: the OS is given the shortcuts back.
 pub fn stop(app: &AppHandle) {
     let hotkeys = app.state::<Hotkeys>();
     let mut held = hotkeys.0.lock().unwrap();

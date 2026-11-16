@@ -1,5 +1,5 @@
 // The folded (compact) island, as the Island and Look pages show it: a
-// schematic at the real size, with sample sessions and sample numbers, Gullu
+// schematic at the real size, with sample sessions and sample numbers, the mascot
 // in the colour picked.
 //
 // It is laid out by the island's own arithmetic — core/layout.ts
@@ -157,7 +157,7 @@ export function islandPreview(bot: Bot): IslandPreview {
       }
       draw();
       const names = on.map((k) => COMPACT_CELLS[k].short);
-      words.textContent = names.length ? `Gullu · sessions · ${names.join(" · ")}` : "Gullu · sessions — no numbers, so the island is narrower";
+      words.textContent = names.length ? `Durazno · sessions · ${names.join(" · ")}` : "Durazno · sessions — no numbers, so the island is narrower";
       // Its length along the edge, ears included; on a side, the column's width beside it.
       width.textContent = side ? `${COMPACT_COLUMN_W} × ${wanted + 2 * EAR_COMPACT} px` : `${wanted + 2 * EAR_COMPACT} px`;
       desk.setAttribute("aria-label", `Preview of the compact island, with sample values: ${on.map((k) => COMPACT_CELLS[k].name).join(", ") || "no numbers"}`);

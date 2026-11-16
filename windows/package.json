@@ -1,5 +1,5 @@
 {
-  "name": "nook",
+  "name": "oleo",
   "private": true,
   "version": "0.2.2",
   "type": "module",
@@ -15,8 +15,8 @@
     "shots:import": "node scripts/import-shot.mjs",
     "shots:list": "node scripts/shots.mjs --list",
     "tauri": "tauri",
-    "predev": "cargo build --release -p nook-hook",
-    "prebuild": "cargo build --release -p nook-hook",
+    "predev": "cargo build --release -p oleo-hook",
+    "prebuild": "cargo build --release -p oleo-hook",
     "pack": "tauri build && node scripts/pack.mjs"
   },
   "devDependencies": {

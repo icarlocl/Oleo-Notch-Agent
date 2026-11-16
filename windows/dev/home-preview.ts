@@ -324,7 +324,7 @@ function renderMain(front: FakeSession | null) {
     whoName.textContent = hooksMissing ? "Not connected" : "No sessions";
     whoName.title = "";
     whoWords.textContent = "";
-    doing.textContent = hooksMissing ? "Claude Code can't reach Nook yet" : "Nothing is running";
+    doing.textContent = hooksMissing ? "Claude Code can't reach Oleo yet" : "Nothing is running";
     doing.title = "";
     return;
   }
@@ -355,7 +355,7 @@ function renderEmpty(none: boolean) {
   if (hooksMissing) {
     empty.append(
       h("div", { class: "title", text: "Hooks not installed" }),
-      h("div", { class: "sub", text: "Nook hears about sessions through Claude Code's hooks. Install them to see sessions here." }),
+      h("div", { class: "sub", text: "Oleo hears about sessions through Claude Code's hooks. Install them to see sessions here." }),
       h("button", { class: "btn secondary" }, svg(ICONS.gear, 12), "Open Settings"),
     );
   } else {
@@ -555,7 +555,7 @@ const controls = h(
     button("0", () => load([], "No sessions: the middle says how to start one.")),
     button("0 · hooks not installed", () => load([], "No sessions because the hooks are not installed.", true)),
     button("1", () => load(fakeSessions(1), "One session.")),
-    button("4", () => load(fakeSessions(4), "Four sessions, two of them in the same folder (nook ·1, nook ·2).")),
+    button("4", () => load(fakeSessions(4), "Four sessions, two of them in the same folder (oleo ·1, oleo ·2).")),
     button("8", () => load(fakeSessions(8), "Eight sessions: the six most urgent on show, the rest behind \"+2\".")),
     button("all 8 need attention", () => load(allNeedAttention(), "All eight ask at once: \"+2\" takes the colour of the most urgent one it hides."))),
   group("Edge cases",
@@ -615,6 +615,6 @@ document.getElementById("root")!.append(
   controls,
 );
 
-say("Four sessions, two of them in the same folder (nook ·1, nook ·2).");
+say("Four sessions, two of them in the same folder (oleo ·1, oleo ·2).");
 refresh();
 startBots();

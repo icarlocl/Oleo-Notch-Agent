@@ -4,7 +4,8 @@
 
 import { wipe } from "../core/canvas";
 import type { BotStateName } from "../core/layout";
-import { BOT_THEMES, BotEngine, type BotTheme } from "../bot/engine";
+import { BotEngine } from "../bot/engine";
+import { isMascot, type MascotId } from "../bot/mascots";
 import { h } from "../views/dom";
 
 /** As in island.ts: room above the body for what flies out of it. */
@@ -21,6 +22,8 @@ interface Mounted {
   canvas: HTMLCanvasElement;
   slot: HTMLElement;
   size: number;
+  /** A mascot of its own (a card of the mascot picker): wearing another leaves it be. */
+  fixed: boolean;
   /** Frames still owed while motion is reduced: a change is drawn, then he holds still. */
   owed: number;
 }
@@ -29,8 +32,8 @@ const bots: Mounted[] = [];
 /** Enough frames for a change of state or colour to settle on his face. */
 const SETTLE_FRAMES = 45;
 
-/** The island's bot at `diameter`, without the glow the open island puts under him. */
-export function mountBot(diameter: number): Bot {
+/** The island's bot at `diameter`, without the glow the open island puts under him; `mascot` keeps it that one. */
+export function mountBot(diameter: number, mascot?: MascotId): Bot {
   const size = Math.round(diameter / 0.6);
   const height = size + OVERHANG;
   const slot = h("div", { class: "sp-bot", style: `width:${diameter}px;height:${diameter}px` });
@@ -46,7 +49,8 @@ export function mountBot(diameter: number): Bot {
 
   const engine = new BotEngine();
   engine.particleOverhang = OVERHANG;
-  const mounted: Mounted = { engine, canvas, slot, size, owed: SETTLE_FRAMES };
+  if (mascot) engine.mascot = mascot;
+  const mounted: Mounted = { engine, canvas, slot, size, fixed: mascot != null, owed: SETTLE_FRAMES };
   bots.push(mounted);
   return {
     el: slot,
@@ -58,13 +62,12 @@ export function mountBot(diameter: number): Bot {
   };
 }
 
-export const isBotTheme = (name: string): name is BotTheme => name in BOT_THEMES;
-
-/** Every bot of this window in `name`'s colours; a name the engine does not know leaves them as they are. */
-export function wearBotTheme(name: string) {
-  if (!isBotTheme(name)) return;
+/** Every bot of this window as the mascot `name`; a name the engine does not know leaves them as they are. */
+export function wearMascot(name: string) {
+  if (!isMascot(name)) return;
   for (const bot of bots) {
-    bot.engine.theme = name;
+    if (bot.fixed) continue;
+    bot.engine.mascot = name;
     bot.owed = SETTLE_FRAMES;
   }
   wakeBots();
@@ -73,7 +76,7 @@ export function wearBotTheme(name: string) {
 /**
  * The frame loop: every bot on show, its eyes after the mouse. The webview
  * itself stops handing out frames while the window is hidden — which it is for
- * most of Nook's life — so nothing is drawn then; and with motion reduced, a
+ * most of Oleo's life — so nothing is drawn then; and with motion reduced, a
  * bot is drawn only until a change has settled.
  */
 export function startBots(still: () => boolean) {
@@ -83,7 +86,7 @@ export function startBots(still: () => boolean) {
     mouse.y = e.clientY;
   });
 
-  // The settings window exists, hidden, for all of Nook's life, and a hidden
+  // The settings window exists, hidden, for all of Oleo's life, and a hidden
   // WebView2 window goes on handing out frames: the loop has to stop by itself.
   // It runs while a bot still has something to do, and is woken by what can
   // give it something: the mouse, the window coming back, a bot refreshed.

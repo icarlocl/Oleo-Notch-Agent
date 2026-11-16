@@ -339,7 +339,7 @@ export function buildHome(actions: ViewActions): ViewHost {
       whoName.title = "";
       whoModel.textContent = "";
       whoState.textContent = "";
-      doing.textContent = missing ? "Claude Code can't reach Nook yet" : "Nothing is running";
+      doing.textContent = missing ? "Claude Code can't reach Oleo yet" : "Nothing is running";
       doing.title = "";
       review.style.display = "none";
       return;

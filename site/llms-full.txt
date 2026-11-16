@@ -44,9 +44,9 @@ New in 0.2.2: Codex sessions with Allow and Deny, and a reply box on a finished 
 
 This site sets no cookies and uses no analytics.
 
-## Meet Gullu
+## Meet Durazno
 
-Gullu is Nook's mascot, a fluffy cream character with a small green sprout on its head. It lives in the island and wears the state of your sessions: busy while Claude works, curious when it thinks, alert when it needs you, happy when it is done. Playful reactions can be switched off in Settings.
+Durazno is Nook's mascot, a fluffy cream character with a small green sprout on its head. It lives in the island and wears the state of your sessions: busy while Claude works, curious when it thinks, alert when it needs you, happy when it is done. Playful reactions can be switched off in Settings.
 
 ## Install
 
@@ -271,7 +271,7 @@ The same works in the integrated terminal of VS Code, and in Cursor’s terminal
 
 ## A tour of the island
 
-The island lives at the top of your screen. It is folded to a thin pill most of the time, opens when you point at it, and opens by itself when a session needs you. Its mascot, Gullu, wears the state of your sessions.
+The island lives at the top of your screen. It is folded to a thin pill most of the time, opens when you point at it, and opens by itself when a session needs you. Its mascot, Durazno, wears the state of your sessions.
 
 ### Home
 
@@ -313,7 +313,7 @@ In **Settings → Island → Visibility** you choose how the folded island behav
 - **Hide only when no session is active**: while a session is working, thinking or asking, the island stays.
 - **Hide in full-screen apps** (on by default): the island stays out of the way of videos, games and presentations, but a permission request or a question still shows so you can answer it.
 
-Under **General** you can pick which display it lives on (the main display, or the one the mouse is on) and whether Nook launches at startup. Under **Appearance** there are themes, reduced motion and Gullu’s playful reactions.
+Under **General** you can pick which display it lives on (the main display, or the one the mouse is on) and whether Nook launches at startup. Under **Appearance** there are themes, reduced motion and Durazno’s playful reactions.
 
 Next: [how the hooks work](https://nook.zubyr.dev/guides/claude-code-hooks/), or [troubleshooting](https://nook.zubyr.dev/guides/troubleshooting/) if no sessions show up.
 
@@ -845,7 +845,7 @@ Nook is free software under the MIT license. These short terms say what that mea
 
 ## License
 
-Nook’s source code is released under the [MIT License](https://github.com/zubairbinshaukat/nook/blob/main/LICENSE). You may use, copy, modify, merge, publish, distribute and sell it, as long as you keep the copyright and permission notice. Nook is a fork of Coucou by Louis Raillé, which is also MIT-licensed; the original notice is kept. Gullu, the icons and the sounds are Nook’s own and are covered by [LICENSE-ASSETS.md](https://github.com/zubairbinshaukat/nook/blob/main/LICENSE-ASSETS.md). Third-party notices (for example Lucide icons) are in [NOTICE](https://github.com/zubairbinshaukat/nook/blob/main/NOTICE).
+Nook’s source code is released under the [MIT License](https://github.com/zubairbinshaukat/nook/blob/main/LICENSE). You may use, copy, modify, merge, publish, distribute and sell it, as long as you keep the copyright and permission notice. Nook is a fork of Coucou by Louis Raillé, which is also MIT-licensed; the original notice is kept. Durazno, the icons and the sounds are Nook’s own and are covered by [LICENSE-ASSETS.md](https://github.com/zubairbinshaukat/nook/blob/main/LICENSE-ASSETS.md). Third-party notices (for example Lucide icons) are in [NOTICE](https://github.com/zubairbinshaukat/nook/blob/main/NOTICE).
 
 ## Provided as is
 
@@ -915,7 +915,7 @@ The first release of Nook, a fork of Coucou for Windows. Highlights:
 - **The relay.** `nook-hook` is run by Claude Code on each hook event. It never blocks Claude Code, checks it is talking to Nook (same user, `nook.exe`, no lower integrity level) and talks only over a named pipe that only the current user can open.
 - **Safe hooks.** Hooks are installed and removed from Settings with a diff preview, a dated backup and a click.
 - **Usage and system.** Claude usage limits (5-hour and weekly) and CPU, GPU and RAM in the header.
-- **Gullu.** Nook’s own buddy, with reactions to the pointer and to session status.
+- **Durazno.** Nook’s own buddy, with reactions to the pointer and to session status.
 - **The Shelf.** To-do, Timer, Reminders, Media, Mirror and Projects widgets.
 - **Shortcuts and visibility.** Three configurable global shortcuts, auto-hide in full-screen apps, and paging by swipe.
 - **Private by design.** No telemetry and no network calls.

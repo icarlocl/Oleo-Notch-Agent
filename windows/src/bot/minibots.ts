@@ -10,7 +10,7 @@
 
 import { Ease } from "../core/anim";
 import { BotEngine, hexToRGB } from "./engine";
-import { GulluReactions, type GulluZone } from "./reactions";
+import { MascotReactions, type MascotZone } from "./reactions";
 import { wipe } from "../core/canvas";
 import type { BotStateName } from "../core/layout";
 import type { AgentTask } from "../core/state";
@@ -25,7 +25,7 @@ interface MiniBot {
   /** It answers the cursor: a session's mini does, the others do not. */
   reacts: boolean;
   /** Its reactions, once the cursor has come by. */
-  ctl: GulluReactions | null;
+  ctl: MascotReactions | null;
   /** The status its reactions were last told of: the engine's state, which whoever made the mini sets. */
   status: BotStateName | null;
   /** Drawn until then whatever else: the cursor was beside it a moment ago, or a reaction has just played. */
@@ -56,7 +56,7 @@ const live = new Map<HTMLCanvasElement, MiniBot>();
 let playful = true;
 let reduce: boolean | null = null;
 
-const isClose = (zone: GulluZone) => zone === "on" || zone === "near";
+const isClose = (zone: MascotZone) => zone === "on" || zone === "near";
 
 /**
  * Creates a mini bot whose **body** is about `bodySize` CSS pixels across.
@@ -228,8 +228,8 @@ export function miniBotManners(playfulOn: boolean, reduceMotion: boolean | null)
 }
 
 /** A mini's reactions: to the cursor only — what an idle bot does by itself, and its nap, are the island's bot's. */
-function reactions(mb: MiniBot): GulluReactions {
-  const ctl = new GulluReactions(mb.engine);
+function reactions(mb: MiniBot): MascotReactions {
+  const ctl = new MascotReactions(mb.engine);
   ctl.beats = false;
   ctl.napAfter = Number.POSITIVE_INFINITY;
   ctl.idleEvery = [1e9, 1e9];

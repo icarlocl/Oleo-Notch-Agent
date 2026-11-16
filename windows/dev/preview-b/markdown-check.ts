@@ -43,7 +43,7 @@ export function checkMarkdown(): { passed: number; failed: string[] } {
   same("relative, with a folder", path("src/views/markdown.ts"), { path: "src/views/markdown.ts", line: null, col: null, bare: false });
   same("with a line", path("src/a.ts:12"), { path: "src/a.ts", line: 12, col: null, bare: false });
   same("with a line and a column", path("src/a.ts:12:5"), { path: "src/a.ts", line: 12, col: 5, bare: false });
-  same("a drive", path("C:\\work\\nook\\NOTICE"), { path: "C:\\work\\nook\\NOTICE", line: null, col: null, bare: false });
+  same("a drive", path("C:\\work\\oleo\\NOTICE"), { path: "C:\\work\\oleo\\NOTICE", line: null, col: null, bare: false });
   same("a drive, with a line", path("C:/work/a.rs:7"), { path: "C:/work/a.rs", line: 7, col: null, bare: false });
   same("from the root", path("/usr/local/etc/app.conf"), { path: "/usr/local/etc/app.conf", line: null, col: null, bare: false });
   // A single name: a path only as far as its shape goes — a link once the file is known to exist.
@@ -57,7 +57,7 @@ export function checkMarkdown(): { passed: number; failed: string[] } {
   same("a file with no extension, in a folder", path("docker/Dockerfile")?.path, "docker/Dockerfile");
   for (const not of [
     "session.answer", "Math.round()", "console.log", "v1.2.3", "e.g.", "and/or", "TCP/IP", "application/json", "src/views", "src/", "/clear", "/",
-    "https://example.com/a.ts", "file:///C:/a.ts", "--goto", "-x/a.ts", "*.ts", "src/*.ts", "a b/c.ts", "..", "./..", "C:\\Users\\nook", "README",
+    "https://example.com/a.ts", "file:///C:/a.ts", "--goto", "-x/a.ts", "*.ts", "src/*.ts", "a b/c.ts", "..", "./..", "C:\\Users\\oleo", "README",
     "npm run build", "foo.bar", "//server/share/a.ts", "\\\\server\\share\\a.ts", "a.ts:", "a.ts:x", "$HOME/a.ts", "%APPDATA%\\a.ts", "~", "",
   ]) same(`not a path: ${not}`, path(not), null);
 

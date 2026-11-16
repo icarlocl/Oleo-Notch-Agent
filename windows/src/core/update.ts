@@ -1,6 +1,6 @@
-// Whether a newer Nook is out, as the island knows it.
+// Whether a newer Oleo is out, as the island knows it.
 //
-// Nook asks GitHub for its latest release only when the user has switched the
+// Oleo asks GitHub for its latest release only when the user has switched the
 // daily check on (Settings → About), or presses "Check now" there
 // (src-tauri/src/update.rs). The island never asks: it is told the result, and
 // shows it — a mark in its header — only while the check is switched on.

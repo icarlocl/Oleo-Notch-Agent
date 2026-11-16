@@ -14,7 +14,7 @@
 //    the child).
 //  - Nothing here waits on the child on a Tauri or async thread: one thread
 //    watches it, and kills it after 30 minutes or when the user cancels.
-//  - The hooks the child fires carry `NOOK_REPLY=1` (see the relay's ENV_CONTEXT),
+//  - The hooks the child fires carry `OLEO_REPLY=1` (see the relay's ENV_CONTEXT),
 //    so they can be told apart from a session the user typed in.
 // The log says that a reply started and ended, with the session id and lengths,
 // never what was said.
@@ -367,7 +367,7 @@ fn launch(tool: Tool, exe: &Path, id: &str, cwd: &Path, log_file: std::fs::File)
     let mut cmd = Command::new(exe);
     cmd.args(args_for(tool, id))
         .current_dir(cwd)
-        .env("NOOK_REPLY", "1")
+        .env("OLEO_REPLY", "1")
         .stdin(Stdio::piped())
         .stdout(Stdio::from(log_file.try_clone()?))
         .stderr(Stdio::from(log_file));
@@ -387,7 +387,7 @@ fn launch(tool: Tool, exe: &Path, id: &str, cwd: &Path, log_file: std::fs::File)
     cmd.spawn()
 }
 
-/// Where this run's output goes: `reply-last.log` beside `nook.log`, unless
+/// Where this run's output goes: `reply-last.log` beside `oleo.log`, unless
 /// another run is going and is writing there, which gets a file of its own.
 fn log_path(tool: Tool, id: &str, others_running: bool) -> PathBuf {
     let dir = settings::local_dir();
@@ -428,14 +428,14 @@ fn begin(app: &AppHandle, tool: &str, session_id: &str, cwd: &str, text: &str) -
     let path = log_path(tool, session_id, others_running);
     if platform::ensure_private_dir(&settings::local_dir()).is_err() {
         release(app);
-        return Err("Nook could not prepare its log folder.".into());
+        return Err("Oleo could not prepare its log folder.".into());
     }
     let file = match std::fs::File::create(&path) {
         Ok(file) => file,
         Err(e) => {
             log::line(format!("reply: cannot open {}: {e}", path.display()));
             release(app);
-            return Err("Nook could not open its log file.".into());
+            return Err("Oleo could not open its log file.".into());
         }
     };
     let mut child = match launch(tool, &exe, session_id, &cwd, file) {
@@ -714,7 +714,7 @@ mod tests {
     }
 
     #[test]
-    fn the_log_goes_beside_nook_log_and_a_second_run_gets_its_own_file() {
+    fn the_log_goes_beside_oleo_log_and_a_second_run_gets_its_own_file() {
         let first = log_path(Tool::Claude, "a", false);
         assert_eq!(first.file_name().unwrap(), "reply-last.log");
         assert_eq!(first.parent().unwrap(), settings::local_dir());

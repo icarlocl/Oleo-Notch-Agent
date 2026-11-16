@@ -37,7 +37,7 @@ jobs:
       - run: npm ci
 
       # The relay is bundled as a resource, so the app's build script wants it built first.
-      - run: cargo build --release -p nook-hook
+      - run: cargo build --release -p oleo-hook
 
       - run: npx tsc --noEmit
 

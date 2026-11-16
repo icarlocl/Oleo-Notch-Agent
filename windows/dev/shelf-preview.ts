@@ -197,8 +197,8 @@ setBotState(homeBot, "working");
 
 function buildHome(): HTMLElement {
   const groups: [string, [BotStateName, string][]][] = [
-    ["Needs you", [["approval", "nook — wants to run a command"], ["question", "korus — asks which test runner"]]],
-    ["Working", [["working", "nook ·2 — editing shelf.css"], ["thinking", "sbe-hub — thinking"], ["working", "morning-ai-brief — running tests"]]],
+    ["Needs you", [["approval", "oleo — wants to run a command"], ["question", "korus — asks which test runner"]]],
+    ["Working", [["working", "oleo ·2 — editing shelf.css"], ["thinking", "sbe-hub — thinking"], ["working", "morning-ai-brief — running tests"]]],
     ["Done", [["finished", "korus ·2 — finished 1 min ago"], ["sleeping", "ig-post — finished 4 min ago"]]],
   ];
   const mid = h("div", { class: "card home-mid" });
@@ -226,7 +226,7 @@ function buildHome(): HTMLElement {
       h("div", { class: "card wash home-left", style: "--wash:rgba(59,158,255,0.34)" },
         homeBot.slot,
         h("div", { class: "home-now" },
-          h("b", { text: "nook" }),
+          h("b", { text: "oleo" }),
           h("span", { text: "Editing shelf.css" }),
           h("span", { text: "2 need you" }))),
       mid,
@@ -341,7 +341,7 @@ function buildAlert(kind: AlertKind) {
   if (kind === "permission") {
     setBotState(alertBot, "approval");
     stack = h("div", { class: "stack alert-stack" },
-      h("div", { class: "who-row" }, dot("#F5A524"), h("span", { class: "n", text: "nook" }), h("span", { text: "· Bash" })),
+      h("div", { class: "who-row" }, dot("#F5A524"), h("span", { class: "n", text: "oleo" }), h("span", { text: "· Bash" })),
       h("div", { class: "title", text: "Claude wants to run a command" }),
       h("div", { class: "code", text: "npm run build" }),
       h("div", { class: "actions", style: "margin-top:3px" },

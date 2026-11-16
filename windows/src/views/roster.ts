@@ -28,7 +28,7 @@ export interface Entry {
   id: string;
   /** The session; null for another agent's pill. */
   session: ClaudeSession | null;
-  /** Another agent's pill (`nook_agent`); null for a session. */
+  /** Another agent's pill (`oleo_agent`); null for a session. */
   task: AgentTask | null;
   /** What it shows as. */
   state: BotStateName;

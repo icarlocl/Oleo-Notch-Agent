@@ -7,22 +7,22 @@ export type Dock = "top" | "bottom" | "left" | "right";
 export type Scene = "desktop" | "browser" | "editor" | "terminal" | "none";
 export type Theme = "light" | "dark";
 export type Taskbar = "bottom" | "top" | "hidden";
-export type Wallpaper = "nook" | "bloom";
+export type Wallpaper = "oleo" | "bloom";
 
 export const DOCKS: readonly Dock[] = ["top", "bottom", "left", "right"];
 export const SCENES: readonly Scene[] = ["desktop", "browser", "editor", "terminal", "none"];
 export const THEMES: readonly Theme[] = ["light", "dark"];
 export const TASKBARS: readonly Taskbar[] = ["bottom", "top", "hidden"];
-export const WALLPAPERS: readonly Wallpaper[] = ["nook", "bloom"];
+export const WALLPAPERS: readonly Wallpaper[] = ["oleo", "bloom"];
 
 export interface StageOptions {
   scene: Scene;
   theme: Theme;
   taskbar: Taskbar;
   /**
-   * "nook" (default): Nook's own silk-ribbon wallpaper (stage/wallpapers, drawn by stage/wallpaper-gen).
-   * "bloom": the local Windows 11 Bloom photo (stage/assets, git-ignored); Nook's shows when the file is missing.
-   * "original", the old drawn wallpaper's name, is read as "nook".
+   * "oleo" (default): Oleo's own silk-ribbon wallpaper (stage/wallpapers, drawn by stage/wallpaper-gen).
+   * "bloom": the local Windows 11 Bloom photo (stage/assets, git-ignored); Oleo's shows when the file is missing.
+   * "original", the old drawn wallpaper's name, is read as "oleo".
    */
   wallpaper: Wallpaper;
   dock: Dock;
@@ -77,7 +77,7 @@ export function parseOptions(params: URLSearchParams): StageOptions {
     scene: oneOf(SCENES, params.get("scene"), "desktop"),
     theme,
     taskbar: oneOf(TASKBARS, params.get("taskbar"), "bottom"),
-    wallpaper: oneOf(WALLPAPERS, params.get("wallpaper") === "original" ? "nook" : params.get("wallpaper"), "nook"),
+    wallpaper: oneOf(WALLPAPERS, params.get("wallpaper") === "original" ? "oleo" : params.get("wallpaper"), "oleo"),
     dock: oneOf(DOCKS, params.get("dock"), "top"),
     shot,
     ui: !shot && flag(params.get("ui"), false),

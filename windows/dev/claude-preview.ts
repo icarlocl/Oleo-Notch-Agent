@@ -36,8 +36,8 @@ const stage = installStage(document.getElementById("root")!, params);
 const view = params.get("view") ?? "overview";
 
 const SESSION = "3f2a9c1e-preview";
-const CWD = "C:\\Users\\nook\\code\\nook";
-// Where a session runs, as Nook says it on each event (src-tauri/src/target.rs):
+const CWD = "C:\\Users\\oleo\\code\\oleo";
+// Where a session runs, as Oleo says it on each event (src-tauri/src/target.rs):
 // in the app it is worked out from what the relay reports, here it is made up.
 // `target` picks the first session's: claude (the default), vscode, cursor, wt,
 // powershell, cmd — or none, a session nothing says the place of, which has no ↗.
@@ -166,24 +166,24 @@ if (at === "read") {
     "    session = newSession(id);",
   ].join("\n"));
 } else {
-  run("cargo test -p nook-hook", at === "run" ? null : TESTS);
+  run("cargo test -p oleo-hook", at === "run" ? null : TESTS);
 }
 
 // `sessions`: three more conversations going on behind the first, each
 // somewhere else — one at work in a tab of Windows Terminal, one that has just
 // finished in the Claude app, one in VS Code — so each has its own ↗.
 const second: HookPayload = {
-  session_id: "8b1d04e7-preview", cwd: "C:\\Users\\nook\\code\\atlas", session_title: "Course search", ...TARGETS.wt,
+  session_id: "8b1d04e7-preview", cwd: "C:\\Users\\oleo\\code\\atlas", session_title: "Course search", ...TARGETS.wt,
 };
 const third: HookPayload = {
   session_id: "c47e9a02-preview", cwd: CWD, session_title: "Fix the blurry island", ...TARGETS.claude,
 };
 const fourth: HookPayload = {
-  session_id: "d5a1c3f9-preview", cwd: "C:\\Users\\nook\\code\\site", session_title: "Landing page copy", ...TARGETS.vscode,
+  session_id: "d5a1c3f9-preview", cwd: "C:\\Users\\oleo\\code\\site", session_title: "Landing page copy", ...TARGETS.vscode,
 };
 if (params.has("sessions")) {
   hook({ ...fourth, hook_event_name: "UserPromptSubmit", prompt: "Tighten the landing page copy" });
-  hook({ ...fourth, hook_event_name: "PreToolUse", tool_name: "Read", tool_input: { file_path: "C:\\Users\\nook\\code\\site\\index.html" } });
+  hook({ ...fourth, hook_event_name: "PreToolUse", tool_name: "Read", tool_input: { file_path: "C:\\Users\\oleo\\code\\site\\index.html" } });
   hook({ ...second, hook_event_name: "UserPromptSubmit", prompt: "Add a search to the course list" });
   // This one's model comes the other way: from the status line's relay, with a name of its own.
   tellModel({ sessionId: second.session_id, model: { id: "claude-sonnet-4-5", displayName: "Sonnet 4.5" } });
@@ -260,7 +260,7 @@ const realStop = () => {
     last_message: "Each subagent now has **its own view**, reached from the sidebar or from the line where it was launched, and approval cards name the subagent that asks.",
   });
 };
-const asks = { tool_name: "Bash", tool_input: { command: "cargo test -p nook-hook forwards_agent" } };
+const asks = { tool_name: "Bash", tool_input: { command: "cargo test -p oleo-hook forwards_agent" } };
 if (params.has("subagents")) {
   hook({ hook_event_name: "PreToolUse", tool_name: "Grep", tool_input: { pattern: "agent_id|SubagentStart|SubagentStop" } });
   hook({ hook_event_name: "PostToolUse", tool_name: "Grep", tool_input: { pattern: "agent_id|SubagentStart|SubagentStop" } });
@@ -340,7 +340,7 @@ if (params.has("subagents")) {
 //   phantoms=two         two real ones in parallel, typeless events between theirs → 2
 //   phantoms=names       real ones nothing described: by type and the start of their task, by type alone, as "Subagent"
 //   phantoms=foreground  a subagent the `Agent` call waited for: the call comes back after it has stopped → 1, timed
-//   phantoms=late        Nook started mid-session: a stop for one it never saw launched → 0, then its call coming back → 1, "done" with no time
+//   phantoms=late        Oleo started mid-session: a stop for one it never saw launched → 0, then its call coming back → 1, "done" with no time
 //   phantoms=resumed     one that stopped and runs a tool again → 1, running
 let ghosts = 0;
 /** A side agent of Claude Code's own stops — and, with `start`, had started: neither says a type. */
@@ -400,7 +400,7 @@ const PHANTOMS: Record<string, () => void> = {
     hook({ hook_event_name: "Stop", last_message: "The routing is in `handleHook()`." });
   },
   late() {
-    // Its start, and the call that launched it, went by before Nook was looking.
+    // Its start, and the call that launched it, went by before Oleo was looking.
     hook({ hook_event_name: "SubagentStop", agent_id: "late-one", agent_type: "Explore", last_message: "Done." });
     const run = call("Explore", "Count the hook events", "Count the hook events, and report back.");
     hook({ hook_event_name: "PostToolUse", ...run, launched_agent: "late-one", launched_async: false });
@@ -476,7 +476,7 @@ if (params.has("asked")) {
   const push = { tool_name: "Bash", tool_input: { command: "git push origin windows-claude-desktop" } };
   hook({ hook_event_name: "PreToolUse", ...push });
   hook({ hook_event_name: "PermissionRequest", request_id: "preview-0", ...push });
-  hook({ hook_event_name: "PostToolUse", ...push, result: { text: ["To github.com:nook/nook.git", "   11bd082..848ca62  windows-claude-desktop -> windows-claude-desktop"].join("\n"), start: null, truncated: false, tail: true } });
+  hook({ hook_event_name: "PostToolUse", ...push, result: { text: ["To github.com:oleo/oleo.git", "   11bd082..848ca62  windows-claude-desktop -> windows-claude-desktop"].join("\n"), start: null, truncated: false, tail: true } });
   hook({ hook_event_name: "SubagentStart" });
 }
 
@@ -519,7 +519,7 @@ if (params.has("subagents") && (view === "question" || view === "approval")) {
           ].join("\n"),
         },
       }
-    : { hook_event_name: "PermissionRequest", request_id: "preview-2", tool_name: "Bash", tool_input: { command: "cargo test -p nook-hook" } });
+    : { hook_event_name: "PermissionRequest", request_id: "preview-2", tool_name: "Bash", tool_input: { command: "cargo test -p oleo-hook" } });
 } else if (view === "finished" || params.has("answered") || params.has("reply")) {
   // The turn ends on what Claude said. `reply`: on a reply with everything the journal's Markdown
   // draws — the five alerts, headings, chips, paths; some fifty lines, shown whole — and an
@@ -639,10 +639,10 @@ const metricsTick = () => {
 
 interface HomeSpec { cwd: string; state: string; doing: string; minutes: number; seen?: boolean; reply?: string }
 const HOME: HomeSpec[] = [
-  { cwd: "D:\\work\\personal\\nook", state: "working", doing: "cargo test --workspace", minutes: 2 },
+  { cwd: "D:\\work\\personal\\oleo", state: "working", doing: "cargo test --workspace", minutes: 2 },
   { cwd: "D:\\work\\acme\\api", state: "approval", doing: "npm run clean && npm run build", minutes: 4 },
   { cwd: "D:\\work\\acme\\web", state: "finished", doing: "Three files changed: the header, its styles and its test.", minutes: 1 },
-  { cwd: "D:\\work\\personal\\nook", state: "thinking", doing: "How should the relay's statusline mode chain to an existing one?", minutes: 6 },
+  { cwd: "D:\\work\\personal\\oleo", state: "thinking", doing: "How should the relay's statusline mode chain to an existing one?", minutes: 6 },
   { cwd: "D:\\work\\docs-site", state: "question", doing: "Which sidebar layout?", minutes: 9 },
   { cwd: "D:\\work\\ml-pipeline", state: "error", doing: "pytest tests/test_loader.py", minutes: 3 },
   { cwd: "D:\\work\\infra", state: "finished", doing: "The terraform plan is clean.", minutes: 3, seen: true },
@@ -653,7 +653,7 @@ const LONG = "D:\\work\\client-with-an-unreasonably-long-repository-name-2026-re
 const MODELS = ["claude-opus-5-5", "claude-sonnet-4-5", undefined, "claude-haiku-4-5-20251001"];
 
 // `tools=claude,claude,cursor` says which tool each home session runs in (default all Claude Code): a Cursor
-// session carries `nook_tool: "cursor"` as the relay sets it, and runs in Cursor. `names=web,api,docs` renames
+// session carries `oleo_tool: "cursor"` as the relay sets it, and runs in Cursor. `names=web,api,docs` renames
 // the sessions' folders (D:\\work\\acme\\<name>), in the order of the sessions. Cursor never asks, so a
 // Cursor session should be working or finished.
 const TOOLS = (params.get("tools") ?? "").split(",").map((s) => s.trim());
@@ -661,7 +661,7 @@ const NAMES = (params.get("names") ?? "").split(",").map((s) => s.trim()).filter
 function homeSession(i: number, spec: HomeSpec) {
   const cursor = TOOLS[i] === "cursor";
   if (NAMES[i]) spec = { ...spec, cwd: `D:\\work\\acme\\${NAMES[i]}` };
-  const of: HookPayload = { session_id: `home-${i + 1}`, cwd: spec.cwd, session_title: undefined, ...(cursor ? { ...TARGETS.cursor, nook_tool: "cursor" } : TARGETS.wt) };
+  const of: HookPayload = { session_id: `home-${i + 1}`, cwd: spec.cwd, session_title: undefined, ...(cursor ? { ...TARGETS.cursor, oleo_tool: "cursor" } : TARGETS.wt) };
   const send = (payload: HookPayload) => handleHook(island, { ...of, ...payload });
   const ago = Date.now() - spec.minutes * MIN;
   send({ hook_event_name: "SessionStart", model: MODELS[i % MODELS.length] });

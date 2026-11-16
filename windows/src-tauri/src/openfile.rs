@@ -173,7 +173,7 @@ mod tests {
 
     impl Sandbox {
         fn new() -> Self {
-            let name = format!("nook-openfile-{}-{}", std::process::id(), COUNT.fetch_add(1, Ordering::Relaxed));
+            let name = format!("oleo-openfile-{}-{}", std::process::id(), COUNT.fetch_add(1, Ordering::Relaxed));
             let root = std::env::temp_dir().join(name);
             fs::create_dir_all(root.join("project").join("src")).unwrap();
             fs::create_dir_all(root.join("project").join("docs")).unwrap();

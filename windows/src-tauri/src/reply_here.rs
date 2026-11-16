@@ -164,7 +164,7 @@ pub async fn session_reply_here(
     }
     let Some(plan) = sessions.plan(&session_id) else {
         crate::log::line("reply here: nothing known of where the session runs");
-        return Err("Nook doesn't know where this session runs.".into());
+        return Err("Oleo doesn't know where this session runs.".into());
     };
     tauri::async_runtime::spawn_blocking(move || imp::reply(&plan, &session_id, title.as_deref(), &text))
         .await
@@ -297,7 +297,7 @@ mod imp {
         if !target::is_extension(&plan.entrypoint) {
             return Err("This session runs in the editor's terminal, which can't be picked from outside.".into());
         }
-        let scheme = target::editor_image(&plan.target).and_then(link_scheme).ok_or("Nook doesn't know this editor's link.")?;
+        let scheme = target::editor_image(&plan.target).and_then(link_scheme).ok_or("Oleo doesn't know this editor's link.")?;
         let link = prompt_link(scheme, session_id, text)?;
         // The link opens in whichever window is in front: the session's first.
         let hwnd = crate::plan_window(plan).ok_or("This session's window couldn't be found.")?;
@@ -315,35 +315,35 @@ mod tests {
 
     #[test]
     fn a_terminal_shows_a_conversation_by_its_title() {
-        let mine = "Nook folders in personal repos";
+        let mine = "Oleo folders in personal repos";
         // The glyph Claude Code puts first, whatever it is, and case.
-        assert!(shows_conversation("◐ Nook folders in personal repos", mine));
-        assert!(shows_conversation("✳ nook FOLDERS in personal repos", mine));
+        assert!(shows_conversation("◐ Oleo folders in personal repos", mine));
+        assert!(shows_conversation("✳ oleo FOLDERS in personal repos", mine));
         // No glyph before it: not a tab Claude Code named, and nothing is typed there.
-        assert!(!shows_conversation("Nook folders in personal repos", mine));
-        assert!(!shows_conversation("[x] Nook folders in personal repos", mine));
+        assert!(!shows_conversation("Oleo folders in personal repos", mine));
+        assert!(!shows_conversation("[x] Oleo folders in personal repos", mine));
         // The title is where the window's begins.
-        assert!(!shows_conversation("◐ About Nook folders in personal repos", mine));
-        assert!(shows_conversation("⠂ Nook folders in personal repos - Windows Terminal", mine));
+        assert!(!shows_conversation("◐ About Oleo folders in personal repos", mine));
+        assert!(shows_conversation("⠂ Oleo folders in personal repos - Windows Terminal", mine));
         // The window's title cut short, with or without an ellipsis.
-        assert!(shows_conversation("◐ Nook folders in pers…", mine));
-        assert!(shows_conversation("◐ Nook folders in pers...", mine));
-        assert!(shows_conversation("◐ Nook folders", mine));
+        assert!(shows_conversation("◐ Oleo folders in pers…", mine));
+        assert!(shows_conversation("◐ Oleo folders in pers...", mine));
+        assert!(shows_conversation("◐ Oleo folders", mine));
         // The island's title cut short.
-        assert!(shows_conversation("◐ Nook folders in personal repos", "Nook folders in pers…"));
-        assert!(shows_conversation("◐ Nook folders in personal repos", "Nook folders in"));
+        assert!(shows_conversation("◐ Oleo folders in personal repos", "Oleo folders in pers…"));
+        assert!(shows_conversation("◐ Oleo folders in personal repos", "Oleo folders in"));
         // Another tab.
         assert!(!shows_conversation("◐ Fix the updater", mine));
         assert!(!shows_conversation("Windows PowerShell", mine));
         assert!(!shows_conversation("✳ Claude Code", mine));
         // A window title too short to be a cut one proves nothing.
-        assert!(!shows_conversation("◐ Nook", mine));
+        assert!(!shows_conversation("◐ Oleo", mine));
         assert!(!shows_conversation("pwsh", "pwsh is a shell"));
         // A title too short to prove anything, and nothing at all.
         assert!(!shows_conversation("◐ ab cd", "ab"));
         assert!(!shows_conversation("◐ Fix the updater", "Fix"));
-        assert!(!shows_conversation("◐ Nook folders in personal repos", ""));
-        assert!(!shows_conversation("◐ Nook folders in personal repos", "  ◐  "));
+        assert!(!shows_conversation("◐ Oleo folders in personal repos", ""));
+        assert!(!shows_conversation("◐ Oleo folders in personal repos", "  ◐  "));
         assert!(!shows_conversation("", mine));
         assert!(!shows_conversation("", ""));
     }

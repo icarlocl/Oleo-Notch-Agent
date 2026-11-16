@@ -1,13 +1,13 @@
 [package]
-name = "nook"
-description = "Nook shows your Claude Code sessions at the top of your screen and lets you answer their permission requests and questions."
-authors = ["Louis Raille", "Edurique", "Zubair Bin Shaukat"]
+name = "oleo"
+description = "Oleo shows your Claude Code sessions at the top of your screen and lets you answer their permission requests and questions."
+authors = ["Franco Ruiz"]
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "nook_lib"
+name = "oleo_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

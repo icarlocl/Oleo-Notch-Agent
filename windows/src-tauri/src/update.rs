@@ -1,8 +1,8 @@
-// The opt-in update check: the one place Nook uses the network.
+// The opt-in update check: the one place Oleo uses the network.
 //
-// It asks GitHub for the latest release of Nook, and only when the user clicks
+// It asks GitHub for the latest release of Oleo, and only when the user clicks
 // "Check now" or has switched on the daily check (Settings, off by default).
-// The request carries nothing but a `User-Agent: Nook/<version>` header, which
+// The request carries nothing but a `User-Agent: Oleo/<version>` header, which
 // GitHub's API requires. It is made by the system's curl, so the app takes no
 // HTTP client of its own. The page never says what to ask or where to go: the
 // address of the API and the address that is opened are constants here.
@@ -18,9 +18,9 @@ use tauri::{AppHandle, Emitter, Manager};
 
 use crate::{platform, settings};
 
-const API_URL: &str = "https://api.github.com/repos/zubairbinshaukat/nook/releases/latest";
+const API_URL: &str = "https://api.github.com/repos/icarlocl/oleo/releases/latest";
 /// The only address this module ever opens.
-const RELEASES_URL: &str = "https://github.com/zubairbinshaukat/nook/releases/latest";
+const RELEASES_URL: &str = "https://github.com/icarlocl/oleo/releases/latest";
 const CURRENT: &str = env!("CARGO_PKG_VERSION");
 
 const MINUTE_MS: u64 = 60_000;
@@ -103,7 +103,7 @@ struct Release {
 }
 
 fn parse_release(body: &[u8]) -> Result<Release, String> {
-    let odd = || "GitHub's answer wasn't what Nook expected. Try again later.".to_string();
+    let odd = || "GitHub's answer wasn't what Oleo expected. Try again later.".to_string();
     let Ok(Value::Object(release)) = serde_json::from_slice::<Value>(body) else { return Err(odd()) };
     let tag = release.get("tag_name").and_then(Value::as_str).map(str::trim).unwrap_or("");
     let version = tag.strip_prefix(['v', 'V']).unwrap_or(tag);
@@ -194,7 +194,7 @@ fn curl_args(version: &str) -> Vec<String> {
     let mut args: Vec<String> = ["-q", "--silent", "--fail", "--proto", "=https", "--max-redirs", "0", "--max-time", "10", "--max-filesize", "1048576"]
         .map(String::from)
         .to_vec();
-    args.extend(["-H".into(), format!("User-Agent: Nook/{version}"), "-H".into(), "Accept: application/vnd.github+json".into(), API_URL.into()]);
+    args.extend(["-H".into(), format!("User-Agent: Oleo/{version}"), "-H".into(), "Accept: application/vnd.github+json".into(), API_URL.into()]);
     args
 }
 
@@ -216,7 +216,7 @@ fn fetch() -> Result<Vec<u8>, String> {
         .output()
         .map_err(|err| {
             crate::log::line(format!("update: curl did not start: {err}"));
-            "Nook needs curl to check for updates, and couldn't find it on this computer.".to_string()
+            "Oleo needs curl to check for updates, and couldn't find it on this computer.".to_string()
         })?;
     if !output.status.success() {
         crate::log::line(format!("update: curl exited with {:?}", output.status.code()));
@@ -306,11 +306,11 @@ pub fn update_last(_app: AppHandle) -> Option<UpdateInfo> {
 }
 
 /// A release's Windows installer, by the name the release workflow gives it
-/// (`Nook-Windows-<version>-setup.exe`, under the tag `v<version>`). None for a
+/// (`Oleo-Windows-<version>-setup.exe`, under the tag `v<version>`). None for a
 /// version that is not plain numbers and dots: nothing else goes into an address.
 fn installer_url(version: &str) -> Option<String> {
     let plain = parse_version(version).is_some() && version.chars().all(|c| c.is_ascii_digit() || c == '.');
-    plain.then(|| format!("https://github.com/zubairbinshaukat/nook/releases/download/v{version}/Nook-Windows-{version}-setup.exe"))
+    plain.then(|| format!("https://github.com/icarlocl/oleo/releases/download/v{version}/Oleo-Windows-{version}-setup.exe"))
 }
 
 /// Where "Get it" goes: on Windows, straight to the newer version's installer,
@@ -322,7 +322,7 @@ fn open_target(last: Option<&UpdateInfo>, windows: bool) -> String {
         .unwrap_or_else(|| RELEASES_URL.to_string())
 }
 
-/// Opens the newer version's download in the browser. No argument: the address is Nook's own.
+/// Opens the newer version's download in the browser. No argument: the address is Oleo's own.
 #[tauri::command]
 pub fn update_open() {
     platform::open_url(&open_target(last().as_ref(), cfg!(windows)));
@@ -373,7 +373,7 @@ mod tests {
 
     #[test]
     fn a_release_answer_is_read() {
-        let ok = br#"{"tag_name":"v0.3.0","name":"Nook 0.3.0","draft":false,"prerelease":false,"assets":[]}"#;
+        let ok = br#"{"tag_name":"v0.3.0","name":"Oleo 0.3.0","draft":false,"prerelease":false,"assets":[]}"#;
         assert_eq!(parse_release(ok), Ok(Release { version: "0.3.0".into(), offered: true }));
         let bare = br#"{"tag_name":"0.3.0"}"#;
         assert_eq!(parse_release(bare), Ok(Release { version: "0.3.0".into(), offered: true }));
@@ -385,7 +385,7 @@ mod tests {
         let newer = info("0.3.0", true);
         assert_eq!(
             open_target(Some(&newer), true),
-            "https://github.com/zubairbinshaukat/nook/releases/download/v0.3.0/Nook-Windows-0.3.0-setup.exe"
+            "https://github.com/icarlocl/oleo/releases/download/v0.3.0/Oleo-Windows-0.3.0-setup.exe"
         );
         // Not Windows, nothing newer, nothing known: the releases page.
         assert_eq!(open_target(Some(&newer), false), RELEASES_URL);
@@ -422,7 +422,7 @@ mod tests {
         let behind = stored.info("0.2.0");
         assert!(behind.available);
         assert_eq!((behind.current.as_str(), behind.latest.as_str()), ("0.2.0", "0.3.0"));
-        assert_eq!(behind.url, "https://github.com/zubairbinshaukat/nook/releases/latest");
+        assert_eq!(behind.url, "https://github.com/icarlocl/oleo/releases/latest");
         // The app was updated since: nothing to offer any more.
         assert!(!stored.info("0.3.0").available);
         assert!(!stored.info("0.4.0").available);
@@ -434,8 +434,8 @@ mod tests {
     #[test]
     fn the_request_is_fixed_and_carries_only_the_version() {
         let args = curl_args("0.2.0");
-        assert!(args.contains(&"User-Agent: Nook/0.2.0".to_string()));
-        assert_eq!(args.last().unwrap(), "https://api.github.com/repos/zubairbinshaukat/nook/releases/latest");
+        assert!(args.contains(&"User-Agent: Oleo/0.2.0".to_string()));
+        assert_eq!(args.last().unwrap(), "https://api.github.com/repos/icarlocl/oleo/releases/latest");
         assert_eq!(args.iter().filter(|a| a.as_str() == "-H").count(), 2);
     }
 
@@ -472,7 +472,7 @@ mod tests {
     }
 
     fn temp_file(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("nook-update-test-{}-{name}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("oleo-update-test-{}-{name}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         dir.join("update.json")

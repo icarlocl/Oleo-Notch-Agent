@@ -20,7 +20,7 @@ const FOCUS_MS = 120;
 const MAX_LINES = { card: 2, panel: 5 } as const;
 
 /** What a reply does, said on the field. */
-const SENT_HOW = "Nook types it into the window this session runs in, and the conversation carries on there. In a terminal with tabs, this session's tab has to be the one showing.";
+const SENT_HOW = "Oleo types it into the window this session runs in, and the conversation carries on there. In a terminal with tabs, this session's tab has to be the one showing.";
 
 export interface ReplyBoxActions {
   /** A text field wants the keyboard, or gives it back. */

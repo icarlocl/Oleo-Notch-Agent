@@ -211,8 +211,8 @@ body.pv-page {
 }
 
 /* The bot lives on the island's black wherever he is shown: the island is
-   dark in both themes, and so is his nook. */
-.sp-nook {
+   dark in both themes, and so is his oleo. */
+.sp-oleo {
   flex: 0 0 auto;
   width: 36px;
   height: 36px;
@@ -1497,7 +1497,7 @@ body.pv-page {
   gap: 16px;
 }
 
-.sp-about .sp-nook {
+.sp-about .sp-oleo {
   width: 84px;
   height: 84px;
   border-radius: 24px;

@@ -1,4 +1,4 @@
-// Nook's stage wallpaper: bundles of thin silk ribbons sweeping up from the lower left,
+// Oleo's stage wallpaper: bundles of thin silk ribbons sweeping up from the lower left,
 // twisting as they go, lit by a soft key light and a coloured rim light. Every ribbon is
 // a ruled surface (a centre curve, a width and a twist angle along x) drawn back to front
 // in one fragment shader: each one shades itself (satin highlight, back face in another
@@ -31,7 +31,7 @@ const jit = (amount) => (SEED === 1 ? 0 : (rand() - 0.5) * 2 * amount);
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
 
 // ── Palette ─────────────────────────────────────────────────────────────────
-// Nook's accents: mint #3ddc97, blue #5aa9ff, violet #a98bfa, amber #ffb547.
+// Oleo's accents: mint #3ddc97, blue #5aa9ff, violet #a98bfa, amber #ffb547.
 const PAL = {
   dark: {
     bg: hex("#06080b"), glow: hex("#142352"), glow2: hex("#251a52"), glowMint: hex("#0b3134"),

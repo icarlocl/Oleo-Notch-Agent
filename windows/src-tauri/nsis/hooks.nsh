@@ -1,6 +1,6 @@
 ; Uninstall hooks for the NSIS installer.
 ;
-; The app stages nook-hook.exe into %LOCALAPPDATA%\Nook\bin at launch, so the
+; The app stages oleo-hook.exe into %LOCALAPPDATA%\Oleo\bin at launch, so the
 ; installer never recorded it and the default uninstaller leaves it behind. The
 ; log lives in the same place and is ours too.
 ;
@@ -11,6 +11,6 @@
 ; printing anything, so a leftover entry costs nothing beyond a dead path.
 
 !macro NSIS_HOOK_PREUNINSTALL
-  RMDir /r "$LOCALAPPDATA\Nook\bin"
-  Delete "$LOCALAPPDATA\Nook\nook.log"
+  RMDir /r "$LOCALAPPDATA\Oleo\bin"
+  Delete "$LOCALAPPDATA\Oleo\oleo.log"
 !macroend

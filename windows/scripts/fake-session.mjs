@@ -15,13 +15,13 @@
 // "at work", with no finish sound — a permission request from inside one of
 // them, each SubagentStop, and the Stop that really ends the turn.
 //
-// Every event is piped into nook-hook exactly as Claude Code would do it.
+// Every event is piped into oleo-hook exactly as Claude Code would do it.
 // Nothing is ever executed: the "command" in the permission request is only
 // text for the card. For the permission request the script prints what
 // Claude Code would receive — the decision JSON, or nothing at all when the
 // island did not answer and the terminal would have asked instead.
 //
-// The relay is looked up in $NOOK_HOOK, then $CARGO_TARGET_DIR, then
+// The relay is looked up in $OLEO_HOOK, then $CARGO_TARGET_DIR, then
 // windows/target, release build first.
 
 import { spawn } from "node:child_process";
@@ -30,10 +30,10 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const exe = process.platform === "win32" ? "nook-hook.exe" : "nook-hook";
+const exe = process.platform === "win32" ? "oleo-hook.exe" : "oleo-hook";
 
 function findHook() {
-  if (process.env.NOOK_HOOK) return process.env.NOOK_HOOK;
+  if (process.env.OLEO_HOOK) return process.env.OLEO_HOOK;
   const targets = [process.env.CARGO_TARGET_DIR, join(root, "target")].filter(Boolean);
   for (const target of targets) {
     for (const profile of ["release", "debug"]) {
@@ -46,7 +46,7 @@ function findHook() {
 
 const hook = findHook();
 if (!hook) {
-  console.error(`${exe} not found. Build it first: cargo build --release -p nook-hook`);
+  console.error(`${exe} not found. Build it first: cargo build --release -p oleo-hook`);
   process.exit(1);
 }
 
@@ -114,7 +114,7 @@ const SUBAGENTS = [
 
 // `--mixed`: two Claude Code sessions and two Cursor sessions at once, one
 // folder ("api") open in both tools. Cursor's events are what its hooks.json
-// hooks send, through `nook-hook --agent cursor <event>`: nothing is ever
+// hooks send, through `oleo-hook --agent cursor <event>`: nothing is ever
 // answered, and no Cursor session gets a card to answer.
 const claudeOf = (name, folder) => {
   const id = `fake-${name}-${Date.now()}`;
@@ -171,7 +171,7 @@ const READING = [
 // sessions: one at work, one finished. `api` waits on a question (a
 // notification, so the script does not block), `docs` has finished, `site`
 // rests, and one name is long enough to be cut. Turn the list on in Settings
-// (or press Ctrl+Shift+L once it is on). The sessions stay until Nook is restarted.
+// (or press Ctrl+Shift+L once it is on). The sessions stay until Oleo is restarted.
 const shop1 = claudeOf("shop1", "shop"), shop2 = claudeOf("shop2", "shop");
 const apiq = claudeOf("apiq", "api"), docs = claudeOf("docs", "docs");
 const site = claudeOf("site", "site"), long = claudeOf("long", "a-very-long-project-folder-name-that-needs-an-ellipsis");

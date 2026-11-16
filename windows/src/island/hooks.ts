@@ -24,7 +24,7 @@ import { rememberProject } from "../widgets/projects";
 import type { Island } from "./island";
 
 /**
- * By request: clears it if no decision was made before the hook gave up. Nook
+ * By request: clears it if no decision was made before the hook gave up. Oleo
  * answers within 108 s or not at all; after that the terminal has taken over
  * and the card would be lying. Each request has its own connection to the
  * relay and its own 108 s: one that waits behind another's card is timed from
@@ -44,35 +44,35 @@ export interface HookPayload {
   tool_name?: string;
   tool_input?: Record<string, unknown>;
   /** Optional agent tag: lowercase, digits and hyphens, ≤ 24 chars. */
-  nook_agent?: string;
-  /** "cursor" or "codex" on an event of that tool's (nook-hook --agent cursor, --agent codex); absent for Claude Code. */
-  nook_tool?: string;
-  /** "1" on an event of a run a reply typed in the island started (NOOK_REPLY, set by reply.rs). */
-  nook_reply?: string;
-  /** CLAUDE_CODE_ENTRYPOINT and TERM_PROGRAM, added by nook-hook. */
+  oleo_agent?: string;
+  /** "cursor" or "codex" on an event of that tool's (oleo-hook --agent cursor, --agent codex); absent for Claude Code. */
+  oleo_tool?: string;
+  /** "1" on an event of a run a reply typed in the island started (OLEO_REPLY, set by reply.rs). */
+  oleo_reply?: string;
+  /** CLAUDE_CODE_ENTRYPOINT and TERM_PROGRAM, added by oleo-hook. */
   entrypoint?: string;
   term_program?: string;
   /**
-   * Where the session runs, and so where its ↗ goes — added by Nook itself
-   * (src-tauri/src/target.rs) from what nook-hook reports, in the place of the
+   * Where the session runs, and so where its ↗ goes — added by Oleo itself
+   * (src-tauri/src/target.rs) from what oleo-hook reports, in the place of the
    * processes the relay named. Read with `readTarget`.
    */
   target?: unknown;
-  /** What an edit tool did to its file — added by nook-hook to PostToolUse. */
+  /** What an edit tool did to its file — added by oleo-hook to PostToolUse. */
   change?: { patch: string; additions: number; deletions: number; truncated: boolean; created: boolean };
-  /** A few lines of what a tool gave back — added by nook-hook to PostToolUse. */
+  /** A few lines of what a tool gave back — added by oleo-hook to PostToolUse. */
   result?: StepResult;
   /** On a PostToolUseFailure: what went wrong. */
   error?: string;
-  /** What was picked for each question of Claude's question tool — added by nook-hook to PostToolUse. */
+  /** What was picked for each question of Claude's question tool — added by oleo-hook to PostToolUse. */
   answers?: Record<string, string>;
-  /** On a PermissionRequest: what it asks was too long for nook-hook to send whole. */
+  /** On a PermissionRequest: what it asks was too long for oleo-hook to send whole. */
   target_truncated?: boolean;
-  /** What an edit asking for permission would do — added by nook-hook to PermissionRequest. */
+  /** What an edit asking for permission would do — added by oleo-hook to PermissionRequest. */
   proposal?: { patch: string; additions: number; deletions: number; truncated: boolean; created: boolean };
-  /** The conversation's title, read by nook-hook from the session's transcript. */
+  /** The conversation's title, read by oleo-hook from the session's transcript. */
   session_title?: string;
-  /** Tokens the session's last answer was given to read, counted by nook-hook in the transcript; only on the events that read it. */
+  /** Tokens the session's last answer was given to read, counted by oleo-hook in the transcript; only on the events that read it. */
   context_tokens?: number;
   /** On a Stop: what Claude said to end its turn. On a SubagentStop: what the subagent said last. */
   last_message?: string;
@@ -84,7 +84,7 @@ export interface HookPayload {
    */
   agent_id?: string;
   agent_type?: string;
-  /** On the PostToolUse of an `Agent` call: the id of the subagent it launched — lifted by nook-hook from the tool's response. */
+  /** On the PostToolUse of an `Agent` call: the id of the subagent it launched — lifted by oleo-hook from the tool's response. */
   launched_agent?: string;
   /** With `launched_agent`: the subagent went on in the background. Without it, the call waited for it, and it has come back. */
   launched_async?: boolean;
@@ -310,7 +310,7 @@ function startSubagent(session: ClaudeSession, payload: HookPayload): Subagent |
   if (at < 0) at = session.launching.findIndex((call) => !type || !call.type);
   const call = at >= 0 ? session.launching.splice(at, 1)[0] : null;
   if (!type && !call) return null;
-  const id = payload.agent_id ?? `nook-${++anonymous}`;
+  const id = payload.agent_id ?? `oleo-${++anonymous}`;
   const agent = addSubagent(session, id, type || call?.type || "", call?.step ?? null, true);
   if (call) nameSubagent(agent, call);
   if (!payload.agent_id) {
@@ -326,7 +326,7 @@ function startSubagent(session: ClaudeSession, payload: HookPayload): Subagent |
  * and the call what for. A call that ran in the background comes back at once,
  * just after the subagent's start; one that waited for its subagent comes back
  * after it has stopped. Either way the subagent is known by then — unless its
- * start went by unseen (Nook started in between), and then the call itself is
+ * start went by unseen (Oleo started in between), and then the call itself is
  * the launch: `call` is its line of the journal, when there is one.
  */
 function nameLaunched(session: ClaudeSession, payload: HookPayload, call: SessionStep | null): boolean {
@@ -407,7 +407,7 @@ function backgroundAgents(payload: HookPayload): BackgroundAgent[] | null {
  * It never says one runs that the island saw stop: a subagent still lists
  * itself as running on its own SubagentStop. One the island never saw launched
  * is taken from the list only when the list says all of it — that it runs, its
- * type and what it is for: a subagent launched before Nook was looking.
+ * type and what it is for: a subagent launched before Oleo was looking.
  */
 function heedTasks(island: Island, session: ClaudeSession, tasks: BackgroundAgent[]) {
   for (const task of tasks) {
@@ -443,7 +443,7 @@ const SDK_ENTRYPOINT = "sdk";
  */
 function isAutomated(payload: HookPayload): boolean {
   // A reply typed in the island runs through the command line too (core/reply.ts): it is the user's own turn.
-  if (payload.nook_reply === "1" || Reply.isOurs(payload.session_id)) return false;
+  if (payload.oleo_reply === "1" || Reply.isOurs(payload.session_id)) return false;
   return (payload.entrypoint ?? "").toLowerCase().startsWith(SDK_ENTRYPOINT);
 }
 
@@ -467,14 +467,14 @@ function sessionOf(island: Island, payload: HookPayload): ClaudeSession {
   const id = payload.session_id || ANONYMOUS;
   let session = State.sessions.find((s) => s.id === id);
   if (!session) {
-    session = newSession(id, payload.nook_tool === "cursor" ? "cursor" : payload.nook_tool === "codex" ? "codex" : "claude");
+    session = newSession(id, payload.oleo_tool === "cursor" ? "cursor" : payload.oleo_tool === "codex" ? "codex" : "claude");
     State.sessions.push(session);
     makeRoom(island, session);
   }
-  // Where it runs: Nook says it on every event of the session. An event that
+  // Where it runs: Oleo says it on every event of the session. An event that
   // says nothing of it leaves what is known alone.
   // A reply's run has no window: where the session runs is still where the user opened it.
-  const target = payload.nook_reply === "1" ? null : readTarget(payload.target);
+  const target = payload.oleo_reply === "1" ? null : readTarget(payload.target);
   if (target) session.target = target;
   if (payload.session_title) session.title = payload.session_title;
   // The model it runs on, on the events that say it — and only the session's
@@ -856,21 +856,21 @@ function handleAgent(island: Island, payload: HookPayload, agent: string) {
 
 /** Exported for the dev preview, which plays a session without Claude Code. */
 export function handleHook(island: Island, payload: HookPayload) {
-  // Route to the right pill. Valid nook_agent → dynamic "agent_<name>" pill.
+  // Route to the right pill. Valid oleo_agent → dynamic "agent_<name>" pill.
   // "claude" is reserved; absent or invalid → Claude Code, as before.
-  const agent = validateAgent(payload.nook_agent);
+  const agent = validateAgent(payload.oleo_agent);
   if (agent && !State.paused) return handleAgent(island, payload, agent);
 
   // Cursor's agent is followed for its status only: never a card to answer, and
   // not at all when the user turned it off (Settings → Cursor).
-  const cursor = payload.nook_tool === "cursor";
+  const cursor = payload.oleo_tool === "cursor";
   if (cursor && (payload.hook_event_name === "PermissionRequest" || !State.settings.showCursorSessions)) {
     if (payload.request_id) void Bridge.approvalDecline(payload.request_id);
     return;
   }
   // Codex's sessions are followed as Claude Code's are, requests and all — unless
   // the user turned them off (Settings → Codex): Codex then asks in its own window.
-  if (payload.nook_tool === "codex" && !State.settings.showCodexSessions) {
+  if (payload.oleo_tool === "codex" && !State.settings.showCodexSessions) {
     if (payload.request_id) void Bridge.approvalDecline(payload.request_id);
     return;
   }
@@ -889,7 +889,7 @@ export function handleHook(island: Island, payload: HookPayload) {
   // A reply typed in the island runs in a process of its own (core/reply.ts), which
   // starts and ends like a session. Neither is the session's: the one the user
   // opened is still there when the reply's run is over, journal and all.
-  if (payload.nook_reply === "1" && (name === "SessionStart" || name === "SessionEnd")) return;
+  if (payload.oleo_reply === "1" && (name === "SessionStart" || name === "SessionEnd")) return;
 
   if (name === "SessionEnd") {
     const over = State.sessions.find((s) => s.id === (payload.session_id || ANONYMOUS));
@@ -918,7 +918,7 @@ export function handleHook(island: Island, payload: HookPayload) {
     tellType(subagent, typeOf(payload.agent_type));
   }
   // A tool event from inside something the session never launched — one of
-  // Claude Code's own side agents, or a subagent started before Nook was
+  // Claude Code's own side agents, or a subagent started before Oleo was
   // looking: its steps are nobody's the island knows, and are no line of the
   // session's own journal either. What it asks permission for is still asked.
   const stranger = from != null && !subagent;

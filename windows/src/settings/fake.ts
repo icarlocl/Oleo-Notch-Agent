@@ -1,4 +1,4 @@
-// DEV ONLY. A made-up Nook for looking at the settings window in a plain
+// DEV ONLY. A made-up Oleo for looking at the settings window in a plain
 // browser: `npx vite`, then /settings.html?fake. Nothing here reads or writes
 // the machine; the "writes" change a few variables of this page.
 //
@@ -32,15 +32,15 @@ import type { Backend } from "./backend";
 
 const HOME = "C:\\Users\\dev";
 const SETTINGS_JSON = `${HOME}\\.claude\\settings.json`;
-const RELAY = `${HOME}\\AppData\\Local\\Nook\\bin\\nook-hook.exe`;
-const RELAY_BEFORE = `${HOME}\\Downloads\\Nook\\nook-hook.exe`;
+const RELAY = `${HOME}\\AppData\\Local\\Oleo\\bin\\oleo-hook.exe`;
+const RELAY_BEFORE = `${HOME}\\Downloads\\Oleo\\oleo-hook.exe`;
 const OWN_STATUS_LINE = "npx ccstatusline";
 const CLAUDE_MD = `${HOME}\\.claude\\CLAUDE.md`;
 const CURSOR_JSON = `${HOME}\\.cursor\\hooks.json`;
 const CODEX_JSON = `${HOME}\\.codex\\hooks.json`;
 /** The block, as replyformat.rs writes it. */
 const REPLY_BLOCK = [
-  "<!-- nook:reply-format:start -->",
+  "<!-- oleo:reply-format:start -->",
   "## Reply format",
   "- Start with a one-line summary.",
   "- Put anything I must decide in a > [!IMPORTANT] block, one per decision, with the options and your recommendation.",
@@ -48,14 +48,14 @@ const REPLY_BLOCK = [
   "- Put recommendations in > [!TIP].",
   "- Use short sections with ## headings and bullets with **bold lead-ins**.",
   "- End with the next step.",
-  "<!-- nook:reply-format:end -->",
+  "<!-- oleo:reply-format:end -->",
 ];
 const REPLY_OLD_LINE = "- Close with what happens next.";
 const EVENTS = ["SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PermissionRequest", "SubagentStart", "SubagentStop", "Stop"];
 
 /** The messages shortcut.rs refuses with. */
 const TAKEN = "Already used by another app — pick another";
-const TWICE = "Already another Nook shortcut — pick another";
+const TWICE = "Already another Oleo shortcut — pick another";
 /** Made up: what "another app" holds, so a refusal can be tried by hand. */
 const HELD_ELSEWHERE = new Set(["Ctrl+Alt+T", "Ctrl+Shift+Escape"]);
 
@@ -125,7 +125,7 @@ export function fakeBackend(): Backend {
   }
 
   const preview = (diff: string): HookPreview => {
-    if (hooks.unreadable) throw new Error(`${SETTINGS_JSON} is not valid JSON (expected value at line 4 column 3). Nook won't touch it — fix the file, then try again.`);
+    if (hooks.unreadable) throw new Error(`${SETTINGS_JSON} is not valid JSON (expected value at line 4 column 3). Oleo won't touch it — fix the file, then try again.`);
     return { diff, backup: `${SETTINGS_JSON}.bak-${stamp()}`, settingsPath: SETTINGS_JSON, fingerprint: String(revision) };
   };
   const written = (fingerprint: string): string => {
@@ -218,7 +218,7 @@ export function fakeBackend(): Backend {
       await wait(500);
       const found = q.get("update") ?? "available";
       if (found === "offline") throw new Error("Couldn't reach GitHub. Check your connection and try again.");
-      update = { current: "0.2.1", latest: found === "latest" ? "0.2.1" : "0.3.0", available: found !== "latest", url: "https://github.com/zubairbinshaukat/nook/releases/latest", checkedAt: Date.parse("2026-10-06T09:15:00Z") };
+      update = { current: "0.2.1", latest: found === "latest" ? "0.2.1" : "0.3.0", available: found !== "latest", url: "https://github.com/icarlocl/oleo/releases/latest", checkedAt: Date.parse("2026-10-06T09:15:00Z") };
       return update;
     },
     async updateLast() {
@@ -269,7 +269,7 @@ export function fakeBackend(): Backend {
         state,
         found: state === "unmarked" ? ["## Reply format", "- Lead with the answer, then the detail.", "- Put recommendations in > [!TIP]."] : [],
         error: state === "error"
-          ? "Nook's reply-format markers in CLAUDE.md are broken: the start marker has no end marker. Nook won't change the file — fix or remove the marker lines by hand (<!-- nook:reply-format:start --> … <!-- nook:reply-format:end -->)."
+          ? "Oleo's reply-format markers in CLAUDE.md are broken: the start marker has no end marker. Oleo won't change the file — fix or remove the marker lines by hand (<!-- oleo:reply-format:start --> … <!-- oleo:reply-format:end -->)."
           : null,
         path: CLAUDE_MD,
         exists: replyCase !== "missing",
@@ -305,13 +305,13 @@ export function fakeBackend(): Backend {
       console.info(`[fake] the system browser would open the "${which}" link`);
     },
     async dataPaths() {
-      return { settings: `${HOME}\\AppData\\Roaming\\Nook`, local: `${HOME}\\AppData\\Local\\Nook` };
+      return { settings: `${HOME}\\AppData\\Roaming\\Oleo`, local: `${HOME}\\AppData\\Local\\Oleo` };
     },
     async openLogFolder() {
       console.info("[fake] the log folder would open in the file manager");
     },
     async restart() {
-      console.info("[fake] Nook would close and start again");
+      console.info("[fake] Oleo would close and start again");
       await wait(400);
       hooks.ready = true;
     },

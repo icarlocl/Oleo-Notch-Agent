@@ -3,7 +3,7 @@
 // The island is in the way of the top of a window now and then (a browser's tab
 // strip): a shortcut or the tray hides the window — not folded, hidden: no
 // pixel, no mouse, the polls parked — and the same again brings it back. It is
-// never saved: Nook always starts with the island on show.
+// never saved: Oleo always starts with the island on show.
 //
 // A request — a permission, or a question — that comes while the island is
 // hidden shows it, so it is seen; once every such request is over, it hides
@@ -79,7 +79,7 @@ impl Tracker {
         if self.hidden { Change::Hide } else { Change::Show }
     }
 
-    /// "Open Nook": on show, if it was hidden — and left on show.
+    /// "Open Oleo": on show, if it was hidden — and left on show.
     pub fn open(&mut self) -> Change {
         self.auto_shown = false;
         self.generation += 1;
@@ -192,7 +192,7 @@ pub fn toggle(app: &AppHandle) {
     apply(app, Tracker::toggle);
 }
 
-/// "Open Nook", and a second launch of Nook.
+/// "Open Oleo", and a second launch of Oleo.
 pub fn open(app: &AppHandle) {
     apply(app, Tracker::open);
 }
@@ -297,7 +297,7 @@ mod tests {
         assert_eq!(island.toggle(), Change::Show);
         assert_eq!(island.request_done(), Change::Nothing);
         assert!(!island.hidden());
-        // Open Nook over a popup is as much the person's.
+        // Open Oleo over a popup is as much the person's.
         let mut island = Tracker::default();
         island.toggle();
         island.request_up();
@@ -377,7 +377,7 @@ mod tests {
             act(&mut island);
             assert_eq!(island.hide_if_current(g), Change::Nothing);
         }
-        // Open Nook leaves it on show for good.
+        // Open Oleo leaves it on show for good.
         let mut island = Tracker::default();
         island.toggle();
         island.request_up();

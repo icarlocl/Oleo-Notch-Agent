@@ -2,16 +2,16 @@
 //
 // The same rule as for Claude Code (hooks.rs, whose one way of changing a file
 // this uses): the diff first, a dated backup, an explicit click, and only
-// Nook's own entries are ever added, replaced or removed.
+// Oleo's own entries are ever added, replaced or removed.
 //
-// Status only. Nook subscribes to the events that cannot change what Cursor
+// Status only. Oleo subscribes to the events that cannot change what Cursor
 // does — never to the before* gates (beforeShellExecution, beforeMCPExecution,
 // beforeReadFile, preToolUse, subagentStart) that can allow, deny or hold a
 // call — and its relay prints nothing at all for them (hook/src/cursor.rs).
 // beforeSubmitPrompt is the one before* event that is followed: empty output
 // means "continue" (Cursor's docs), so it can neither block nor edit a prompt.
 //
-// A Nook entry is `{ "command": "<relay> --agent cursor <event>", "timeout": 5 }`:
+// A Oleo entry is `{ "command": "<relay> --agent cursor <event>", "timeout": 5 }`:
 // Cursor's hooks.json has no exec form, so the command is one string, and it is
 // refused unless it has nothing to quote (cmd, PowerShell and sh all read it alike).
 
@@ -23,7 +23,7 @@ use serde_json::{json, Map, Value};
 use crate::hooks::{self, FileChange, HookPreview};
 use crate::{platform, settings};
 
-/// Every event Nook follows, with the hook's timeout in seconds. All of them
+/// Every event Oleo follows, with the hook's timeout in seconds. All of them
 /// are observational.
 pub const EVENTS: &[(&str, u64)] = &[
     ("sessionStart", 5),
@@ -41,16 +41,16 @@ pub const EVENTS: &[(&str, u64)] = &[
     ("stop", 5),
 ];
 
-/// What `hooks.json` has when Nook creates it.
+/// What `hooks.json` has when Oleo creates it.
 const VERSION: u64 = 1;
 const MODE: &str = "--agent cursor";
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CursorStatus {
-    /// Every event has an entry of Nook's.
+    /// Every event has an entry of Oleo's.
     pub installed: bool,
-    /// ... and every one is what Nook would write now (the relay has not moved).
+    /// ... and every one is what Oleo would write now (the relay has not moved).
     pub current: bool,
     /// hooks.json is there.
     pub file_exists: bool,
@@ -59,7 +59,7 @@ pub struct CursorStatus {
     pub hooks_path: String,
     pub hook_path: String,
     pub hook_ready: bool,
-    /// Why Nook will not write its command (a path with a space in it), if so.
+    /// Why Oleo will not write its command (a path with a space in it), if so.
     pub refused: Option<String>,
     /// hooks.json is there but cannot be read as plain JSON: said, never written over.
     pub unreadable: Option<String>,
@@ -82,7 +82,7 @@ fn relay_word(relay: &str) -> Result<String, String> {
         Ok(relay.to_string())
     } else {
         Err(format!(
-            "The relay's path ({relay}) has a space or a special character in it. Cursor runs hook commands through a shell that may not read such a path, so Nook won't write one. Nothing was changed."
+            "The relay's path ({relay}) has a space or a special character in it. Cursor runs hook commands through a shell that may not read such a path, so Oleo won't write one. Nothing was changed."
         ))
     }
 }
@@ -91,12 +91,12 @@ fn command_for(relay: &str, event: &str) -> String {
     format!("{relay} {MODE} {event}")
 }
 
-/// An entry of Nook's: its command runs the relay in Cursor mode.
+/// An entry of Oleo's: its command runs the relay in Cursor mode.
 fn is_ours(entry: &Value) -> bool {
     entry
         .get("command")
         .and_then(Value::as_str)
-        .is_some_and(|command| command.contains(hooks::MARKER) && command.contains(MODE))
+        .is_some_and(|command| hooks::runs_relay(command) && command.contains(MODE))
 }
 
 /// hooks.json as a JSON object: absent or blank is nothing, a BOM is let by,
@@ -108,14 +108,14 @@ fn parse(bytes: &[u8], path: &str) -> Result<Value, String> {
     }
     match serde_json::from_slice::<Value>(text) {
         Ok(v) if v.is_object() => Ok(v),
-        Ok(_) => Err(format!("{path} isn't a JSON object — Nook won't touch it.")),
+        Ok(_) => Err(format!("{path} isn't a JSON object — Oleo won't touch it.")),
         Err(err) => Err(format!(
-            "{path} isn't plain JSON ({err}). Nook can't read comments or trailing commas, and won't overwrite the file: remove them (or move the file), then try again."
+            "{path} isn't plain JSON ({err}). Oleo can't read comments or trailing commas, and won't overwrite the file: remove them (or move the file), then try again."
         )),
     }
 }
 
-/// hooks.json with Nook's entries added or replaced; everything else — other
+/// hooks.json with Oleo's entries added or replaced; everything else — other
 /// tools' entries, unknown keys, the order of both — is as it was.
 fn installed(existing: &Value, relay: &str) -> Result<Value, String> {
     let relay = relay_word(relay)?;
@@ -123,13 +123,13 @@ fn installed(existing: &Value, relay: &str) -> Result<Value, String> {
     let mut hooks = match root.get("hooks") {
         None => Map::new(),
         Some(Value::Object(map)) => map.clone(),
-        Some(_) => return Err("The \"hooks\" key of hooks.json isn't an object — Nook won't touch it.".into()),
+        Some(_) => return Err("The \"hooks\" key of hooks.json isn't an object — Oleo won't touch it.".into()),
     };
     for (event, timeout) in EVENTS {
         let mut list = match hooks.get(*event) {
             None => Vec::new(),
             Some(Value::Array(list)) => list.clone(),
-            Some(_) => return Err(format!("The \"{event}\" hooks of hooks.json aren't a list — Nook won't touch them.")),
+            Some(_) => return Err(format!("The \"{event}\" hooks of hooks.json aren't a list — Oleo won't touch them.")),
         };
         list.retain(|entry| !is_ours(entry));
         list.push(json!({ "command": command_for(&relay, event), "timeout": timeout }));
@@ -140,20 +140,20 @@ fn installed(existing: &Value, relay: &str) -> Result<Value, String> {
     Ok(Value::Object(root))
 }
 
-/// hooks.json with every entry of Nook's removed and nothing else changed. A
+/// hooks.json with every entry of Oleo's removed and nothing else changed. A
 /// file left with no hook of anyone's keeps its other keys (and its version).
 fn uninstalled(existing: &Value) -> Result<Value, String> {
     let mut root = existing.as_object().cloned().unwrap_or_default();
     let Some(hooks) = root.get("hooks") else { return Ok(Value::Object(root)) };
     let Value::Object(hooks) = hooks else {
-        return Err("The \"hooks\" key of hooks.json isn't an object — Nook won't touch it.".into());
+        return Err("The \"hooks\" key of hooks.json isn't an object — Oleo won't touch it.".into());
     };
     let mut kept = Map::new();
     for (event, value) in hooks {
         match value {
             Value::Array(list) => {
                 let rest: Vec<Value> = list.iter().filter(|e| !is_ours(e)).cloned().collect();
-                // A list that was empty before is left as it was; one that held only Nook's goes.
+                // A list that was empty before is left as it was; one that held only Oleo's goes.
                 if !rest.is_empty() || list.is_empty() {
                     kept.insert(event.clone(), Value::Array(rest));
                 }
@@ -233,7 +233,7 @@ pub fn apply(install: bool, fingerprint: &str) -> Result<String, String> {
 mod tests {
     use super::*;
 
-    const RELAY: &str = "C:/Users/me/AppData/Local/Nook/bin/nook-hook.exe";
+    const RELAY: &str = "C:/Users/me/AppData/Local/Oleo/bin/oleo-hook.exe";
 
     fn foreign() -> Value {
         json!({
@@ -288,7 +288,7 @@ mod tests {
 
     #[test]
     fn a_moved_relay_is_replaced_not_added() {
-        let old = installed(&foreign(), "C:/old/nook-hook.exe").unwrap();
+        let old = installed(&foreign(), "C:/old/oleo-hook.exe").unwrap();
         assert_eq!(status_of(&old, RELAY), (true, false));
         let out = installed(&old, RELAY).unwrap();
         assert_eq!(commands(&out, "stop").len(), 2);
@@ -296,7 +296,7 @@ mod tests {
     }
 
     #[test]
-    fn removing_takes_only_nooks_entries_and_the_rest_comes_back_as_it_was() {
+    fn removing_takes_only_oleos_entries_and_the_rest_comes_back_as_it_was() {
         let out = uninstalled(&installed(&foreign(), RELAY).unwrap()).unwrap();
         assert_eq!(out, foreign());
         // Nothing of ours in a file of nobody else's: what is left is the file without hooks.
@@ -305,8 +305,8 @@ mod tests {
     }
 
     #[test]
-    fn an_entry_that_only_mentions_nook_is_not_ours() {
-        let theirs = json!({ "hooks": { "stop": [{ "command": "nook-hook.exe --agent other stop" }] } });
+    fn an_entry_that_only_mentions_oleo_is_not_ours() {
+        let theirs = json!({ "hooks": { "stop": [{ "command": "oleo-hook.exe --agent other stop" }] } });
         assert_eq!(uninstalled(&theirs).unwrap(), theirs);
         assert_eq!(commands(&installed(&theirs, RELAY).unwrap(), "stop").len(), 2);
     }
@@ -330,8 +330,8 @@ mod tests {
 
     #[test]
     fn a_relay_path_that_needs_quoting_is_refused() {
-        assert!(installed(&json!({}), "C:/Users/John Doe/bin/nook-hook.exe").is_err());
-        assert!(installed(&json!({}), "C:/Users/me/a&b/nook-hook.exe").is_err());
+        assert!(installed(&json!({}), "C:/Users/John Doe/bin/oleo-hook.exe").is_err());
+        assert!(installed(&json!({}), "C:/Users/me/a&b/oleo-hook.exe").is_err());
     }
 
     #[test]

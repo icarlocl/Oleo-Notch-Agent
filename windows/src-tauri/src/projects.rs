@@ -2,7 +2,7 @@
 // most recent first, and the two things it does with one — open it in VS Code,
 // start a new Claude Code session in it in Windows Terminal.
 //
-// The list is Nook's own: a folder is added when a session's hook event names it
+// The list is Oleo's own: a folder is added when a session's hook event names it
 // as its working folder (`note`), kept in shelf.json (the page cannot write it),
 // at most MAX_PROJECTS, and a folder that no longer exists is left out of what is
 // shown. The page names a folder to launch, and Rust launches it only if it is one
@@ -183,9 +183,9 @@ mod tests {
     fn only_an_existing_folder_is_launchable() {
         let base = here();
         assert!(launchable(&base));
-        assert!(!launchable(&format!("{base}{}nook-no-such-folder-{}", std::path::MAIN_SEPARATOR, std::process::id())));
+        assert!(!launchable(&format!("{base}{}oleo-no-such-folder-{}", std::path::MAIN_SEPARATOR, std::process::id())));
         // A file is not a folder.
-        let file = std::env::temp_dir().join(format!("nook-projects-{}.txt", std::process::id()));
+        let file = std::env::temp_dir().join(format!("oleo-projects-{}.txt", std::process::id()));
         std::fs::write(&file, b"x").unwrap();
         assert!(!launchable(&file.to_string_lossy()));
         let _ = std::fs::remove_file(file);
@@ -219,8 +219,8 @@ mod tests {
 
     #[test]
     fn a_folder_is_named_by_its_last_part() {
-        assert_eq!(folder_name("D:\\work\\personal\\nook"), "nook");
-        assert_eq!(folder_name("/home/me/nook/"), "nook");
+        assert_eq!(folder_name("D:\\work\\personal\\oleo"), "oleo");
+        assert_eq!(folder_name("/home/me/oleo/"), "oleo");
         assert_eq!(folder_name("D:\\"), "D:");
         assert_eq!(folder_name("/"), "/");
     }

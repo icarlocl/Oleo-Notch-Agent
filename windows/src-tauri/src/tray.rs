@@ -16,7 +16,7 @@ pub struct HideItem(MenuItem<Wry>);
 pub struct AgentsItem(MenuItem<Wry>);
 
 pub fn build(app: &AppHandle) -> tauri::Result<()> {
-    let open = MenuItem::with_id(app, "open", "Abrir Nook", true, None::<&str>)?;
+    let open = MenuItem::with_id(app, "open", "Abrir Oleo", true, None::<&str>)?;
     let hide = MenuItem::with_id(app, "hide", visibility::label(false), true, None::<&str>)?;
     let agents = MenuItem::with_id(app, "agents", crate::agents::label(false), false, None::<&str>)?;
     let settings = MenuItem::with_id(app, "settings", "Ajustes…", true, None::<&str>)?;
@@ -29,8 +29,8 @@ pub fn build(app: &AppHandle) -> tauri::Result<()> {
     app.manage(HideItem(hide));
     app.manage(AgentsItem(agents));
 
-    let mut builder = TrayIconBuilder::with_id("nook")
-        .tooltip("Nook")
+    let mut builder = TrayIconBuilder::with_id("oleo")
+        .tooltip("Oleo")
         .menu(&menu)
         .on_menu_event(|app: &AppHandle, event| match event.id.as_ref() {
             "quit" => app.exit(0),
@@ -38,7 +38,7 @@ pub fn build(app: &AppHandle) -> tauri::Result<()> {
             "hide" => visibility::toggle(app),
             "agents" => crate::agents::toggle(app),
             id => {
-                // Open Nook brings back an island that was hidden, then the page opens it.
+                // Open Oleo brings back an island that was hidden, then the page opens it.
                 if id == "open" {
                     visibility::open(app);
                 }

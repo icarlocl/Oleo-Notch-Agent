@@ -90,7 +90,7 @@ The last two are plain screenshots of the real app.
 | **Claude Code, Codex and Cursor** | Codex's and Cursor's agent sessions appear next to Claude Code's, each with its own mark. Codex gets Allow and Deny; Cursor is status only. |
 | **Usage limits** | Your 5-hour and 7-day Claude limits, from Claude Code's own status line, with no network call. Codex's limits are not shown. |
 | **Resources** | CPU, GPU and RAM in the header of every screen. |
-| **Gullu** | Nook's little buddy wears the status of your sessions and reacts to the pointer. |
+| **Durazno** | Oleo's peach plush wears the status of your sessions and reacts to the pointer. |
 | **The Shelf** | Small widgets: To-do, Timer, Reminders, Media, Mirror, Projects. Swipe between Home and Shelf. |
 | **Keyboard** | `Ctrl+Alt+Space` opens the large panel, `Ctrl+Shift+Space` opens it at normal size, `Ctrl+Alt+Enter` jumps to the session that needs you. All configurable. |
 | **Stays out of the way** | Hides in full-screen apps, folds on its own, uses almost no CPU while hidden. |
@@ -261,8 +261,7 @@ Oleo is derived from Nook. Nook is a fork of [Coucou](https://github.com/Louis-C
 (MIT), built on the Windows multi-session work of PR #71 by
 [Edurique](https://github.com/Edurique/coucou_edu_windows_implementation).
 Interface icons are from [Lucide](https://lucide.dev) and
-[Simple Icons](https://simpleicons.org); see [`NOTICE`](NOTICE). Gullu, the
-icons and the sounds are Nook's own; see
+[Simple Icons](https://simpleicons.org); see [`NOTICE`](NOTICE). Durazno and the icons are Oleo's own (the sounds come from Nook); see
 [`LICENSE-ASSETS.md`](LICENSE-ASSETS.md).
 
 "Claude" and "Claude Code" are trademarks of Anthropic. "Codex" is a trademark of OpenAI. "Cursor" is a trademark

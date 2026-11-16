@@ -3,7 +3,7 @@
   "defaults": {
     "size": "1600x900",
     "scale": 100,
-    "wallpaper": "nook",
+    "wallpaper": "oleo",
     "variants": [
       "dark",
       "light"
@@ -23,7 +23,7 @@
         "README.md"
       ],
       "out": "hero",
-      "alt": "Nook open on the Home view at 125% scaling: three agents, two from Claude Code and one from Cursor, with CPU, GPU, RAM and Claude usage beside them.",
+      "alt": "Oleo open on the Home view at 125% scaling: three agents, two from Claude Code and one from Cursor, with CPU, GPU, RAM and Claude usage beside them.",
       "notes": "The whole desktop at 125 % Windows scaling, island open on Home with three sessions: web working, api needs permission, docs (Cursor) done."
     },
     {
@@ -41,7 +41,7 @@
         "README.md"
       ],
       "out": "island-home",
-      "alt": "The Nook island open on Home: a session card that needs permission, the working and done sessions, and CPU, GPU, RAM and Claude usage.",
+      "alt": "The Oleo island open on Home: a session card that needs permission, the working and done sessions, and CPU, GPU, RAM and Claude usage.",
       "notes": "The island alone, with 40 px around it."
     },
     {
@@ -57,7 +57,7 @@
         "guides/first-run#tour"
       ],
       "out": "folded",
-      "alt": "The Nook island folded to a small pill: the character, a dot for each session, and the CPU, GPU, RAM and Claude usage readings.",
+      "alt": "The Oleo island folded to a small pill: the character, a dot for each session, and the CPU, GPU, RAM and Claude usage readings.",
       "notes": "The compact (folded) island alone with its metrics."
     },
     {
@@ -76,7 +76,7 @@
         "README.md"
       ],
       "out": "over-browser-tabs",
-      "alt": "The Nook island floating over the tab strip of a browser window, so it never takes space from the page.",
+      "alt": "The Oleo island floating over the tab strip of a browser window, so it never takes space from the page.",
       "notes": "The island over a browser's tab strip."
     },
     {
@@ -94,7 +94,7 @@
         "guides/first-run#first-session"
       ],
       "out": "over-terminal",
-      "alt": "A Claude Code session open in the Nook island above a terminal window.",
+      "alt": "A Claude Code session open in the Oleo island above a terminal window.",
       "notes": "The session view over a terminal window."
     },
     {
@@ -113,7 +113,7 @@
         "README.md"
       ],
       "out": "over-editor",
-      "alt": "A permission request for an edit in the Nook island, with the changed lines as a diff and Deny and Allow buttons, above a code editor.",
+      "alt": "A permission request for an edit in the Oleo island, with the changed lines as a diff and Deny and Allow buttons, above a code editor.",
       "notes": "An edit approval with a diff over a code editor."
     },
     {
@@ -130,7 +130,7 @@
         "README.md"
       ],
       "out": "dock-bottom",
-      "alt": "Nook docked to the bottom edge of the screen, standing on the taskbar.",
+      "alt": "Oleo docked to the bottom edge of the screen, standing on the taskbar.",
       "notes": "Island docked at the bottom, taskbar below."
     },
     {
@@ -146,7 +146,7 @@
         "guides/first-run#auto-hide"
       ],
       "out": "dock-left",
-      "alt": "Nook docked to the left edge of the screen as a tall panel.",
+      "alt": "Oleo docked to the left edge of the screen as a tall panel.",
       "notes": "Island docked at the left edge."
     },
     {
@@ -259,7 +259,7 @@
         "guides/first-run"
       ],
       "out": "settings-connect",
-      "alt": "Nook Settings on Connect: under Claude Code, Sessions and approvals says Not connected, with a Connect button.",
+      "alt": "Oleo Settings on Connect: under Claude Code, Sessions and approvals says Not connected, with a Connect button.",
       "notes": "Connect page before the hooks are installed."
     },
     {
@@ -288,7 +288,7 @@
         "guides/first-run#usage-status-line"
       ],
       "out": "settings-usage-diff",
-      "alt": "The preview of the status line entry Nook would add to settings.json, with a confirm button.",
+      "alt": "The preview of the status line entry Oleo would add to settings.json, with a confirm button.",
       "notes": "The usage status line diff."
     },
     {
@@ -302,7 +302,7 @@
         "guides/cursor#setup"
       ],
       "out": "settings-cursor",
-      "alt": "Nook Settings on Connect with the Cursor entry set up and its details open.",
+      "alt": "Oleo Settings on Connect with the Cursor entry set up and its details open.",
       "notes": "Connect page with Cursor connected."
     },
     {
@@ -316,7 +316,7 @@
         "guides/codex#setup"
       ],
       "out": "settings-codex",
-      "alt": "Nook Settings searched for Codex: the Codex entry is connected, its details are open with the note to trust the hooks with /hooks, and the Show Codex sessions switch is on.",
+      "alt": "Oleo Settings searched for Codex: the Codex entry is connected, its details are open with the note to trust the hooks with /hooks, and the Show Codex sessions switch is on.",
       "notes": "Settings searched for Codex (the Codex block is at the bottom of Connect), connected, details open."
     },
     {
@@ -330,7 +330,7 @@
         "guides/troubleshooting#multi-monitor"
       ],
       "out": "settings-island",
-      "alt": "Nook Settings, Island page: where the island sits, which display it uses, its size and when it folds.",
+      "alt": "Oleo Settings, Island page: where the island sits, which display it uses, its size and when it folds.",
       "notes": "Island placement settings."
     },
     {
@@ -344,7 +344,7 @@
         "README.md"
       ],
       "out": "settings-look",
-      "alt": "Nook Settings, Look and colours page: theme, accent and the buddy.",
+      "alt": "Oleo Settings, Look and colours page: theme, accent and the buddy.",
       "notes": "Look and colours."
     },
     {
@@ -358,7 +358,7 @@
         "guides/first-run#shortcuts"
       ],
       "out": "settings-shortcuts",
-      "alt": "Nook Settings, Shortcuts page: the keyboard shortcuts for the large panel, the normal panel, jumping to a session, hiding and the agents list.",
+      "alt": "Oleo Settings, Shortcuts page: the keyboard shortcuts for the large panel, the normal panel, jumping to a session, hiding and the agents list.",
       "notes": "Shortcuts."
     },
     {
@@ -372,7 +372,7 @@
         "guides/troubleshooting#shortcut-conflict"
       ],
       "out": "settings-shortcut-taken",
-      "alt": "Nook Settings, Shortcuts page, with a shortcut marked as already used by another app.",
+      "alt": "Oleo Settings, Shortcuts page, with a shortcut marked as already used by another app.",
       "notes": "A shortcut another app holds."
     },
     {
@@ -386,7 +386,7 @@
         "guides/shelf-widgets#using-the-shelf"
       ],
       "out": "settings-shelf",
-      "alt": "Nook Settings, Shelf widgets page: switches for To-do, Timer, Reminders, Media, Mirror and Projects.",
+      "alt": "Oleo Settings, Shelf widgets page: switches for To-do, Timer, Reminders, Media, Mirror and Projects.",
       "notes": "Shelf widget switches."
     },
     {
@@ -401,7 +401,7 @@
         "privacy#update-check"
       ],
       "out": "settings-about",
-      "alt": "Nook Settings, About and privacy page: the version, the Updates group with the daily check switched off and a Check now button, and the privacy summary.",
+      "alt": "Oleo Settings, About and privacy page: the version, the Updates group with the daily check switched off and a Check now button, and the privacy summary.",
       "notes": "About and privacy."
     },
     {
@@ -415,7 +415,7 @@
       ],
       "out": "install-release-page",
       "alt": "The latest release page on GitHub, with the Windows installer and SHA256SUMS.txt in the assets list.",
-      "notes": "Browser at github.com/zubairbinshaukat/nook/releases/latest, assets list expanded, the installer and SHA256SUMS.txt rows highlighted (a red or accent box). Crop to the page, no other tabs or bookmarks."
+      "notes": "Browser at github.com/icarlocl/oleo/releases/latest, assets list expanded, the installer and SHA256SUMS.txt rows highlighted (a red or accent box). Crop to the page, no other tabs or bookmarks."
     },
     {
       "id": "install-smartscreen",
@@ -455,8 +455,8 @@
         "guides/install#run-installer"
       ],
       "out": "install-wizard",
-      "alt": "The Nook installer wizard on its first page.",
-      "notes": "Run Nook-Windows-0.2.2-setup.exe past SmartScreen and capture the first page of the installer window (not the last). Window snip, 100 % scale."
+      "alt": "The Oleo installer wizard on its first page.",
+      "notes": "Run Oleo-Windows-0.2.2-setup.exe past SmartScreen and capture the first page of the installer window (not the last). Window snip, 100 % scale."
     },
     {
       "id": "tray-menu",
@@ -469,8 +469,8 @@
         "guides/troubleshooting#island-missing"
       ],
       "out": "tray-menu",
-      "alt": "The Nook icon in the Windows notification area with its context menu open.",
-      "notes": "Windows 11, dark taskbar, 100 % scale. Open the hidden-icons chevron, right-click the Nook icon so its menu is open, then snip the menu plus the icon row (Win+Shift+S rectangle). Needs the real tray."
+      "alt": "The Oleo icon in the Windows notification area with its context menu open.",
+      "notes": "Windows 11, dark taskbar, 100 % scale. Open the hidden-icons chevron, right-click the Oleo icon so its menu is open, then snip the menu plus the icon row (Win+Shift+S rectangle). Needs the real tray."
     },
     {
       "id": "log-folder",
@@ -483,8 +483,8 @@
         "guides/troubleshooting#collect-logs"
       ],
       "out": "log-folder",
-      "alt": "File Explorer open at the Nook folder in LocalAppData, showing the log file and the bin folder.",
-      "notes": "File Explorer at %LOCALAPPDATA%\\Nook (type it in the address bar), details view so file names and sizes show. Hide your user name in the address bar if it is visible (blur or crop)."
+      "alt": "File Explorer open at the Oleo folder in LocalAppData, showing the log file and the bin folder.",
+      "notes": "File Explorer at %LOCALAPPDATA%\\Oleo (type it in the address bar), details view so file names and sizes show. Hide your user name in the address bar if it is visible (blur or crop)."
     },
     {
       "id": "log-file",
@@ -496,8 +496,8 @@
         "guides/troubleshooting#collect-logs"
       ],
       "out": "log-file",
-      "alt": "The Nook log file open in Notepad: one line per event, with the time first.",
-      "notes": "nook.log open in Notepad (dark theme), text area only: crop out the title bar, menu and toolbar row, which show the account picture."
+      "alt": "The Oleo log file open in Notepad: one line per event, with the time first.",
+      "notes": "oleo.log open in Notepad (dark theme), text area only: crop out the title bar, menu and toolbar row, which show the account picture."
     },
     {
       "id": "hooks-in-claude-code",
@@ -509,8 +509,8 @@
         "guides/claude-code-hooks#diagnose"
       ],
       "out": "hooks-in-claude-code",
-      "alt": "Claude Code's /hooks screen listing Nook's relay on the hook events.",
-      "notes": "Install the hooks, start `claude` in a terminal, type /hooks and capture the list that shows the nook-hook.exe entries. Use a dark terminal at a readable font size; crop to the list. Hide any private path."
+      "alt": "Claude Code's /hooks screen listing Oleo's relay on the hook events.",
+      "notes": "Install the hooks, start `claude` in a terminal, type /hooks and capture the list that shows the oleo-hook.exe entries. Use a dark terminal at a readable font size; crop to the list. Hide any private path."
     },
     {
       "id": "cursor-hooks-panel",
@@ -522,8 +522,8 @@
         "guides/cursor#setup"
       ],
       "out": "cursor-hooks-panel",
-      "alt": "Cursor's hooks settings showing Nook's entries after the install.",
-      "notes": "After Settings -> Cursor -> Install hooks and a restart of Cursor, open Cursor's Hooks view (Cursor Settings) and capture the list with Nook's entries. Crop to the panel."
+      "alt": "Cursor's hooks settings showing Oleo's entries after the install.",
+      "notes": "After Settings -> Cursor -> Install hooks and a restart of Cursor, open Cursor's Hooks view (Cursor Settings) and capture the list with Oleo's entries. Crop to the panel."
     },
     {
       "id": "camera-privacy",
@@ -548,8 +548,8 @@
         "README.md"
       ],
       "out": "agents-list-real",
-      "alt": "The Nook agents list window next to a desktop, listing running sessions with their states.",
-      "notes": "In the real app turn on Settings -> Agents list with 3-4 real or fake-session sessions (npm run fake-session) so the small agents window shows rows. Snip the window with a bit of desktop around it; use the Nook wallpaper or a plain one. Not capturable in a plain browser."
+      "alt": "The Oleo agents list window next to a desktop, listing running sessions with their states.",
+      "notes": "In the real app turn on Settings -> Agents list with 3-4 real or fake-session sessions (npm run fake-session) so the small agents window shows rows. Snip the window with a bit of desktop around it; use the Oleo wallpaper or a plain one. Not capturable in a plain browser."
     },
     {
       "id": "real-approval-terminal",
@@ -562,7 +562,7 @@
         "README.md"
       ],
       "out": "real-approval-terminal",
-      "alt": "Claude Code asking for permission in a terminal while the real Nook island shows the same request at the top of the screen.",
+      "alt": "Claude Code asking for permission in a terminal while the real Oleo island shows the same request at the top of the screen.",
       "notes": "Real Windows 11 desktop, a Claude Code permission prompt waiting in Windows Terminal and the real island open on the same request above it (use a throwaway project; no private paths, no other windows). Crop to the top of the screen and the terminal."
     },
     {
@@ -589,7 +589,7 @@
       ],
       "out": "cursor-session-list",
       "alt": "The island's session list with Claude Code and Cursor rows, the filter chips and the sparkle and cube marks.",
-      "notes": "Real Nook with one Claude Code session and one Cursor agent session running (Cursor hooks installed). Open the island on Home / the session list so both rows show; snip the island with 30 px around it over the Nook wallpaper or a plain desktop."
+      "notes": "Real Oleo with one Claude Code session and one Cursor agent session running (Cursor hooks installed). Open the island on Home / the session list so both rows show; snip the island with 30 px around it over the Oleo wallpaper or a plain desktop."
     }
   ]
 }

@@ -4,12 +4,12 @@
 // (src/views/markdown.ts reads the alerts it asks for).
 //
 // The block sits between two marker lines, and those lines are the whole of
-// what Nook owns in that file:
+// what Oleo owns in that file:
 //
-//   <!-- nook:reply-format:start -->
+//   <!-- oleo:reply-format:start -->
 //   ## Reply format
 //   …
-//   <!-- nook:reply-format:end -->
+//   <!-- oleo:reply-format:end -->
 //
 // It is written the way the hooks are, through the hooks' own code (hooks.rs
 // `preview_file` / `write_file`): the diff first, the fingerprint of the file
@@ -38,8 +38,8 @@ use serde::{Deserialize, Serialize};
 use crate::hooks::{self, FileChange, HookPreview};
 use crate::platform;
 
-pub const START: &str = "<!-- nook:reply-format:start -->";
-pub const END: &str = "<!-- nook:reply-format:end -->";
+pub const START: &str = "<!-- oleo:reply-format:start -->";
+pub const END: &str = "<!-- oleo:reply-format:end -->";
 
 /// What stands between the markers, line by line.
 pub const BODY: &[&str] = &[
@@ -79,7 +79,7 @@ pub enum Action {
 pub enum State {
     NotInstalled,
     Installed,
-    /// The markers are there; what is between them is not Nook's current text.
+    /// The markers are there; what is between them is not Oleo's current text.
     Outdated,
     /// No markers, but the file says the same already: these lines.
     Unmarked(Vec<String>),
@@ -106,7 +106,7 @@ pub fn claude_md_path() -> PathBuf {
 // ── Reading: text, lines, markers ─────────────────────────────────────────────
 
 /// A file's bytes as text, its BOM apart. A file that is not UTF-8 is not one
-/// Nook can add a line to without guessing: refused.
+/// Oleo can add a line to without guessing: refused.
 fn text_of(bytes: &[u8]) -> Result<(bool, &str), String> {
     let (bom, rest) = match bytes.strip_prefix(BOM) {
         Some(rest) => (true, rest),
@@ -114,7 +114,7 @@ fn text_of(bytes: &[u8]) -> Result<(bool, &str), String> {
     };
     std::str::from_utf8(rest)
         .map(|text| (bom, text))
-        .map_err(|_| "CLAUDE.md isn't UTF-8 text. Nook won't touch it.".to_string())
+        .map_err(|_| "CLAUDE.md isn't UTF-8 text. Oleo won't touch it.".to_string())
 }
 
 /// The file's own line ending: that of its first line. A file with none yet gets `\n`.
@@ -155,7 +155,7 @@ struct Pair<'a> {
 
 /// The markers of a text: none, one pair, or a refusal — a marker with no
 /// partner, more than one pair, the end before the start, or a marker that is
-/// not alone on its line. Nook then cannot tell what is its own.
+/// not alone on its line. Oleo then cannot tell what is its own.
 fn markers(text: &str) -> Result<Option<Pair<'_>>, String> {
     let lines = lines_of(text);
     let starts: Vec<&Line> = lines.iter().filter(|line| line.words.trim() == START).collect();
@@ -178,7 +178,7 @@ fn markers(text: &str) -> Result<Option<Pair<'_>>, String> {
         return Ok(Some(Pair { start: *starts[0], end: *ends[0] }));
     };
     Err(format!(
-        "Nook's reply-format markers in CLAUDE.md are broken: {why}. Nook won't change the file — fix or remove the marker lines by hand ({START} … {END})."
+        "Oleo's reply-format markers in CLAUDE.md are broken: {why}. Oleo won't change the file — fix or remove the marker lines by hand ({START} … {END})."
     ))
 }
 
@@ -265,7 +265,7 @@ fn updated(text: &str, pair: &Pair) -> String {
 fn removed(text: &str, pair: &Pair) -> String {
     let mut before = &text[..pair.start.start];
     let after = &text[pair.end.next..];
-    // The blank line Nook put before the start marker: an empty line, and nothing else.
+    // The blank line Oleo put before the start marker: an empty line, and nothing else.
     for blank in ["\r\n", "\n"] {
         if before.ends_with(&format!("\n{blank}")) || before == blank {
             before = &before[..before.len() - blank.len()];
@@ -288,7 +288,7 @@ pub fn changed(bytes: Option<&[u8]>, action: Action) -> Result<Vec<u8>, String> 
     let next = match (action, &pair) {
         (Action::Install, None) => {
             if !lookalike(text).is_empty() {
-                return Err("CLAUDE.md already has a reply format of its own, without Nook's markers. Nook won't add a second one, and won't change yours.".into());
+                return Err("CLAUDE.md already has a reply format of its own, without Oleo's markers. Oleo won't add a second one, and won't change yours.".into());
             }
             appended(text)
         }
@@ -296,7 +296,7 @@ pub fn changed(bytes: Option<&[u8]>, action: Action) -> Result<Vec<u8>, String> 
         (Action::Install | Action::Update, Some(pair)) => updated(text, pair),
         (Action::Remove, Some(pair)) => removed(text, pair),
         (Action::Update | Action::Remove, None) => {
-            return Err("Nook's reply format isn't in CLAUDE.md: there is nothing to change.".into());
+            return Err("Oleo's reply format isn't in CLAUDE.md: there is nothing to change.".into());
         }
     };
     let mut out = if bom { BOM.to_vec() } else { Vec::new() };
@@ -351,7 +351,7 @@ mod tests {
     use std::fs;
     use std::sync::atomic::{AtomicU32, Ordering};
 
-    const LF_BLOCK: &str = "<!-- nook:reply-format:start -->\n## Reply format\n- Start with a one-line summary.\n- Put anything I must decide in a > [!IMPORTANT] block, one per decision, with the options and your recommendation.\n- Put risks and unverified things in > [!WARNING].\n- Put recommendations in > [!TIP].\n- Use short sections with ## headings and bullets with **bold lead-ins**.\n- End with the next step.\n<!-- nook:reply-format:end -->";
+    const LF_BLOCK: &str = "<!-- oleo:reply-format:start -->\n## Reply format\n- Start with a one-line summary.\n- Put anything I must decide in a > [!IMPORTANT] block, one per decision, with the options and your recommendation.\n- Put risks and unverified things in > [!WARNING].\n- Put recommendations in > [!TIP].\n- Use short sections with ## headings and bullets with **bold lead-ins**.\n- End with the next step.\n<!-- oleo:reply-format:end -->";
 
     fn install(text: &str) -> String {
         String::from_utf8(changed(Some(text.as_bytes()), Action::Install).unwrap()).unwrap()
@@ -444,15 +444,15 @@ mod tests {
             let there = changed(Some(&with_bom), Action::Install).unwrap();
             assert_eq!(changed(Some(&there), Action::Remove).unwrap(), with_bom, "BOM + {original:?}");
         }
-        // A file Nook created is left empty, not deleted: there is nothing of anybody's in it.
+        // A file Oleo created is left empty, not deleted: there is nothing of anybody's in it.
         assert_eq!(act(&install(""), Action::Remove), "");
         // What the user wrote after the block since stays, and so does what was before.
         let grown = format!("{}More of mine.\n", install("# Mine\n"));
         assert_eq!(act(&grown, Action::Remove), "# Mine\nMore of mine.\n");
-        // A block the user moved to the top, with no blank line of Nook's before it.
+        // A block the user moved to the top, with no blank line of Oleo's before it.
         let moved = format!("{LF_BLOCK}\n\n# Mine\n");
         assert_eq!(act(&moved, Action::Remove), "\n# Mine\n");
-        // Only an empty line is taken as Nook's: one with spaces in it is the user's.
+        // Only an empty line is taken as Oleo's: one with spaces in it is the user's.
         let spaced = format!("# Mine\n  \n{LF_BLOCK}\n");
         assert_eq!(act(&spaced, Action::Remove), "# Mine\n  \n");
     }
@@ -471,7 +471,7 @@ mod tests {
     fn updating_replaces_only_what_is_between_the_markers() {
         let before = "# Mine\r\n\r\nBe brief.  \r\n\r\n";
         let after = "\r\n## After\r\nKept too.";
-        // An older text of Nook's, and marker lines with spaces after them: both pairs stay as they are.
+        // An older text of Oleo's, and marker lines with spaces after them: both pairs stay as they are.
         let old = format!("{before}{START}  \r\n## Reply format\r\n- An older line.\r\n{END}\t{after}");
         assert_eq!(state(&old), State::Outdated);
         let new = act(&old, Action::Update);
@@ -500,7 +500,7 @@ mod tests {
         let own = "# Mine\n\n### reply FORMAT\n- Lead with the answer.\n- Then the detail.\n\n## Other\nKept.\n";
         assert_eq!(state(own), State::Unmarked(vec!["### reply FORMAT".into(), "- Lead with the answer.".into(), "- Then the detail.".into()]));
         assert!(changed(Some(own.as_bytes()), Action::Install).unwrap_err().contains("won't add a second one"));
-        // Nook's own lines pasted by hand, with no heading and no markers.
+        // Oleo's own lines pasted by hand, with no heading and no markers.
         let pasted = "Notes.\n* Put risks and unverified things in > [!WARNING].\nMore.\n";
         assert_eq!(state(pasted), State::Unmarked(vec!["* Put risks and unverified things in > [!WARNING].".into()]));
         assert!(changed(Some(pasted.as_bytes()), Action::Install).is_err());
@@ -515,7 +515,7 @@ mod tests {
         // A long section is shown in part.
         let long = format!("## Reply format\n{}", "- line\n".repeat(40));
         assert!(matches!(state(&long), State::Unmarked(found) if found.len() == FOUND_LINES));
-        // Inside Nook's markers the same words are simply the block.
+        // Inside Oleo's markers the same words are simply the block.
         assert_eq!(state(&install("# Mine\n")), State::Installed);
     }
 
@@ -547,7 +547,7 @@ mod tests {
     static COUNT: AtomicU32 = AtomicU32::new(0);
     impl Sandbox {
         fn new() -> Self {
-            let dir = std::env::temp_dir().join(format!("nook-replyformat-{}-{}", std::process::id(), COUNT.fetch_add(1, Ordering::Relaxed)));
+            let dir = std::env::temp_dir().join(format!("oleo-replyformat-{}-{}", std::process::id(), COUNT.fetch_add(1, Ordering::Relaxed)));
             let _ = fs::remove_dir_all(&dir);
             fs::create_dir_all(&dir).unwrap();
             Sandbox(dir)
@@ -606,7 +606,7 @@ mod tests {
         fs::write(&path, &original).unwrap();
 
         let plan = hooks::preview_file(&path, change(Action::Install)).unwrap();
-        assert!(plan.diff.contains("+ <!-- nook:reply-format:start -->") && !plan.diff.lines().any(|line| line.starts_with('-')), "only additions: {}", plan.diff);
+        assert!(plan.diff.contains("+ <!-- oleo:reply-format:start -->") && !plan.diff.lines().any(|line| line.starts_with('-')), "only additions: {}", plan.diff);
         assert!(plan.backup.contains("CLAUDE.md.bak-"), "{}", plan.backup);
         assert_eq!(fs::read(&path).unwrap(), original);
 

@@ -1,12 +1,12 @@
-// DEV ONLY. A made-up Nook for the Shelf in a plain browser (`npx vite`): its
-// saved state lives in the browser's own storage, and what only Nook can do
+// DEV ONLY. A made-up Oleo for the Shelf in a plain browser (`npx vite`): its
+// saved state lives in the browser's own storage, and what only Oleo can do
 // (the system player, the project folders) answers with made-up data.
 // backend.ts loads this file on a dev server outside Tauri only, and a build
 // leaves it out.
 
 import type { MediaInfo, ProjectInfo } from "../core/bridge";
 
-const KEY = "nook.shelf.fake.";
+const KEY = "oleo.shelf.fake.";
 
 export function load(widget: string): unknown {
   try {
@@ -66,7 +66,7 @@ export function mediaControl(action: "previous" | "toggle" | "next"): boolean {
 export function projectsList(): ProjectInfo[] {
   const now = Date.now();
   return [
-    { path: "D:\\work\\personal\\nook", name: "nook", at: now - 2 * 60_000 },
+    { path: "D:\\work\\personal\\oleo", name: "oleo", at: now - 2 * 60_000 },
     { path: "D:\\work\\korus", name: "korus", at: now - 60 * 60_000 },
     { path: "D:\\work\\clients\\sbe-hub", name: "sbe-hub", at: now - 26 * 3_600_000 },
     { path: "D:\\work\\personal\\ig-post", name: "ig-post", at: now - 5 * 86_400_000 },

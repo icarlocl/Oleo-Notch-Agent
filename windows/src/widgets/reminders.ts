@@ -1,11 +1,11 @@
 // Reminders: words and a time. Small: the next one, and a quick add. Expanded:
 // the whole list, each line editable (its words, its time) and removable.
 //
-// They fire only while Nook is running — the expanded view says so in one line;
+// They fire only while Oleo is running — the expanded view says so in one line;
 // there is no service and no scheduled task. There is one `setTimeout`, armed
 // to the next one due: no polling, and none at all when nothing is waiting.
 // When one is due, a sound is played and the island opens on the list. A
-// reminder that came due while Nook was not running is not fired late and
+// reminder that came due while Oleo was not running is not fired late and
 // loud: at the next start it is marked missed, and one notice says so.
 // Kept in shelf.json.
 
@@ -30,7 +30,7 @@ export interface Reminder {
   done: boolean;
   /** It has come due (and was said), or it was set for a time already gone: it is not to fire again. */
   fired: boolean;
-  /** It came due while Nook was not running. */
+  /** It came due while Oleo was not running. */
   missed: boolean;
 }
 
@@ -94,7 +94,7 @@ function check() {
   arm();
 }
 
-/** At start: the list is read; what came due while Nook was not running is marked missed, and said once, a little later. */
+/** At start: the list is read; what came due while Oleo was not running is marked missed, and said once, a little later. */
 export async function startReminders() {
   const kept = readReminders(await loadWidget("reminders"));
   const now = Date.now();
@@ -233,7 +233,7 @@ export function buildReminders(ctx: WidgetContext): Widget {
     list,
     h("div", { class: "fc-add" }, shared(add.field, "rem-add", "text"), when,
       h("button", { class: "btn secondary", text: "Añadir", onclick: add.commit })),
-    h("div", { class: "fc-note", text: "Los recordatorios funcionan mientras Nook está abierto. Haz clic en el texto o la hora para editar." }));
+    h("div", { class: "fc-note", text: "Los recordatorios funcionan mientras Oleo está abierto. Haz clic en el texto o la hora para editar." }));
 
   let shown: string | null = null;
   let shownNext = "";

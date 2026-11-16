@@ -196,7 +196,7 @@ function paintClock(el: RowEl, now: number) {
 /** A row's own words and numbers, patched into the element it has. */
 function paintRow(el: RowEl, row: AgentRow, now: number) {
   el.row = row;
-  // The tools' marks are rebuilt only when the tools change: Nook's own marks, as in the sidebar.
+  // The tools' marks are rebuilt only when the tools change: Oleo's own marks, as in the sidebar.
   const tools = row.agents.join(",");
   if (el.marks.dataset.tools !== tools) {
     el.marks.dataset.tools = tools;

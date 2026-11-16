@@ -58,7 +58,7 @@ pub struct Foreground {
     pub class: String,
     /// The image its process runs (`msedge.exe`), empty when it will not say.
     pub process: String,
-    /// One of Nook's own windows: the island with the keyboard, the settings window.
+    /// One of Oleo's own windows: the island with the keyboard, the settings window.
     pub own: bool,
     /// It is on the display the island is on.
     pub on_island_display: bool,
@@ -94,7 +94,7 @@ fn is_shell(front: &Foreground) -> bool {
 
 /// True when the island should stay out of the way.
 ///
-/// - Nook's own window in front, or the shell's (the desktop, the taskbar, the
+/// - Oleo's own window in front, or the shell's (the desktop, the taskbar, the
 ///   Start menu and the other flyouts, Alt+Tab): never.
 /// - A window on another display than the island's: never — it hides nothing
 ///   the island is drawn over.
@@ -175,7 +175,7 @@ mod tests {
     }
 
     #[test]
-    fn the_desktop_and_nooks_own_windows_never_count() {
+    fn the_desktop_and_oleos_own_windows_never_count() {
         for class in ["Progman", "WorkerW", "Shell_TrayWnd", "Shell_SecondaryTrayWnd"] {
             assert!(!is_fullscreen(Some(&window(DISPLAY, class)), Notification::Normal), "{class}");
             assert!(!is_fullscreen(Some(&window(DISPLAY, class)), Notification::Presentation), "{class}");

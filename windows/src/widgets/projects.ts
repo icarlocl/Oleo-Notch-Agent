@@ -35,7 +35,7 @@ const state = {
   said: { path: "", kind: "" as "" | "code" | "claude", ok: true, at: 0 },
 };
 
-/** A session was seen running in this folder: Rust keeps it, if it could launch it. Said once per folder, as long as Nook runs. */
+/** A session was seen running in this folder: Rust keeps it, if it could launch it. Said once per folder, as long as Oleo runs. */
 const noted = new Set<string>();
 export function rememberProject(cwd: string) {
   if (!cwd || noted.has(cwd) || !widgetOn("projects")) return;

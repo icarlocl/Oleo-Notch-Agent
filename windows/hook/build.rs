@@ -1,4 +1,4 @@
-//! Links the Visual C++ runtime statically into nook-hook.exe.
+//! Links the Visual C++ runtime statically into oleo-hook.exe.
 //!
 //! Without this the relay imports VCRUNTIME140.dll, and on a PC without the
 //! Visual C++ Redistributable it dies before its own code runs (0xC0000135,
@@ -38,14 +38,14 @@ fn main() {
 #[cfg(windows)]
 fn version_info() {
     let mut res = tauri_winres::WindowsResource::new();
-    res.set("ProductName", "Nook");
-    res.set("FileDescription", "Nook hook relay for Claude Code");
-    res.set("CompanyName", "Zubair Bin Shaukat");
-    res.set("LegalCopyright", "© Zubair Bin Shaukat and contributors");
-    res.set("InternalName", "nook-hook");
-    res.set("OriginalFilename", "nook-hook.exe");
+    res.set("ProductName", "Oleo");
+    res.set("FileDescription", "Oleo hook relay for Claude Code");
+    res.set("CompanyName", "Franco Ruiz");
+    res.set("LegalCopyright", "© 2026 Franco Ruiz");
+    res.set("InternalName", "oleo-hook");
+    res.set("OriginalFilename", "oleo-hook.exe");
     if let Err(err) = res.compile() {
-        println!("cargo:warning=nook-hook: no version information ({err})");
+        println!("cargo:warning=oleo-hook: no version information ({err})");
     }
 }
 

@@ -14,7 +14,7 @@
 //   --dpr N        device pixel ratio of the PNG, 2 for a sharp 3840x2160 (default 1)
 //   --cli          the plain headless CLI with a virtual-time budget instead of DevTools (less exact; needs no Node 22)
 //   --budget MS    with --cli: the virtual time given to the page to settle (default 8000)
-//   --base URL     the dev server (default http://127.0.0.1:1420, or $NOOK_DEV)
+//   --base URL     the dev server (default http://127.0.0.1:1420, or $OLEO_DEV)
 //   --transparent  keep the page transparent (with scene=none&bg=transparent)
 //   --browser EXE  chrome.exe or msedge.exe, if not in the usual places
 //   --list         print SET and quit
@@ -69,7 +69,7 @@ const [W, H] = [Number(size[1]), Number(size[2])];
 const out = flag("--out");
 const dpr = Number(flag("--dpr") ?? 1) || 1;
 const budget = Number(flag("--budget") ?? 8000) || 8000;
-const base = (flag("--base") ?? process.env.NOOK_DEV ?? "http://127.0.0.1:1420").replace(/\/$/, "");
+const base = (flag("--base") ?? process.env.OLEO_DEV ?? "http://127.0.0.1:1420").replace(/\/$/, "");
 const transparent = flag("--transparent") !== null;
 const cli = flag("--cli") !== null;
 const browserArg = flag("--browser");
@@ -117,7 +117,7 @@ const baseFlags = (profile) => [
 
 /** The plain CLI: a virtual-time budget, then a screenshot. Less exact (the island's springs run on frames), so it is the fallback. */
 function captureCli(url, file) {
-  const profile = mkdtempSync(join(tmpdir(), "nook-shot-"));
+  const profile = mkdtempSync(join(tmpdir(), "oleo-shot-"));
   const flags = [
     ...baseFlags(profile), `--window-size=${W},${H}`, `--force-device-scale-factor=${dpr}`,
     `--virtual-time-budget=${budget}`, `--screenshot=${file}`,
@@ -133,7 +133,7 @@ function captureCli(url, file) {
 
 /** The DevTools protocol over the WebSocket Node ships (22+): waits for the page's `__shotReady`, then captures. */
 async function captureCdp(url, file) {
-  const profile = mkdtempSync(join(tmpdir(), "nook-shot-"));
+  const profile = mkdtempSync(join(tmpdir(), "oleo-shot-"));
   const child = spawn(browser, [...baseFlags(profile), "--remote-debugging-port=0", "about:blank"], { stdio: "ignore" });
   const done = () => {
     child.kill();

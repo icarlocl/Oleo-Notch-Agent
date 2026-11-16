@@ -209,8 +209,8 @@ body.settings-window {
 }
 
 /* The bot lives on the island's black wherever he is shown: the island is
-   dark in both themes, and so is his nook. */
-.sp-nook {
+   dark in both themes, and so is his oleo. */
+.sp-oleo {
   flex: 0 0 auto;
   width: 36px;
   height: 36px;
@@ -609,7 +609,7 @@ body.settings-window {
   gap: 8px;
 }
 
-/* Connect: each tool's own part — its mark and name, and under them what Nook writes for it. */
+/* Connect: each tool's own part — its mark and name, and under them what Oleo writes for it. */
 .sp-tool {
   margin-top: 30px;
   padding-top: 22px;
@@ -1727,48 +1727,50 @@ body.settings-window {
   margin-top: 0.5px;
 }
 
-/* The bot's colours. */
-.sp-swatches {
+/* The mascot picker: a card per mascot, each one alive on the island's black. */
+.sp-mascots {
   display: flex;
   flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sp-mascot {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 6px;
-}
-
-.sp-swatch-name {
-  margin-left: 6px;
-  font: 500 12.5px var(--font);
-  color: var(--text-2);
-}
-
-.sp-swatch {
-  appearance: none;
-  width: 34px;
-  height: 34px;
-  padding: 0;
+  width: 92px;
+  padding: 10px 6px 8px;
   border: 0;
-  border-radius: 50%;
-  background: transparent;
-  display: grid;
-  place-items: center;
+  border-radius: 14px;
+  background: #000;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   cursor: default;
+  transition: box-shadow 0.16s ease-out;
 }
 
-.sp-swatch i {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--c);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
-  transition: scale 0.16s ease-out;
+.sp-mascot .sp-bot {
+  position: relative;
+  pointer-events: none;
 }
 
-.sp-swatch:hover i {
-  scale: 1.1;
+.sp-mascot-name {
+  font: 500 12px var(--font);
+  color: rgba(255, 255, 255, 0.82);
 }
 
-.sp-swatch[aria-checked="true"] {
+.sp-mascot:hover {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+.sp-mascot[aria-checked="true"] {
   box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.sp-mascot:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ── Shelf: the cards, as the shelf has them ─────────────────────────────── */
@@ -1899,7 +1901,7 @@ body.settings-window {
   gap: 16px;
 }
 
-.sp-about .sp-nook {
+.sp-about .sp-oleo {
   width: 72px;
   height: 72px;
   border-radius: 20px;
@@ -2270,7 +2272,7 @@ body.settings-window {
   flex-wrap: wrap;
 }
 
-/* A word from Nook that is neither good news nor bad. */
+/* A word from Oleo that is neither good news nor bad. */
 .sp-flash.note {
   background: var(--sunken);
   color: var(--text-2);

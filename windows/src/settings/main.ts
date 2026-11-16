@@ -9,7 +9,7 @@
 // control and no id exists twice either.
 //
 // Every setting applies at once. Only what writes to Claude Code's
-// settings.json (or its CLAUDE.md, or Cursor's hooks.json) asks first: Nook
+// settings.json (or its CLAUDE.md, or Cursor's hooks.json) asks first: Oleo
 // shows the diff, and nothing is written until the button under it is pressed
 // — with the fingerprint of the diff on show, so a file that changed in
 // between is refused by Rust rather than written over.
@@ -17,12 +17,12 @@
 import "./settings.css";
 import type { AboutLink, CodexStatus, CursorStatus, DataPaths, HookPreview, HookStatus, ReplyFormatAction, ReplyFormatStatus, ShortcutName, ShortcutStatus, UpdateInfo, UsageStatus } from "../core/bridge";
 import { COMPACT_METRICS, DEFAULT_SETTINGS, FADE_MAX, FADE_MIN, FOLDED_AUTO_HIDE, MAX_COMPACT_METRICS, compactMetrics, finishedNotice, foldedAutoHide, type CompactMetric, type FinishedNotice, type SessionAgent, type Settings } from "../core/state";
-import { BOT_THEMES } from "../bot/engine";
+import { DEFAULT_MASCOT, MASCOTS, isMascot, type MascotId } from "../bot/mascots";
 import { clear, h, replay } from "../views/dom";
 import { BRANDS, CLAUDE_MARK, CODEX_MARK, LUCIDE, brand } from "../views/iconset";
 import { TOOL_NAME } from "../views/tool";
 import { connect, type Backend } from "./backend";
-import { isBotTheme, mountBot, refreshBots, startBots, wearBotTheme } from "./bots";
+import { mountBot, refreshBots, startBots, wearMascot } from "./bots";
 import { COMPACT_BOT, COMPACT_CELLS, cellIcon, islandPreview } from "./island-preview";
 import { SPRING, flip, icon, reorderable, segmented, slider, toggle, type Toggle } from "./ui";
 import { weatherPicker } from "./weather";
@@ -39,7 +39,7 @@ const sectionNamed = (name: string | null | undefined): Section | null =>
 type Theme = Settings["theme"];
 type Motion = Settings["reduceMotion"];
 
-let nook: Backend;
+let oleo: Backend;
 let settings: Settings = { ...DEFAULT_SETTINGS };
 let version = "";
 let hooks: HookStatus | null = null;
@@ -63,7 +63,7 @@ const reason = (err: unknown) => (err instanceof Error ? err.message : String(er
 const INFO: Record<Section, { name: string; icon: string; group: string; lede: string }> = {
   connect: {
     name: "Conexiones", icon: LUCIDE.plug, group: "Configuración",
-    lede: "Conecta Nook con Claude Code, Cursor y Codex. Revisa y confirma los cambios antes de aplicarlos.",
+    lede: "Conecta Oleo con Claude Code, Cursor y Codex. Revisa y confirma los cambios antes de aplicarlos.",
   },
   island: {
     name: "Isla", icon: LUCIDE.panelTop, group: "La isla",
@@ -71,7 +71,7 @@ const INFO: Record<Section, { name: string; icon: string; group: string; lede: s
   },
   look: {
     name: "Apariencia y colores", icon: LUCIDE.palette, group: "La isla",
-    lede: "Personaliza los colores de Gullu y de la ventana, y las animaciones.",
+    lede: "Elige la mascota, los colores de la ventana y las animaciones.",
   },
   sounds: {
     name: "Sonidos", icon: LUCIDE.volume2, group: "La isla",
@@ -90,8 +90,8 @@ const INFO: Record<Section, { name: string; icon: string; group: string; lede: s
     lede: "Elige qué herramientas aparecen en la pestaña Widgets y en qué orden.",
   },
   about: {
-    name: "Acerca de Nook y privacidad", icon: LUCIDE.info, group: "",
-    lede: "Consulta dónde se guardan los datos y quién creó Nook.",
+    name: "Acerca de Oleo y privacidad", icon: LUCIDE.info, group: "",
+    lede: "Consulta dónde se guardan los datos y quién creó Oleo.",
   },
 };
 
@@ -105,7 +105,7 @@ let saveTimer = 0;
 function save() {
   window.clearTimeout(saveTimer);
   saveTimer = 0;
-  void nook.saveSettings(settings);
+  void oleo.saveSettings(settings);
 }
 
 /**
@@ -163,7 +163,7 @@ const still = (): boolean => (settings.reduceMotion === "system" ? systemStill.m
 function applyAppearance() {
   page.dataset.theme = resolvedTheme();
   page.dataset.motion = still() ? "reduce" : "full";
-  wearBotTheme(settings.botTheme);
+  wearMascot(settings.botMascot);
 }
 
 page.style.setProperty("--spring", SPRING.easing);
@@ -498,18 +498,18 @@ document.addEventListener("keydown", (e) => {
 /** The settings each category puts back. Never the connections: those are only ever changed through their diff. */
 const RESET_FIELDS: Partial<Record<Section, readonly (keyof Settings)[]>> = {
   island: ["screen", "dock", "autostart", "autoCloseInterval", "foldedAutoHide", "hideOnlyWhenIdle", "hideInFullscreen", "finishedNotice", "compactMetrics", "weatherLocation"],
-  look: ["botTheme", "playfulReactions", "theme", "reduceMotion"],
+  look: ["botMascot", "playfulReactions", "theme", "reduceMotion"],
   sounds: ["soundEnabled", "soundVolume"],
   agents: ["showAgentsList", "agentsListFade", "agentsListFadeOpacity"],
   shelf: ["shelfOrder", "shelfHidden"],
 };
 /** What the reset of each says it does. */
 const RESET_WORDS: Partial<Record<Section, string>> = {
-  island: "Puts everything on this page back as it was when Nook was installed, including starting with your computer (off).",
-  look: "Puts Gullu's colour, the window's colours and the motion back as they came.",
+  island: "Puts everything on this page back as it was when Oleo was installed, including starting with your computer (off).",
+  look: "Puts the mascot, the window's colours and the motion back as they came.",
   sounds: "Turns sounds back on, at the volume they came with.",
   agents: "Turns the agents list off and puts its fading back as it came. Where you put the list, and its size, are kept.",
-  shortcuts: "Puts all five shortcuts back to Nook's keys, and turns them on.",
+  shortcuts: "Puts all five shortcuts back to Oleo's keys, and turns them on.",
   shelf: "Shows every widget again, in the order they came in.",
 };
 
@@ -610,7 +610,7 @@ function resetFoot(id: Section): HTMLElement {
 // ── Connect: Claude Code and Cursor ───────────────────────────────────────────
 
 /**
- * What Nook writes for Claude Code: the hooks and the status line the usage
+ * What Oleo writes for Claude Code: the hooks and the status line the usage
  * limits come through, in ~/.claude/settings.json; the reply format, in
  * ~/.claude/CLAUDE.md. One flow for the three: the diff, then an explicit click.
  */
@@ -634,28 +634,28 @@ const CODEX_TRUST = "Codex runs new hooks only once you trust them: start Codex 
 /** What the preview panel says of each change, before and after it is written. */
 const CHANGE_WORDS: Record<Change, { install: string; remove: string; done: string }> = {
   hooks: {
-    install: "This is exactly what Nook will change in Claude Code's settings file. Your own hooks and settings stay as they are.",
-    remove: "This removes Nook's entries only. Your own hooks and settings stay as they are.",
+    install: "This is exactly what Oleo will change in Claude Code's settings file. Your own hooks and settings stay as they are.",
+    remove: "This removes Oleo's entries only. Your own hooks and settings stay as they are.",
     done: "Open a new Claude Code session for the change to take effect.",
   },
   usage: {
-    install: "This is exactly what will change in Claude Code's settings file: its status line (the statusLine key), and nothing else. A status line you already have keeps working: Nook runs it for you — it is the long word after --previous — and turning this off puts it back as it was.",
-    remove: "This takes Nook out of the status line only. The status line you had before comes back exactly as it was; with none, the key is removed.",
+    install: "This is exactly what will change in Claude Code's settings file: its status line (the statusLine key), and nothing else. A status line you already have keeps working: Oleo runs it for you — it is the long word after --previous — and turning this off puts it back as it was.",
+    remove: "This takes Oleo out of the status line only. The status line you had before comes back exactly as it was; with none, the key is removed.",
     done: "Claude Code picks the change up when it reloads its settings; a new session always does.",
   },
   reply: {
-    install: "This is exactly what will change in your CLAUDE.md, Claude Code's instructions file: the block between Nook's two marker lines, and nothing outside them.",
-    remove: "This removes Nook's two marker lines, what is between them, and the blank line Nook added before them. Everything else in your CLAUDE.md stays as it is.",
+    install: "This is exactly what will change in your CLAUDE.md, Claude Code's instructions file: the block between Oleo's two marker lines, and nothing outside them.",
+    remove: "This removes Oleo's two marker lines, what is between them, and the blank line Oleo added before them. Everything else in your CLAUDE.md stays as it is.",
     done: "New sessions use it.",
   },
   cursor: {
-    install: "This is exactly what will change in Cursor's hooks.json: Nook's entries, and nothing else. Your own hooks and any other key stay as they are.",
-    remove: "This removes Nook's entries only. Your own hooks stay as they are.",
+    install: "This is exactly what will change in Cursor's hooks.json: Oleo's entries, and nothing else. Your own hooks and any other key stay as they are.",
+    remove: "This removes Oleo's entries only. Your own hooks stay as they are.",
     done: "Cursor reloads hooks.json when it is saved. If its sessions do not show up, restart Cursor.",
   },
   codex: {
-    install: "This is exactly what will change in Codex's hooks.json: Nook's entries, and nothing else. Your own hooks and any other key stay as they are.",
-    remove: "This removes Nook's entries only. Your own hooks stay as they are.",
+    install: "This is exactly what will change in Codex's hooks.json: Oleo's entries, and nothing else. Your own hooks and any other key stay as they are.",
+    remove: "This removes Oleo's entries only. Your own hooks stay as they are.",
     done: CODEX_TRUST,
   },
 };
@@ -683,35 +683,35 @@ interface Spec {
   remove?: string;
 }
 
-const RELAY_MISSING = "Restart Nook first: a part of it is missing.";
+const RELAY_MISSING = "Restart Oleo first: a part of it is missing.";
 const UNREACHABLE: Omit<Spec, "name"> = {
   tone: "off", title: "No disponible",
-  text: "Nook no respondió. Cierra esta ventana y vuelve a abrirla desde la isla o el área de notificación.",
+  text: "Oleo no respondió. Cierra esta ventana y vuelve a abrirla desde la isla o el área de notificación.",
   facts: [],
 };
 
 function hooksSpec(): Spec {
   const s = hooks;
-  const name = "Connect Claude Code to Nook";
+  const name = "Connect Claude Code to Oleo";
   if (!s) return { name, ...UNREACHABLE };
   const file: [string, string] = ["settings.json", s.settingsPath];
   const relay: [string, string] = ["Relay", s.hookPath];
   const relayName = s.hookPath.split(/[\\/]/).pop() || "The relay";
-  const how = "Nook adds a few hooks to Claude Code's settings file (settings.json): each runs Nook's small relay program, which passes what a session does to Nook. Your own hooks are left as they are.";
+  const how = "Oleo adds a few hooks to Claude Code's settings file (settings.json): each runs Oleo's small relay program, which passes what a session does to Oleo. Your own hooks are left as they are.";
   if (!s.hookReady) {
     // Writing hook commands that point at a relay which isn't there would give
     // every Claude Code session a broken hook: installing is not on offer.
     return {
       name, tone: "error", title: "Requiere reinicio",
       text: s.installed
-        ? "A part of Nook that Claude Code talks to is missing, so your sessions can't reach Nook. Restarting Nook puts it back."
-        : "A part of Nook that Claude Code talks to is missing, so connecting now would not work. Restarting Nook puts it back.",
+        ? "A part of Oleo that Claude Code talks to is missing, so your sessions can't reach Oleo. Restarting Oleo puts it back."
+        : "A part of Oleo that Claude Code talks to is missing, so connecting now would not work. Restarting Oleo puts it back.",
       details: [
         `${relayName} is not where ${s.installed ? "the hooks point" : "the hooks would point"}.`,
-        "Still missing after a restart? Installing Nook again puts it back; from the source, cargo build -p nook-hook builds it.",
+        "Still missing after a restart? Installing Oleo again puts it back; from the source, cargo build -p oleo-hook builds it.",
       ],
       facts: [file, relay],
-      primary: { label: "Reiniciar Nook", act: "restart" },
+      primary: { label: "Reiniciar Oleo", act: "restart" },
       remove: s.installed ? "Desconectar…" : s.legacy ? "Remove the old connection…" : undefined,
     };
   }
@@ -719,9 +719,9 @@ function hooksSpec(): Spec {
     return {
       name, tone: "warn", title: "Requiere actualización",
       text: s.installed
-        ? "Nook is connected, but parts of an older version are still there. Updating takes them out."
-        : "An older version of Nook's connection is still there. Nook can't hear your sessions until it is updated.",
-      details: [how, "Hooks from an older version were found beside Nook's: updating replaces them."],
+        ? "Oleo is connected, but parts of an older version are still there. Updating takes them out."
+        : "An older version of Oleo's connection is still there. Oleo can't hear your sessions until it is updated.",
+      details: [how, "Hooks from an older version were found beside Oleo's: updating replaces them."],
       facts: [file, relay],
       primary: { label: "Actualizar…", act: "install" },
       remove: s.installed ? "Desconectar…" : "Remove them…",
@@ -757,8 +757,8 @@ function usageSpec(): Spec {
       details: [
         how,
         u.chained
-          ? "Claude Code hands the numbers to Nook, which then runs the status line you already had, so it keeps showing. Turning this off puts it back exactly as it was."
-          : `Nook prints no status line of its own. ${hints}`,
+          ? "Claude Code hands the numbers to Oleo, which then runs the status line you already had, so it keeps showing. Turning this off puts it back exactly as it was."
+          : `Oleo prints no status line of its own. ${hints}`,
       ],
       facts: [["Key", "statusLine"]],
       remove: "Desactivar…",
@@ -770,8 +770,8 @@ function usageSpec(): Spec {
     details: [
       how,
       u.otherStatusLine
-        ? "You have a status line: Nook runs it after reading the numbers, so it keeps showing, and turning this off puts it back exactly."
-        : `You have no status line: Nook prints none. ${hints}`,
+        ? "You have a status line: Oleo runs it after reading the numbers, so it keeps showing, and turning this off puts it back exactly."
+        : `You have no status line: Oleo prints none. ${hints}`,
     ],
     facts: [],
     // The same relay as the hooks': a status line pointing at one that isn't there shows nothing.
@@ -779,8 +779,8 @@ function usageSpec(): Spec {
   };
 }
 
-const CURSOR_DOES = "Shows your Cursor agent sessions in the island too. Nook can only show them: it can't answer anything in Cursor.";
-const CURSOR_HOW = "Nook adds its entries to Cursor's hooks.json, for events that can only report what Cursor does and never change it.";
+const CURSOR_DOES = "Shows your Cursor agent sessions in the island too. Oleo can only show them: it can't answer anything in Cursor.";
+const CURSOR_HOW = "Oleo adds its entries to Cursor's hooks.json, for events that can only report what Cursor does and never change it.";
 
 function cursorSpec(): Spec {
   const c = cursor;
@@ -788,21 +788,21 @@ function cursorSpec(): Spec {
   if (!c) return { name, ...UNREACHABLE };
   const file: [string, string] = ["hooks.json", c.hooksPath];
   const relay: [string, string] = ["Relay", c.hookPath];
-  if (c.unreadable) return { name, tone: "error", title: "No se puede cambiar", text: "Nook no puede cambiar el archivo de ajustes de Cursor de forma segura.", details: [c.unreadable], facts: [file] };
-  if (c.refused) return { name, tone: "error", title: "No se puede cambiar", text: "Nook no puede cambiar el archivo de ajustes de Cursor de forma segura.", details: [c.refused], facts: [file, relay] };
+  if (c.unreadable) return { name, tone: "error", title: "No se puede cambiar", text: "Oleo no puede cambiar el archivo de ajustes de Cursor de forma segura.", details: [c.unreadable], facts: [file] };
+  if (c.refused) return { name, tone: "error", title: "No se puede cambiar", text: "Oleo no puede cambiar el archivo de ajustes de Cursor de forma segura.", details: [c.refused], facts: [file, relay] };
   if (!c.hookReady) {
     return {
       name, tone: "error", title: "Requiere reinicio",
-      text: "A part of Nook that Cursor talks to is missing, so connecting now would not work. Restarting Nook puts it back.",
+      text: "A part of Oleo that Cursor talks to is missing, so connecting now would not work. Restarting Oleo puts it back.",
       details: ["The relay is not in place yet, and hooks written now would point at nothing."],
-      facts: [file, relay], primary: { label: "Reiniciar Nook", act: "restart" }, remove: c.installed ? "Desconectar…" : undefined,
+      facts: [file, relay], primary: { label: "Reiniciar Oleo", act: "restart" }, remove: c.installed ? "Desconectar…" : undefined,
     };
   }
   if (c.installed && !c.current) {
     return {
       name, tone: "warn", title: "Requiere actualización",
-      text: "Nook's connection to Cursor points at an old place. Updating fixes it.",
-      details: ["Nook's entries in hooks.json point at a relay that has moved. Updating rewrites them, and nothing else."],
+      text: "Oleo's connection to Cursor points at an old place. Updating fixes it.",
+      details: ["Oleo's entries in hooks.json point at a relay that has moved. Updating rewrites them, and nothing else."],
       facts: [file, relay], primary: { label: "Actualizar…", act: "install" }, remove: "Desconectar…",
     };
   }
@@ -818,8 +818,8 @@ function cursorSpec(): Spec {
     details: [
       CURSOR_HOW,
       c.cursorFound
-        ? c.fileExists ? "Your hooks.json is kept: Nook adds its own entries beside yours." : "You have no hooks.json yet: the file is created."
-        : "There is no .cursor folder here, so Cursor may not be installed. Nook can still create hooks.json, and it works once Cursor is.",
+        ? c.fileExists ? "Your hooks.json is kept: Oleo adds its own entries beside yours." : "You have no hooks.json yet: the file is created."
+        : "There is no .cursor folder here, so Cursor may not be installed. Oleo can still create hooks.json, and it works once Cursor is.",
       "After connecting, restart Cursor if its sessions do not show up.",
     ],
     facts: [file], primary: { label: "Conectar…", act: "install" },
@@ -827,7 +827,7 @@ function cursorSpec(): Spec {
 }
 
 const CODEX_DOES = "Muestra tus sesiones de Codex en la isla y te permite responder solicitudes de permiso.";
-const CODEX_HOW = "Nook añade sus entradas a hooks.json de Codex. Si no respondes en la isla, la solicitud de permiso aparecerá en Codex.";
+const CODEX_HOW = "Oleo añade sus entradas a hooks.json de Codex. Si no respondes en la isla, la solicitud de permiso aparecerá en Codex.";
 
 function codexSpec(): Spec {
   const c = codex;
@@ -835,21 +835,21 @@ function codexSpec(): Spec {
   if (!c) return { name, ...UNREACHABLE };
   const file: [string, string] = ["hooks.json", c.hooksPath];
   const relay: [string, string] = ["Relay", c.hookPath];
-  if (c.unreadable) return { name, tone: "error", title: "No se puede cambiar", text: "Nook no puede cambiar el archivo de hooks de Codex de forma segura.", details: [c.unreadable], facts: [file] };
-  if (c.refused) return { name, tone: "error", title: "No se puede cambiar", text: "Nook no puede cambiar el archivo de hooks de Codex de forma segura.", details: [c.refused], facts: [file, relay] };
+  if (c.unreadable) return { name, tone: "error", title: "No se puede cambiar", text: "Oleo no puede cambiar el archivo de hooks de Codex de forma segura.", details: [c.unreadable], facts: [file] };
+  if (c.refused) return { name, tone: "error", title: "No se puede cambiar", text: "Oleo no puede cambiar el archivo de hooks de Codex de forma segura.", details: [c.refused], facts: [file, relay] };
   if (!c.hookReady) {
     return {
       name, tone: "error", title: "Requiere reinicio",
-      text: "A part of Nook that Codex talks to is missing, so connecting now would not work. Restarting Nook puts it back.",
+      text: "A part of Oleo that Codex talks to is missing, so connecting now would not work. Restarting Oleo puts it back.",
       details: ["The relay is not in place yet, and hooks written now would point at nothing."],
-      facts: [file, relay], primary: { label: "Reiniciar Nook", act: "restart" }, remove: c.installed ? "Desconectar…" : undefined,
+      facts: [file, relay], primary: { label: "Reiniciar Oleo", act: "restart" }, remove: c.installed ? "Desconectar…" : undefined,
     };
   }
   if (c.installed && !c.current) {
     return {
       name, tone: "warn", title: "Requiere actualización",
-      text: "Nook's connection to Codex points at an old place. Updating fixes it.",
-      details: ["Nook's entries in hooks.json point at a relay that has moved. Updating rewrites them, and nothing else.", CODEX_TRUST],
+      text: "Oleo's connection to Codex points at an old place. Updating fixes it.",
+      details: ["Oleo's entries in hooks.json point at a relay that has moved. Updating rewrites them, and nothing else.", CODEX_TRUST],
       facts: [file, relay], primary: { label: "Actualizar…", act: "install" }, remove: "Desconectar…",
     };
   }
@@ -865,8 +865,8 @@ function codexSpec(): Spec {
     details: [
       CODEX_HOW,
       c.codexFound
-        ? c.fileExists ? "Your hooks.json is kept: Nook adds its own entries beside yours." : "You have no hooks.json yet: the file is created."
-        : "There is no .codex folder here, so Codex may not be installed. Nook can still create hooks.json, and it works once Codex is.",
+        ? c.fileExists ? "Your hooks.json is kept: Oleo adds its own entries beside yours." : "You have no hooks.json yet: the file is created."
+        : "There is no .codex folder here, so Codex may not be installed. Oleo can still create hooks.json, and it works once Codex is.",
       CODEX_TRUST,
     ],
     facts: [file], primary: { label: "Conectar…", act: "install" },
@@ -874,8 +874,8 @@ function codexSpec(): Spec {
 }
 
 /** The reply format's one sentence, said the same whatever its state. */
-const REPLY_DOES = "Asks Claude Code to lay out its answers the same way each time — a summary first, then what it needs you to decide, its warnings and its tips — so Nook can point them out.";
-const REPLY_HOW = "Nook adds a short block, between two marker lines, to your CLAUDE.md (the instructions Claude Code reads in every session). Nothing outside the block is touched. Applies to new sessions.";
+const REPLY_DOES = "Asks Claude Code to lay out its answers the same way each time — a summary first, then what it needs you to decide, its warnings and its tips — so Oleo can point them out.";
+const REPLY_HOW = "Oleo adds a short block, between two marker lines, to your CLAUDE.md (the instructions Claude Code reads in every session). Nothing outside the block is touched. Applies to new sessions.";
 
 function replySpec(): Spec {
   const r = reply;
@@ -888,7 +888,7 @@ function replySpec(): Spec {
     case "outdated":
       return {
         name, tone: "warn", title: "Requiere actualización",
-        text: "Nook's instructions for Claude Code have changed since you turned this on. Updating brings them up to date.",
+        text: "Oleo's instructions for Claude Code have changed since you turned this on. Updating brings them up to date.",
         details: [REPLY_DOES, "Updating replaces what is between the two marker lines in your CLAUDE.md, and nothing else. Applies to new sessions."],
         facts: [file],
         primary: { label: "Actualizar…", act: "install" }, remove: "Desactivar…",
@@ -896,16 +896,16 @@ function replySpec(): Spec {
     case "unmarked":
       return {
         name, tone: "warn", title: "You have your own",
-        text: "Your Claude Code instructions already ask for a reply layout of their own, so Nook leaves them alone.",
+        text: "Your Claude Code instructions already ask for a reply layout of their own, so Oleo leaves them alone.",
         found: r.found,
         details: [
-          "Your CLAUDE.md has a reply format without Nook's markers: these are the lines Nook found. It won't add a second one, and won't change yours.",
-          "To let Nook manage it, remove those lines yourself and come back: turning it on is then on offer.",
+          "Your CLAUDE.md has a reply format without Oleo's markers: these are the lines Oleo found. It won't add a second one, and won't change yours.",
+          "To let Oleo manage it, remove those lines yourself and come back: turning it on is then on offer.",
         ],
         facts: [file],
       };
     case "error":
-      return { name, tone: "error", title: "No se puede cambiar", text: "Nook can't safely change your Claude Code instructions file.", details: [r.error ?? "CLAUDE.md can't be read."], facts: [file] };
+      return { name, tone: "error", title: "No se puede cambiar", text: "Oleo can't safely change your Claude Code instructions file.", details: [r.error ?? "CLAUDE.md can't be read."], facts: [file] };
     default:
       return {
         name, tone: "off", title: "Desactivado", text: REPLY_DOES,
@@ -923,7 +923,7 @@ const paintClaude = () => {
 };
 
 async function readClaude() {
-  const [h2, u, r, c, x] = await Promise.all([nook.hooksStatus(), nook.usageStatus(), nook.replyFormatStatus(), nook.cursorStatus(), nook.codexStatus()]);
+  const [h2, u, r, c, x] = await Promise.all([oleo.hooksStatus(), oleo.usageStatus(), oleo.replyFormatStatus(), oleo.cursorStatus(), oleo.codexStatus()]);
   hooks = h2;
   usage = u;
   reply = r;
@@ -940,11 +940,11 @@ async function openPreview(kind: Change, install: boolean) {
   // The reply format's block is added, brought up to date, or taken out: said as it stands now.
   const action: ReplyFormatAction = !install ? "remove" : reply?.state === "outdated" ? "update" : "install";
   try {
-    const preview = kind === "reply" ? await nook.replyFormatPreview(action)
-      : kind === "usage" ? await nook.usagePreview(install)
-        : kind === "cursor" ? await nook.cursorPreview(install)
-          : kind === "codex" ? await nook.codexPreview(install)
-            : await nook.hooksPreview(install);
+    const preview = kind === "reply" ? await oleo.replyFormatPreview(action)
+      : kind === "usage" ? await oleo.usagePreview(install)
+        : kind === "cursor" ? await oleo.cursorPreview(install)
+          : kind === "codex" ? await oleo.codexPreview(install)
+            : await oleo.hooksPreview(install);
     flows[kind] = { at: "confirm", install, preview, action };
     paintOthers();
     painters[kind]?.(true, "panel");
@@ -966,14 +966,14 @@ async function writeChange(kind: Change) {
   painters[kind]?.();
   try {
     const backup = kind === "reply"
-      ? await nook.replyFormatApply(flow.action ?? (flow.install ? "install" : "remove"), flow.preview.fingerprint)
+      ? await oleo.replyFormatApply(flow.action ?? (flow.install ? "install" : "remove"), flow.preview.fingerprint)
       : kind === "usage"
-        ? await nook.usageApply(flow.install, flow.preview.fingerprint)
+        ? await oleo.usageApply(flow.install, flow.preview.fingerprint)
         : kind === "cursor"
-          ? await nook.cursorApply(flow.install, flow.preview.fingerprint)
+          ? await oleo.cursorApply(flow.install, flow.preview.fingerprint)
           : kind === "codex"
-            ? await nook.codexApply(flow.install, flow.preview.fingerprint)
-            : await nook.hooksApply(flow.install, flow.preview.fingerprint);
+            ? await oleo.codexApply(flow.install, flow.preview.fingerprint)
+            : await oleo.hooksApply(flow.install, flow.preview.fingerprint);
     if (kind === "reply") wasCreated = reply?.exists === false;
     if (kind === "cursor") wasCreated = cursor?.fileExists === false;
     if (kind === "codex") wasCreated = codex?.fileExists === false;
@@ -1028,7 +1028,7 @@ function diffPanel(kind: Change, flow: Extract<Flow, { at: "confirm" }>, close: 
 }
 
 /**
- * Something Nook writes for Claude Code or Cursor: where it stands in a plain
+ * Something Oleo writes for Claude Code or Cursor: where it stands in a plain
  * sentence, its one action, the technical side folded under Details, and the
  * diff that action would write.
  */
@@ -1047,7 +1047,7 @@ function integration(kind: Change): HTMLElement {
     const block = h("div", { class: "sp-status", "data-tone": spec.tone, role: "group", "aria-label": spec.name }, head);
 
     if (flow.at === "status" && flow.done) {
-      // A file Nook created had no previous one to save.
+      // A file Oleo created had no previous one to save.
       const saved = (kind === "reply" || kind === "cursor" || kind === "codex") && wasCreated ? [] : ["Your previous file is saved as ", ...breakable(flow.done.backup), ". "];
       block.append(h("div", { class: "sp-flash", role: "status" }, icon(LUCIDE.check, 15, 2.4),
         h("span", {}, flow.done.install ? "Done. " : "Removed. ", ...saved, CHANGE_WORDS[kind].done)));
@@ -1066,9 +1066,9 @@ function integration(kind: Change): HTMLElement {
       const { act, blocked, label } = spec.primary;
       const b = button(label, "primary", () => {
         if (act === "install") return go(true);
-        flows[kind] = { at: "status", note: "Reiniciando Nook…" };
+        flows[kind] = { at: "status", note: "Reiniciando Oleo…" };
         paint();
-        void nook.restart().then(() => window.setTimeout(async () => {
+        void oleo.restart().then(() => window.setTimeout(async () => {
           // Only reached where the window outlives the restart: a browser, or a restart that did not happen.
           flows[kind] = { at: "status" };
           await readClaude();
@@ -1149,7 +1149,7 @@ function integration(kind: Change): HTMLElement {
 const connectGroup = (kind: Change, label: string, what: string, keys: string, ...more: Kid[]) =>
   findable(bare(label, integration(kind), ...more), label, what, keys, true);
 
-/** A tool's own part of Connect: its mark, its name, what Nook does with it, and under them everything Nook writes for it. */
+/** A tool's own part of Connect: its mark, its name, what Oleo does with it, and under them everything Oleo writes for it. */
 const toolPart = (key: SessionAgent, what: string, ...kids: Kid[]) =>
   h("section", { class: `sp-tool ${key}`, "aria-label": TOOL_NAME[key] },
     h("header", { class: "sp-tool-head" },
@@ -1164,7 +1164,7 @@ function connectSection(): Kid[] {
   return [
     head("connect"),
     toolPart("claude", "Your sessions and what they ask, your usage limits, and how replies are laid out.",
-      connectGroup("hooks", "Sesiones y permisos", "Connect Claude Code to Nook: see your sessions in the island and answer them there.",
+      connectGroup("hooks", "Sesiones y permisos", "Connect Claude Code to Oleo: see your sessions in the island and answer them there.",
         "hooks hook claude code connect connection install setup set up link sessions permissions approve relay settings.json uninstall disconnect"),
       connectGroup("usage", "Límites de uso", "Show how much of your 5-hour and weekly Claude limits you have used.",
         "usage limits limit quota plan subscription status line statusline weekly 5-hour five hour"),
@@ -1190,7 +1190,7 @@ function codexGroup(): HTMLElement {
 function cursorGroup(): HTMLElement {
   const show = toggle(settings.showCursorSessions, "Mostrar sesiones de Cursor", (on) => change({ showCursorSessions: on }));
   followers.push(() => show.set(settings.showCursorSessions));
-  return toolPart("cursor", "Its agent sessions, to watch only: Nook answers nothing in Cursor.",
+  return toolPart("cursor", "Its agent sessions, to watch only: Oleo answers nothing in Cursor.",
     connectGroup("cursor", "Sesiones", CURSOR_DOES, "cursor editor ide hooks.json agent sessions connect"),
     group(null,
       row("Mostrar sesiones de Cursor", "Muestra las sesiones con el icono de Cursor.", show.el,
@@ -1257,7 +1257,7 @@ const savedShortcut = (which: ShortcutName): ShortcutStatus => {
  * A global shortcut: a field that records the combination pressed in it, a
  * switch, and under them where it stands. Rust has the last word: it registers
  * the combination before it saves it, and one it refuses — not a combination,
- * reserved, another Nook shortcut's, or held by another program — leaves the one
+ * reserved, another Oleo shortcut's, or held by another program — leaves the one
  * that worked in place.
  */
 function shortcutRow({ which, label, does, keys }: (typeof SHORTCUTS)[number]): HTMLElement {
@@ -1303,7 +1303,7 @@ function shortcutRow({ which, label, does, keys }: (typeof SHORTCUTS)[number]): 
 
   async function set(accelerator: string, enabled: boolean, keys: string[]) {
     try {
-      status = await nook.setShortcut(which, accelerator, enabled);
+      status = await oleo.setShortcut(which, accelerator, enabled);
       known = true;
       refused = null;
       if (shortcutsNow) shortcutsNow[which] = status;
@@ -1375,7 +1375,7 @@ function shortcutRow({ which, label, does, keys }: (typeof SHORTCUTS)[number]): 
   if (which === "agents") {
     followers.push(() => {
       paint();
-      void nook.shortcutStatus().then((fresh) => {
+      void oleo.shortcutStatus().then((fresh) => {
         if (!fresh) return;
         shortcutsNow = fresh;
         if (recording || refused) return;
@@ -1386,7 +1386,7 @@ function shortcutRow({ which, label, does, keys }: (typeof SHORTCUTS)[number]): 
   }
 
   // What Rust has: a saved shortcut that could not be registered at launch says so here.
-  void nook.shortcutStatus().then((fresh) => {
+  void oleo.shortcutStatus().then((fresh) => {
     if (!fresh) return;
     shortcutsNow = fresh;
     if (recording || refused) return;
@@ -1627,11 +1627,11 @@ type HideAfter = `${(typeof FOLDED_AUTO_HIDE)[number]}`;
 const HIDE_AFTER_WORDS: Record<HideAfter, string> = { 5: "5 s", 10: "10 s", 30: "30 s", 60: "1 min", 0: "Nunca" };
 /**
  * What keeping the island on show costs, said as what it is: one measurement,
- * on one machine (the app at rest with the folded island up, across Nook and
+ * on one machine (the app at rest with the folded island up, across Oleo and
  * its WebView2 processes, 3 October 2026) — not a promise for another.
  */
 const ALWAYS_SHOWN_NOTE =
-  "While the island is on show, Nook checks your computer's numbers every 2.5 seconds; hidden, it checks nothing. On the PC it was measured on, Nook at rest with the compact island showing took about 7.7 % of one processor core (0.5 % of that 16-core machine) and about 290 MB of memory, WebView2 included. Yours will differ.";
+  "While the island is on show, Oleo checks your computer's numbers every 2.5 seconds; hidden, it checks nothing. On the PC it was measured on, Oleo at rest with the compact island showing took about 7.7 % of one processor core (0.5 % of that 16-core machine) and about 290 MB of memory, WebView2 included. Yours will differ.";
 
 function islandSection(): Kid[] {
   // Where it sits.
@@ -1640,7 +1640,7 @@ function islandSection(): Kid[] {
     change({ dock: v });
     paintPreview(false);
   });
-  const autostart = toggle(settings.autostart, "Iniciar Nook con Windows", (on) => change({ autostart: on }));
+  const autostart = toggle(settings.autostart, "Iniciar Oleo con Windows", (on) => change({ autostart: on }));
 
   // When it closes and hides.
   const clamp = (v: number) => Math.max(2, Math.min(120, Math.round(v) || 15));
@@ -1703,7 +1703,7 @@ function islandSection(): Kid[] {
         "screen display monitor second screen multiple main primary pointer mouse", screen.el),
       stackRow("Borde de la pantalla", "La isla se sitúa en este borde, fuera de la barra de tareas. En los laterales se muestra en vertical.",
         "position edge top bottom left right side move place taskbar dock where", dock.el),
-      row("Iniciar Nook con Windows", "Nook se abre al iniciar sesión.", autostart.el,
+      row("Iniciar Oleo con Windows", "Oleo se abre al iniciar sesión.", autostart.el,
         "startup start up launch login log in sign in boot automatically autostart open")),
     group("Cuándo se muestra y se oculta",
       stackRow("Cerrar la isla después de", "Tiempo que permanece abierta tras retirar el cursor.",
@@ -1715,7 +1715,7 @@ function islandSection(): Kid[] {
       row("Ocultar en pantalla completa", "Oculta la isla durante videos, juegos y presentaciones. Las solicitudes pendientes siguen apareciendo.", fullscreen.el,
         "full screen fullscreen video game presentation movie hide")),
     group("Avisos",
-      stackRow("Cómo avisar al terminar", "«Solo marca» pone una marca en Gullu y una ficha por sesión terminada, y no abre nada: la abres tú. «Tarjeta» abre la tarjeta de «terminado» sola. Los permisos y las preguntas siempre se abren.",
+      stackRow("Cómo avisar al terminar", "«Solo marca» pone una marca en la mascota y una ficha por sesión terminada, y no abre nada: la abres tú. «Tarjeta» abre la tarjeta de «terminado» sola. Los permisos y las preguntas siempre se abren.",
         "notify notification finished done end turn card mark badge chip popup open alert tarjeta marca aviso terminar", finished.el)),
     group("Clima", stackRow("Ubicación", "Busca una ciudad y selecciona un resultado. La búsqueda y el pronóstico usan Open-Meteo.",
       "clima weather temperatura ubicación ciudad pronóstico", weather.el)),
@@ -1724,7 +1724,7 @@ function islandSection(): Kid[] {
         metricPicker.list,
         metricPicker.refusal,
         h("p", { class: "sp-note", text: "Elige hasta tres indicadores y arrástralos para ordenarlos. Los valores de la vista previa son ejemplos." }))),
-    "Contenido de la isla compacta", "Elige hasta tres indicadores para mostrar junto a Gullu.",
+    "Contenido de la isla compacta", "Elige hasta tres indicadores para mostrar junto a la mascota.",
     "metrics numbers stats cpu processor gpu graphics ram memory usage limits weekly waiting sessions show", true),
     resetFoot("island"),
   ];
@@ -1732,43 +1732,42 @@ function islandSection(): Kid[] {
 
 // ── Look and colours ──────────────────────────────────────────────────────────
 
-/** Gullu's colours: the six the engine has. */
-function botColours(): HTMLElement {
-  const names = Object.keys(BOT_THEMES).filter(isBotTheme);
-  const swatches = h("div", { class: "sp-swatches", role: "radiogroup", "aria-label": "Gullu's colour" });
-  const worn = () => (isBotTheme(settings.botTheme) ? settings.botTheme : names[0]);
-  const buttons = names.map((name) => {
-    const b = h("button", { class: "sp-swatch", type: "button", role: "radio", "aria-label": BOT_THEMES[name].label, title: BOT_THEMES[name].label },
-      h("i", { style: `--c:${BOT_THEMES[name].b}` }));
-    b.addEventListener("click", () => pick(name));
+/** The mascot: a card per one Oleo has, each one alive in its card. */
+function mascotPicker(): HTMLElement {
+  const ids = Object.keys(MASCOTS).filter(isMascot);
+  const cards = h("div", { class: "sp-mascots", role: "radiogroup", "aria-label": "Mascota" });
+  const worn = () => (isMascot(settings.botMascot) ? settings.botMascot : DEFAULT_MASCOT);
+  const buttons = ids.map((id) => {
+    const bot = mountBot(56, id);
+    const b = h("button", { class: "sp-mascot", type: "button", role: "radio", "aria-label": MASCOTS[id].label },
+      bot.el, h("span", { class: "sp-mascot-name", text: MASCOTS[id].label }));
+    b.addEventListener("click", () => pick(id));
     return b;
   });
-  const label = h("span", { class: "sp-swatch-name" });
   const paint = () => {
     buttons.forEach((b, i) => {
-      const on = names[i] === worn();
+      const on = ids[i] === worn();
       b.setAttribute("aria-checked", String(on));
       b.tabIndex = on ? 0 : -1;
     });
-    label.textContent = BOT_THEMES[worn()].label;
   };
-  const pick = (name: (typeof names)[number]) => {
-    if (name !== worn()) change({ botTheme: name });
+  const pick = (id: MascotId) => {
+    if (id !== worn()) change({ botMascot: id });
     paint();
   };
-  swatches.addEventListener("keydown", (e) => {
+  cards.addEventListener("keydown", (e) => {
     const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
     if (!step) return;
     e.preventDefault();
-    const to = (names.indexOf(worn()) + step + names.length) % names.length;
-    pick(names[to]);
+    const to = (ids.indexOf(worn()) + step + ids.length) % ids.length;
+    pick(ids[to]);
     buttons[to].focus();
   });
-  swatches.append(...buttons, label);
+  cards.append(...buttons);
   paint();
   followers.push(paint);
-  return stackRow("Gullu's colour", "Gullu is the little character in the island. Choose the colour of the island's character.",
-    "colour color bot character gullu mascot paint theme", swatches);
+  return stackRow("Mascota", "El personaje de la isla. Cambia sus emociones con lo que hacen tus sesiones.",
+    "mascota mascot character bot durazno pet buddy", cards);
 }
 
 function lookSection(): Kid[] {
@@ -1784,7 +1783,7 @@ function lookSection(): Kid[] {
     writeHelp();
   });
   const motion = segmented<Motion>("Reducir movimiento", [["system", "Usar ajustes del sistema"], ["on", "Activado"], ["off", "Desactivado"]], settings.reduceMotion, (v) => change({ reduceMotion: v }));
-  const playful = toggle(settings.playfulReactions !== false, "Gullu interactivo", (on) => change({ playfulReactions: on }));
+  const playful = toggle(settings.playfulReactions !== false, "Mascota interactiva", (on) => change({ playfulReactions: on }));
   writeHelp();
   followers.push(() => {
     theme.set(settings.theme);
@@ -1794,10 +1793,10 @@ function lookSection(): Kid[] {
   });
   return [
     head("look"),
-    group("Gullu",
-      botColours(),
-      row("Gullu interactivo", "Gullu sigue el cursor y reacciona a los clics. Si lo desactivas, solo refleja el estado de las sesiones.", playful.el,
-        "playful reactions animation mouse fun gullu character bot")),
+    group("Mascota",
+      mascotPicker(),
+      row("Mascota interactiva", "La mascota sigue el cursor y reacciona a los clics. Si lo desactivas, solo refleja el estado de las sesiones.", playful.el,
+        "playful reactions animation mouse fun mascot character bot")),
     group("Esta ventana",
       findable(h("div", { class: "sp-row stack" },
         h("div", { class: "sp-row-text" }, h("div", { class: "sp-row-label", text: "Colores de esta ventana" }), themeHelp),
@@ -1805,7 +1804,7 @@ function lookSection(): Kid[] {
       "Colores de esta ventana", "Light, dark, or as your computer is set.",
       "dark mode light mode theme colours colors night appearance window black white")),
     group("Animación",
-      stackRow("Reducir movimiento", "Things in Nook change at once, without sliding or fading.",
+      stackRow("Reducir movimiento", "Things in Oleo change at once, without sliding or fading.",
         "animation animations motion reduce accessibility movement still effects calm", motion.el)),
     resetFoot("look"),
   ];
@@ -1946,15 +1945,11 @@ function shelfSection(): Kid[] {
  * address each one opens is a constant in Rust (about.rs), picked by its id.
  */
 const LINKS: readonly { which: AboutLink; name: string; where: string; mark: () => SVGSVGElement }[] = [
-  { which: "portfolio", name: "Portafolio", where: "zubyr.dev", mark: () => icon(LUCIDE.globe, 16) },
-  { which: "github", name: "GitHub", where: "github.com/zubairbinshaukat", mark: () => brand(BRANDS.github, 16) },
-  // Simple Icons carries no LinkedIn mark: a neutral glyph of the set stands for it.
-  { which: "linkedin", name: "LinkedIn", where: "linkedin.com/in/zubairbinshaukat", mark: () => icon(LUCIDE.briefcaseBusiness, 16) },
-  { which: "x", name: "X", where: "x.com/zubyrdev", mark: () => brand(BRANDS.x, 14) },
+  { which: "github", name: "GitHub", where: "github.com/icarlocl", mark: () => brand(BRANDS.github, 16) },
 ];
 
 /**
- * Updates: the one thing Nook uses the internet for, and only on the user's
+ * Updates: the one thing Oleo uses the internet for, and only on the user's
  * say — the switch (a check a day) or the button (a check now). What a check
  * found is said here; the island says it too while the switch is on.
  */
@@ -1963,7 +1958,7 @@ function updatesGroup(): HTMLElement {
   followers.push(() => auto.set(settings.checkUpdates));
   const status = h("p", { class: "sp-help", role: "status" });
   const check = button("Buscar ahora", "quiet", () => void run());
-  const get = button("Get it…", "primary", () => void nook.updateOpen());
+  const get = button("Get it…", "primary", () => void oleo.updateOpen());
   let found: UpdateInfo | null = null;
   let busy = false;
   let failed: string | null = null;
@@ -1976,7 +1971,7 @@ function updatesGroup(): HTMLElement {
     status.textContent = failed
       ?? (busy ? "Asking GitHub…"
         : !found ? "Not checked yet."
-          : found.available ? `Nook ${found.latest} is out. Get it opens its download page in your browser.`
+          : found.available ? `Oleo ${found.latest} is out. Get it opens its download page in your browser.`
             : `You have the latest version.${found.checkedAt ? ` Checked ${new Date(found.checkedAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}.` : ""}`);
   };
   async function run() {
@@ -1985,14 +1980,14 @@ function updatesGroup(): HTMLElement {
     failed = null;
     paint();
     try {
-      found = await nook.updateCheck();
+      found = await oleo.updateCheck();
     } catch (err) {
       failed = reason(err) || "No se pudo buscar actualizaciones.";
     }
     busy = false;
     paint();
   }
-  void nook.updateLast().then((last) => {
+  void oleo.updateLast().then((last) => {
     if (last && !busy) found = last;
     paint();
   });
@@ -2000,12 +1995,12 @@ function updatesGroup(): HTMLElement {
 
   return group("Actualizaciones",
     row("Buscar actualizaciones a diario",
-      "Once a day, Nook asks GitHub whether a newer version is out, and tells you here and in the island. It sends nothing about you. Off, Nook never connects to the internet by itself.",
+      "Once a day, Oleo asks GitHub whether a newer version is out, and tells you here and in the island. It sends nothing about you. Off, Oleo never connects to the internet by itself.",
       auto.el, "update updates upgrade new version automatic auto check daily github release internet network"),
     findable(h("div", { class: "sp-row" },
       rowText(version ? `You have version ${version}` : "Esta versión", null, status),
       h("div", { class: "sp-update-actions" }, get, check)),
-    "Buscar ahora", "Ask GitHub now whether a newer version of Nook is out.", "update updates check now latest version download upgrade"));
+    "Buscar ahora", "Ask GitHub now whether a newer version of Oleo is out.", "update updates check now latest version download upgrade"));
 }
 
 function aboutSection(): Kid[] {
@@ -2016,37 +2011,37 @@ function aboutSection(): Kid[] {
   const link = ({ which, name, where, mark }: (typeof LINKS)[number]) =>
     h("button", {
       class: "sp-social", type: "button", title: where,
-      "aria-label": `${name}: ${where}. Opens in your browser.`, onclick: () => void nook.openLink(which),
+      "aria-label": `${name}: ${where}. Opens in your browser.`, onclick: () => void oleo.openLink(which),
     }, h("i", {}, mark()), h("span", { text: name }));
   return [
     head("about"),
     h("div", { class: "sp-about" },
-      h("div", { class: "sp-nook", "aria-hidden": "true" }, aboutBot.el),
+      h("div", { class: "sp-oleo", "aria-hidden": "true" }, aboutBot.el),
       h("div", {},
-        h("p", { class: "sp-about-name", text: "Nook" }),
+        h("p", { class: "sp-about-name", text: "Oleo" }),
         h("p", { class: "sp-about-version", text: version ? `Version ${version}` : "" }),
-        h("p", { class: "sp-about-version", text: "Con Gullu, el compañero de Nook" }))),
+        h("p", { class: "sp-about-version", text: "Con Durazno, la mascota de Oleo" }))),
     updatesGroup(),
     findable(bare("Privacidad",
       h("div", { class: "sp-box sp-privacy" },
         icon(LUCIDE.circleCheck, 18, 2),
-        h("p", { text: "Nook no envía telemetría. Si eliges una ubicación, Open-Meteo recibe la búsqueda y las coordenadas de la ciudad seleccionada. Nook puede buscar actualizaciones si lo habilitas." }))),
+        h("p", { text: "Oleo no envía telemetría. Si eliges una ubicación, Open-Meteo recibe la búsqueda y las coordenadas de la ciudad seleccionada. Oleo puede buscar actualizaciones si lo habilitas." }))),
     "Privacidad", "El clima es opcional. Las sesiones se procesan en este equipo.",
     "privacy private telemetry tracking data network internet offline online send", true),
     group("Dónde se guardan tus datos",
       place("Ajustes", "Your choices in this window", paths?.settings, "files folder location data settings where stored path"),
-      place("Logs", "Nook's log file, and the small helper program Claude Code runs", paths?.local, "logs log folder files helper relay location"),
+      place("Logs", "Oleo's log file, and the small helper program Claude Code runs", paths?.local, "logs log folder files helper relay location"),
       ...(paths?.relayError ? [h("p", { class: "sp-help sp-danger-text", text: `Not receiving Claude Code events: ${paths.relayError}` })] : []),
       findable(h("div", { class: "sp-row" },
-        h("button", { class: "sp-link", type: "button", onclick: () => void nook.openLogFolder() },
+        h("button", { class: "sp-link", type: "button", onclick: () => void oleo.openLogFolder() },
           icon(LUCIDE.folderOpen, 16), h("span", { class: "sp-link-text", text: "Abrir la carpeta de registros" }), icon(LUCIDE.arrowUpRight, 14))),
       "Abrir la carpeta de registros", null, "logs log folder open explorer files")),
     findable(bare("Made by",
       h("div", { class: "sp-credit" },
-        h("p", { class: "sp-made", text: "Zubair Bin Shaukat" }),
-        h("div", { class: "sp-links", role: "group", "aria-label": "Zubair Bin Shaukat's links" }, ...LINKS.map(link))),
-      h("p", { class: "sp-credits", text: "Código abierto con licencia MIT." })),
-    "Made by", "Zubair Bin Shaukat. Open source, under the MIT licence.",
+        h("p", { class: "sp-made", text: "Franco Ruiz" }),
+        h("div", { class: "sp-links", role: "group", "aria-label": "Enlaces de Franco Ruiz" }, ...LINKS.map(link))),
+      h("p", { class: "sp-credits", text: "Software privativo. Basado en Nook y Coucou (licencia MIT)." })),
+    "Made by", "Franco Ruiz. Proprietary software, based on Nook and Coucou (MIT).",
     "author made by credits github linkedin website portfolio contact licence license open source", true),
   ];
 }
@@ -2128,8 +2123,8 @@ function setSection(next: Section, animate = true) {
 // ── Go ────────────────────────────────────────────────────────────────────────
 
 async function start() {
-  nook = await connect();
-  const [boot, , statuses, where] = await Promise.all([nook.boot(), readClaude(), nook.shortcutStatus(), nook.dataPaths()]);
+  oleo = await connect();
+  const [boot, , statuses, where] = await Promise.all([oleo.boot(), readClaude(), oleo.shortcutStatus(), oleo.dataPaths()]);
   if (boot) {
     settings = { ...settings, ...boot.settings };
     version = boot.version;
@@ -2152,18 +2147,18 @@ async function start() {
   app.append(
     h("nav", { class: "sp-side", "aria-label": "Ajustes" },
       h("div", { class: "sp-brand" },
-        h("div", { class: "sp-nook", "aria-hidden": "true" }, sideBot.el),
-        h("div", { class: "sp-brand-text" }, h("b", { text: "Nook" }), versionLine)),
+        h("div", { class: "sp-oleo", "aria-hidden": "true" }, sideBot.el),
+        h("div", { class: "sp-brand-text" }, h("b", { text: "Oleo" }), versionLine)),
       searchBox, searchOpen,
       nav,
-      nook.fake ? h("div", { class: "sp-fake", text: "Fake data", title: "Nothing here is read from or written to this machine." }) : null),
+      oleo.fake ? h("div", { class: "sp-fake", text: "Fake data", title: "Nothing here is read from or written to this machine." }) : null),
     main);
   root.append(app, live);
-  setSection(sectionNamed(nook.start) ?? "connect", false);
+  setSection(sectionNamed(oleo.start) ?? "connect", false);
   paintResets();
   startBots(still);
 
-  nook.onSettingsChanged(settingsChanged);
+  oleo.onSettingsChanged(settingsChanged);
   systemDark.addEventListener("change", () => {
     applyAppearance();
     follow();
@@ -2176,7 +2171,7 @@ async function start() {
     if (document.visibilityState === "visible") void refreshClaude();
   });
 
-  if (nook.fake) await fakeStates();
+  if (oleo.fake) await fakeStates();
 }
 
 /**

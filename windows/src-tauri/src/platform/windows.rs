@@ -40,7 +40,7 @@ use crate::metrics::CpuTimes;
 use crate::target::Window;
 
 /// File name of the Claude Code relay.
-pub const HOOK_EXE: &str = "nook-hook.exe";
+pub const HOOK_EXE: &str = "oleo-hook.exe";
 
 /// Environment variable holding the home directory.
 pub const HOME_VAR: &str = "USERPROFILE";
@@ -50,20 +50,20 @@ pub const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 // ── Files ─────────────────────────────────────────────────────────────────────
 
-/// %APPDATA%\Nook — preferences.
+/// %APPDATA%\Oleo — preferences.
 pub fn config_dir() -> PathBuf {
     let base = std::env::var_os("APPDATA")
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("."));
-    base.join("Nook")
+    base.join("Oleo")
 }
 
-/// %LOCALAPPDATA%\Nook — where nook-hook.exe and the log live.
+/// %LOCALAPPDATA%\Oleo — where oleo-hook.exe and the log live.
 pub fn local_dir() -> PathBuf {
     let base = std::env::var_os("LOCALAPPDATA")
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("."));
-    base.join("Nook")
+    base.join("Oleo")
 }
 
 /// %APPDATA% and %LOCALAPPDATA% are already private to the user.
@@ -132,8 +132,8 @@ pub fn find_on_path(stem: &str) -> Option<PathBuf> {
 // ── Who we are ────────────────────────────────────────────────────────────────
 //
 // Named pipes share one machine-wide namespace, so the SID in the name is what
-// keeps two accounts on the same machine from ever meeting on `nook-*`.
-// nook-hook computes the same string (hook/src/win.rs) and additionally checks
+// keeps two accounts on the same machine from ever meeting on `oleo-*`.
+// oleo-hook computes the same string (hook/src/win.rs) and additionally checks
 // that the process serving the pipe really is us.
 
 /// The SID of the account this process runs as, as `S-1-5-21-…`.
@@ -802,7 +802,7 @@ mod tests {
 
     /// The real counters of this machine, read a few times a moment apart:
     /// what the island would show, and what a tick costs. A machine without
-    /// them says why and passes. `cargo test -p nook -- the_graphics --nocapture` prints it.
+    /// them says why and passes. `cargo test -p oleo -- the_graphics --nocapture` prints it.
     #[test]
     fn the_graphics_counters_are_read_or_say_why_not() {
         let opened = Instant::now();
@@ -830,7 +830,7 @@ mod tests {
 
     /// Takes the foreground away from whatever has it and gives it back, from a
     /// process with no claim to it at all — a harder case than the island's.
-    /// Run by hand: `cargo test -p nook -- --ignored comes_forward --nocapture`.
+    /// Run by hand: `cargo test -p oleo -- --ignored comes_forward --nocapture`.
     #[test]
     #[ignore = "moves the keyboard focus on the desktop it runs on"]
     fn a_window_comes_forward_and_the_one_before_it_comes_back() {

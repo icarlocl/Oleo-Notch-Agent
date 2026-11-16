@@ -1,4 +1,4 @@
-// What the settings window asks of Nook, in one place: the commands of
+// What the settings window asks of Oleo, in one place: the commands of
 // core/bridge.ts that it uses, and nothing else. The window is written against
 // this, so the same page can be looked at in a plain browser on made-up data
 // (fake.ts) without one line of it knowing.
@@ -32,7 +32,7 @@ export interface Backend {
   codexStatus(): Promise<CodexStatus | null>;
   codexPreview(install: boolean): Promise<HookPreview>;
   codexApply(install: boolean, fingerprint: string): Promise<string>;
-  /** Asks GitHub now whether a newer Nook is out. Throws a sentence when it could not. */
+  /** Asks GitHub now whether a newer Oleo is out. Throws a sentence when it could not. */
   updateCheck(): Promise<UpdateInfo>;
   /** The last result known, without asking anybody. */
   updateLast(): Promise<UpdateInfo | null>;
@@ -56,7 +56,7 @@ export interface Backend {
   restart(): Promise<void>;
 }
 
-const nook: Backend = {
+const oleo: Backend = {
   fake: false,
   boot: () => Bridge.boot(),
   saveSettings: async (settings) => void (await Bridge.saveSettings(settings)),
@@ -88,15 +88,15 @@ const nook: Backend = {
 };
 
 /**
- * Nook itself — always, inside the app. The made-up one needs all three of: a
+ * Oleo itself — always, inside the app. The made-up one needs all three of: a
  * dev server (`import.meta.env.DEV` is false in every build, so a bundle does
  * not even contain fake.ts), a plain browser (no Tauri), and `?fake` in the
- * address. Inside Nook the second is never true, whatever the address says.
+ * address. Inside Oleo the second is never true, whatever the address says.
  */
 export async function connect(): Promise<Backend> {
   if (import.meta.env.DEV && !IS_TAURI && new URLSearchParams(location.search).has("fake")) {
     const { fakeBackend } = await import("./fake");
     return fakeBackend();
   }
-  return nook;
+  return oleo;
 }

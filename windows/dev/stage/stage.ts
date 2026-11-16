@@ -1,20 +1,20 @@
 // The screenshot stage: a made-up Windows desktop behind the island, drawn in
-// plain HTML, CSS and inline SVG (stage.css) — Nook's wallpaper, a taskbar,
+// plain HTML, CSS and inline SVG (stage.css) — Oleo's wallpaper, a taskbar,
 // desktop icons and, by `scene`, a browser, an editor or a terminal window. Every
 // glyph is drawn here; none is a product's logo. Preview only: none of it ships.
 
 import type { StageOptions, Wallpaper } from "./options";
 
 // ── The wallpaper ────────────────────────────────────────────────────────────
-// "nook": Nook's own silk-ribbon pictures in stage/wallpapers/, drawn by stage/wallpaper-gen/
+// "oleo": Oleo's own silk-ribbon pictures in stage/wallpapers/, drawn by stage/wallpaper-gen/
 // (`node scripts/make-wallpaper.mjs`) and committed. "bloom": Microsoft's Windows 11 Bloom photo in
-// stage/assets/, git-ignored, so it lives on one machine only; when it is missing the Nook picture
+// stage/assets/, git-ignored, so it lives on one machine only; when it is missing the Oleo picture
 // shows instead. The picture is a layer applied once it has loaded (a plain gradient sits under it
 // until then); `wallpaperSettled()` lets a capture wait for that.
 
 const wallpaperUrls = (wallpaper: Wallpaper, theme: string): string[] => {
-  const nook = new URL(`./wallpapers/nook-${theme}.jpg`, import.meta.url).href;
-  return wallpaper === "bloom" ? [new URL(`./assets/wallpaper-${theme}.jpg`, import.meta.url).href, nook] : [nook];
+  const oleo = new URL(`./wallpapers/oleo-${theme}.jpg`, import.meta.url).href;
+  return wallpaper === "bloom" ? [new URL(`./assets/wallpaper-${theme}.jpg`, import.meta.url).href, oleo] : [oleo];
 };
 const wallpaperLoads = new Map<string, Promise<boolean>>();
 const wallpaperKnown = new Map<string, boolean>();
@@ -48,14 +48,14 @@ export const wallpaperSettled = async (): Promise<void> => {
   while (pending.size) await Promise.all([...pending]);
 };
 
-/** Shows the first picture of the list that loads; `data-photo` says which ("bloom" or "nook"). */
+/** Shows the first picture of the list that loads; `data-photo` says which ("bloom" or "oleo"). */
 function applyWallpaper(host: HTMLElement, wallpaper: Wallpaper, theme: string) {
   const el = host.querySelector<HTMLElement>(".wall-photo");
   if (!el) return;
   const urls = wallpaperUrls(wallpaper, theme);
   const show = (url: string) => {
     el.style.backgroundImage = `url("${url}")`;
-    host.dataset.photo = url === urls[urls.length - 1] ? "nook" : "bloom";
+    host.dataset.photo = url === urls[urls.length - 1] ? "oleo" : "bloom";
   };
   const known = urls.find((url) => wallpaperKnown.get(url));
   if (known && urls.slice(0, urls.indexOf(known)).every((url) => wallpaperKnown.get(url) === false)) return show(known);
@@ -261,7 +261,7 @@ const editor = () => `
   <div class="e-title">
     <i class="e-mark"></i>
     <span class="e-menu"><em>File</em><em>Edit</em><em>Selection</em><em>View</em><em>Go</em><em>Run</em><em>Help</em></span>
-    <span class="e-search">${GLYPH.search}<em>nook</em></span>
+    <span class="e-search">${GLYPH.search}<em>oleo</em></span>
     ${controls}
   </div>
   <div class="e-body">
@@ -269,7 +269,7 @@ const editor = () => `
     <div class="e-side">
       <small>EXPLORER</small>
       <div class="e-tree">
-        <p class="open">${GLYPH.chevD}<b>nook</b></p>
+        <p class="open">${GLYPH.chevD}<b>oleo</b></p>
         <p class="d1">${GLYPH.chevD}<b>src</b></p>
         <p class="d2">${GLYPH.chevR}<b>core</b></p>
         <p class="d2 open">${GLYPH.chevD}<b>island</b></p>
@@ -299,19 +299,19 @@ const terminal = () => `
 <div class="win terminal">
   <div class="t-title"><span class="t-tab">${GLYPH.terminal}<em>PowerShell</em>${GLYPH.x}</span><span class="t-add">${GLYPH.plus}</span>${controls}</div>
   <div class="t-body">
-<p><b class="pw">PS</b> C:\\Users\\nook\\code\\nook&gt; <b class="cm">git status -sb</b></p>
+<p><b class="pw">PS</b> C:\\Users\\oleo\\code\\oleo&gt; <b class="cm">git status -sb</b></p>
 <p class="o">## main...origin/main</p>
 <p class="o"> M windows/src/island/settle.ts</p>
 <p class="o"> M windows/src/island/hooks.ts</p>
-<p><b class="pw">PS</b> C:\\Users\\nook\\code\\nook&gt; <b class="cm">npx tsc --noEmit</b></p>
+<p><b class="pw">PS</b> C:\\Users\\oleo\\code\\oleo&gt; <b class="cm">npx tsc --noEmit</b></p>
 <p class="o ok">Found 0 errors.</p>
-<p><b class="pw">PS</b> C:\\Users\\nook\\code\\nook&gt; <b class="cm">cargo test --workspace</b></p>
-<p class="o">   Compiling nook v0.2.2 (C:\\Users\\nook\\code\\nook\\windows\\src-tauri)</p>
+<p><b class="pw">PS</b> C:\\Users\\oleo\\code\\oleo&gt; <b class="cm">cargo test --workspace</b></p>
+<p class="o">   Compiling oleo v0.2.2 (C:\\Users\\oleo\\code\\oleo\\windows\\src-tauri)</p>
 <p class="o">    Finished test profile [unoptimized + debuginfo] target(s) in 14.20s</p>
 <p class="o">     Running unittests src\\lib.rs</p>
 <p class="o">running 41 tests</p>
 <p class="o ok">test result: ok. 41 passed; 0 failed; 0 ignored</p>
-<p><b class="pw">PS</b> C:\\Users\\nook\\code\\nook&gt; <b class="cm">claude</b><i class="caret"></i></p>
+<p><b class="pw">PS</b> C:\\Users\\oleo\\code\\oleo&gt; <b class="cm">claude</b><i class="caret"></i></p>
   </div>
 </div>`;
 

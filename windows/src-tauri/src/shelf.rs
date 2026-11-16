@@ -3,12 +3,12 @@
 // widget's own shape. Everything is local; nothing leaves the machine.
 //
 // The page loads and saves a widget's part through `shelf_load` / `shelf_save`.
-// What it sends is held to what Nook knows: only the widgets it may write, and
+// What it sends is held to what Oleo knows: only the widgets it may write, and
 // within the sizes below (what is over is cut, never stored). The file is
 // written whole each time, to a temporary file that then takes the place of the
 // old one, so a power cut leaves the old file or the new one and never half.
 //
-// Widgets whose data Nook itself keeps (the project folders) are in the file
+// Widgets whose data Oleo itself keeps (the project folders) are in the file
 // too, but the page cannot write them: see `WRITABLE`.
 
 use std::path::{Path, PathBuf};
@@ -17,7 +17,7 @@ use std::sync::Mutex;
 use serde_json::{Map, Value};
 use tauri::State;
 
-/// The widgets the page may write. The others are Nook's own.
+/// The widgets the page may write. The others are Oleo's own.
 pub const WRITABLE: &[&str] = &["todo", "timer", "reminders"];
 
 /// To-do: how many items, how long each, how long the notes.
@@ -161,7 +161,7 @@ impl Store {
         self.with(&path(), |map| map.get(widget).cloned().unwrap_or(Value::Null))
     }
 
-    /// Nook's own write of a widget's part (the project folders): not held to `WRITABLE`.
+    /// Oleo's own write of a widget's part (the project folders): not held to `WRITABLE`.
     pub fn put(&self, widget: &str, value: Value) -> Result<(), String> {
         self.put_in(&path(), widget, value)
     }
@@ -200,7 +200,7 @@ mod tests {
     use serde_json::json;
 
     fn scratch(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("nook-shelf-{}-{name}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("oleo-shelf-{}-{name}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         dir.join("shelf.json")
     }

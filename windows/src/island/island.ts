@@ -12,10 +12,11 @@ import {
 } from "../core/layout";
 import { Sound, type SoundName } from "../core/sound";
 import { CLAUDE_ID, State, foldedAutoHide, nextRequest, nextUsageReset, quietAt, type ClaudeSession, type SessionRequest, type SessionStep } from "../core/state";
-import { BOT_THEMES, BotEngine, hexToRGB, type BotTheme, type RGB } from "../bot/engine";
+import { BotEngine, hexToRGB, type RGB } from "../bot/engine";
+import { isMascot } from "../bot/mascots";
 import { Greeting } from "../bot/greeting";
 import { leaveMiniBots, miniBotManners, miniBotsLively, miniBotsNextDue, pointMiniBots, tickMiniBots } from "../bot/minibots";
-import { GulluReactions, type GulluCue } from "../bot/reactions";
+import { MascotReactions, type MascotCue } from "../bot/reactions";
 import { buildHeader, buildViews, type ViewActions, type ViewHost } from "../views/views";
 import { enterSessionPanel, leaveSubagent } from "../views/session";
 import { ensureMorphCurve, rowScroll, scrollRow, settleRow, type MorphNames, type ShelfHost } from "../views/shelf";
@@ -109,7 +110,7 @@ const reduceMotionChoice = (): boolean | null => {
  * a look around) is silent. A click's reaction that has none takes the slap, so
  * that no click is silent; every other cue is quiet.
  */
-const CUE_SOUNDS: Partial<Record<GulluCue, SoundName>> = {
+const CUE_SOUNDS: Partial<Record<MascotCue, SoundName>> = {
   love: "love", dizzy: "dizzy", annoyed: "annoyed", hover: "hover",
   gasp: "slap", giggle: "slap", laugh: "slap", boop: "slap", whee: "slap", raspberry: "slap",
 };
@@ -250,8 +251,8 @@ export class Island {
    * (bot/reactions.ts): it is told where the bot is, where the cursor is and
    * what the status is, and drives the engine. This is its host.
    */
-  private gullu = new GulluReactions(this.engine);
-  /** The one timer of a bot at rest: to the next thing it does by itself (`gullu.nextDue()`). None while the loop runs, or hidden. */
+  private antics = new MascotReactions(this.engine);
+  /** The one timer of a bot at rest: to the next thing it does by itself (`antics.nextDue()`). None while the loop runs, or hidden. */
   private idleTimer: number | null = null;
   private greeting = new Greeting();
 
@@ -360,11 +361,11 @@ export class Island {
     ShelfHooks.alert = (id) => this.widgetDue(id);
     // Playful reactions off, a click is the engine's slap, and three of them its dizzy.
     this.engine.onDizzy = () => this.handleDizzy();
-    this.gullu.onCue = (cue) => {
+    this.antics.onCue = (cue) => {
       const sound = CUE_SOUNDS[cue];
       if (sound) Sound.play(sound);
     };
-    this.gullu.onChange = () => {
+    this.antics.onChange = () => {
       this.ensureRunning();
       this.armIdle();
     };
@@ -1496,7 +1497,7 @@ export class Island {
 
   /**
    * Where the session in front runs: its editor's window, its terminal's, the
-   * Claude app. Only the session is named: Nook knows where each one runs, and
+   * Claude app. Only the session is named: Oleo knows where each one runs, and
    * one it knows nothing of has no button to get here by.
    */
   private openClient(session: ClaudeSession = State.session) {
@@ -2126,8 +2127,8 @@ export class Island {
 
     // The bot: its eyes, and what it does about a cursor that comes near, stays, circles or leaves.
     this.seatBot();
-    if (gone) this.gullu.pointerLeave();
-    else this.gullu.pointerMove(x, y);
+    if (gone) this.antics.pointerLeave();
+    else this.antics.pointerMove(x, y);
     // The home view's mini bots look at it too, while it is on the island.
     if (!gone && inIsland && State.mode === "expanded" && State.view === "overview") pointMiniBots(x * Display.zoom, y * Display.zoom);
     else leaveMiniBots();
@@ -2148,17 +2149,17 @@ export class Island {
    */
   private seatBot() {
     const greetingActive = State.mode === "expanded" && State.view === "greeting";
-    this.gullu.setVisible(State.mode !== "hidden" && this.botOnShow && !greetingActive);
+    this.antics.setVisible(State.mode !== "hidden" && this.botOnShow && !greetingActive);
     const rect = this.islandRect();
-    this.gullu.place(rect.x + this.botCx.value, rect.y + this.botCy.value, this.botSize.value * 0.6);
+    this.antics.place(rect.x + this.botCx.value, rect.y + this.botCy.value, this.botSize.value * 0.6);
   }
 
   /** A click on the open island, in the cursor's coordinates: the bot's, if it landed on it. */
   private clickBot(x: number, y: number) {
     this.seatBot();
-    if (!this.gullu.visible || !this.gullu.hit(x, y)) return;
+    if (!this.antics.visible || !this.antics.hit(x, y)) return;
     // Five fast clicks make the bot dizzy — its own reaction, and nothing over the content.
-    this.gullu.click(x, y);
+    this.antics.click(x, y);
   }
 
   /**
@@ -2168,14 +2169,14 @@ export class Island {
    */
   private handleDizzy() {
     State.stateOverride = "dizzy";
-    this.gullu.setStatus("dizzy");
+    this.antics.setStatus("dizzy");
     Sound.play("dizzy");
     State.notify();
     if (this.dizzyRecovery != null) window.clearTimeout(this.dizzyRecovery);
     this.dizzyRecovery = window.setTimeout(() => {
       this.dizzyRecovery = null;
       State.stateOverride = null;
-      this.gullu.setStatus(this.botState());
+      this.antics.setStatus(this.botState());
       this.engine.triggerEmote("happy");
       State.notify();
     }, 3300);
@@ -2204,7 +2205,7 @@ export class Island {
     this.idleTimer = null;
     if (this.running) return;
     const home = State.mode === "expanded" && State.view === "overview";
-    const bot = this.gullu.nextDue();
+    const bot = this.antics.nextDue();
     const minis = home ? miniBotsNextDue() : null;
     const due = bot == null ? minis : minis == null ? bot : Math.min(bot, minis);
     if (due == null) return;
@@ -2268,7 +2269,7 @@ export class Island {
       ? settling
       : settling ||
         !this.botCx.settled || !this.botCy.settled || !this.botSize.settled ||
-        greetingActive || this.gullu.busy || (this.botOnShow && this.tintSettling) || (home && miniBotsLively());
+        greetingActive || this.antics.busy || (this.botOnShow && this.tintSettling) || (home && miniBotsLively());
 
     if (busy) {
       // Only the bot's own loop left — its pulse at work, its breathing: that
@@ -2353,10 +2354,10 @@ export class Island {
     this.engine.bodyColor = this.easeBodyColor(dt);
     this.engine.particleOverhang = BOT_OVERHANG;
     // Where it looks, how it leans, what it is playing: its reactions say, then the engine moves.
-    this.gullu.update(dt);
+    this.antics.update(dt);
     // A bot at rest looks the same as it did: the frames that are only here for
     // the island's geometry, or for a timer that has just fired, leave the canvas be.
-    if (!fresh && !this.botStale && !this.gullu.busy && !this.tintSettling) return;
+    if (!fresh && !this.botStale && !this.antics.busy && !this.tintSettling) return;
     this.botStale = false;
     this.botDrawnDpr = dpr;
     this.engine.update(dt);
@@ -2448,7 +2449,7 @@ export class Island {
     this.watchUnread(plan.unseen);
     this.fsm.refresh();
     // The status always wins: whatever the bot was playing stops for it (bot/reactions.ts).
-    this.gullu.setStatus(this.botState());
+    this.antics.setStatus(this.botState());
     this.watchQuiet();
     this.watchUsageReset();
     this.watchHome(expanded && State.view === "overview");
@@ -2559,16 +2560,16 @@ export class Island {
     this.fsm.petitToHiddenDelay = hideAfter;
     this.fsm.refresh(restart);
     this.yieldToFullscreen();
-    // The plush chosen in Settings, on the island's bot and on every mini made after.
-    const theme = State.settings.botTheme;
-    if (theme in BOT_THEMES) {
-      BotEngine.defaultTheme = theme as BotTheme;
-      this.engine.theme = theme as BotTheme;
+    // The mascot chosen in Settings, on the island's bot and on every mini made after.
+    const mascot = State.settings.botMascot;
+    if (isMascot(mascot)) {
+      BotEngine.defaultMascot = mascot;
+      this.engine.mascot = mascot;
     }
     // Settings → Appearance: whether the bot plays with the mouse, and how much it may move.
     const playful = State.settings.playfulReactions !== false;
-    this.gullu.playful = playful;
-    this.gullu.reduceMotion = reduceMotionChoice();
+    this.antics.playful = playful;
+    this.antics.reduceMotion = reduceMotionChoice();
     miniBotManners(playful, reduceMotionChoice());
     // The stylesheet's own reduced-motion rules follow the same choice.
     document.documentElement.dataset.motion = reducedMotion() ? "reduce" : "full";

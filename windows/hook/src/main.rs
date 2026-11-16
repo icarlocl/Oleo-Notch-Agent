@@ -1,11 +1,11 @@
-//! nook-hook — the relay Claude Code runs on every hook event.
+//! oleo-hook — the relay Claude Code runs on every hook event.
 //!
 //! Reads the hook JSON on stdin, adds a little terminal context, and hands it to
-//! Nook over the named pipe `\\.\pipe\nook-<sid>` (Windows) or the Unix
-//! socket `$XDG_RUNTIME_DIR/nook.sock` (Linux).
+//! Oleo over the named pipe `\\.\pipe\oleo-<sid>` (Windows) or the Unix
+//! socket `$XDG_RUNTIME_DIR/oleo.sock` (Linux).
 //!
 //! Hard rule (docs/CLAUDE.md): **never block Claude Code.**
-//! * If the pipe does not exist — Nook is closed — we exit 0 immediately with
+//! * If the pipe does not exist — Oleo is closed — we exit 0 immediately with
 //!   nothing on stdout, and the session carries on untouched.
 //! * Every step runs under a deadline enforced by the main thread, so a pipe that
 //!   accepts the connection and then stops reading cannot wedge the session
@@ -13,11 +13,11 @@
 //! * Only `PermissionRequest` waits for a human, because approving from the
 //!   island — or answering Claude's question there — is the whole point. No
 //!   answer means empty stdout, and Claude Code asks in its own window exactly
-//!   as if Nook were not installed.
+//!   as if Oleo were not installed.
 //!
-//! Usage: `nook-hook <EventName>` (the name is also read from the JSON).
-//! `nook-hook --where` is a diagnostic: see WHERE_FLAG.
-//! `nook-hook statusline` is Claude Code's status line command: see statusline.rs.
+//! Usage: `oleo-hook <EventName>` (the name is also read from the JSON).
+//! `oleo-hook --where` is a diagnostic: see WHERE_FLAG.
+//! `oleo-hook statusline` is Claude Code's status line command: see statusline.rs.
 
 use std::io::{Read, Write};
 use std::sync::mpsc;
@@ -94,9 +94,9 @@ const ENV_CONTEXT: &[(&str, &str)] = &[
     ("session_pid", "CLAUDE_CODE_SSE_PORT"),
     // Which Claude Code this is: the desktop app, VS Code, the command line.
     ("entrypoint", "CLAUDE_CODE_ENTRYPOINT"),
-    // Set by Nook on a run it started itself (a reply from the island), so the
+    // Set by Oleo on a run it started itself (a reply from the island), so the
     // events of that run can be told from a session the user typed in.
-    ("nook_reply", "NOOK_REPLY"),
+    ("oleo_reply", "OLEO_REPLY"),
 ];
 /// The events that say where the session runs — the processes above the relay,
 /// so the island's ↗ can bring the right window forward. A session does not
@@ -119,10 +119,10 @@ const HOST_NAMES: &[&str] = &[
 const DESKTOP: &str = "explorer.exe";
 /// Ancestors looked at, and named, at most.
 const MAX_ANCESTORS: usize = 16;
-/// The diagnostic: `nook-hook --where` prints what the relay would say of the
+/// The diagnostic: `oleo-hook --where` prints what the relay would say of the
 /// place it is run from — the terminal context and the ancestors it would
 /// report, plus the whole chain — as JSON on stdout, and exits. It reads no
-/// stdin and sends nothing to Nook. Run it from the terminal a session is in
+/// stdin and sends nothing to Oleo. Run it from the terminal a session is in
 /// when the island's ↗ goes to the wrong window, or is not there.
 const WHERE_FLAG: &str = "--where";
 
@@ -185,10 +185,10 @@ fn main() {
 fn decision_json(decision: &str) -> Option<String> {
     let behavior = match decision.trim() {
         "allow" => r#"{"behavior":"allow"}"#.to_string(),
-        "deny" => r#"{"behavior":"deny","message":"Denied from Nook"}"#.to_string(),
+        "deny" => r#"{"behavior":"deny","message":"Denied from Oleo"}"#.to_string(),
         // A question the user chose not to answer: Claude is told so, and decides
         // what to do without the answer.
-        "skip" => r#"{"behavior":"deny","message":"The user skipped this question from Nook, without answering it."}"#.to_string(),
+        "skip" => r#"{"behavior":"deny","message":"The user skipped this question from Oleo, without answering it."}"#.to_string(),
         _ => return None,
     };
     Some(format!(
@@ -196,7 +196,7 @@ fn decision_json(decision: &str) -> Option<String> {
     ))
 }
 
-/// What Nook said about a permission request, as the JSON Claude Code
+/// What Oleo said about a permission request, as the JSON Claude Code
 /// expects. Besides the bare `allow` and `deny`, one line carries something:
 /// `answer {…}`, for Claude's question tool — the answers picked on the island,
 /// keyed by question.
@@ -563,7 +563,7 @@ fn title_in(line: &str) -> Option<String> {
     (!title.is_empty()).then(|| title.chars().take(MAX_TITLE).collect())
 }
 
-/// One hook event, ready to go: the line for Nook, its name, and — for
+/// One hook event, ready to go: the line for Oleo, its name, and — for
 /// Claude's question tool only — its input exactly as it came.
 struct Event {
     line: String,
@@ -582,8 +582,8 @@ fn read_event() -> Option<Event> {
         raw.drain(..3);
     }
 
-    // Parse argv: "nook-hook.exe [--agent <name>] [<EventName>]"
-    // --agent tags the payload with nook_agent so the app routes to the right pill.
+    // Parse argv: "oleo-hook.exe [--agent <name>] [<EventName>]"
+    // --agent tags the payload with oleo_agent so the app routes to the right pill.
     // Absent or invalid names are validated and discarded by the app, not here.
     let mut agent = String::new();
     let mut arg_event = String::new();
@@ -614,14 +614,14 @@ fn read_event() -> Option<Event> {
     event_of(payload, agent, arg_event)
 }
 
-/// What Claude Code sent, as it goes to Nook: what the island shows lifted out
+/// What Claude Code sent, as it goes to Oleo: what the island shows lifted out
 /// of the fields too large to forward, those dropped, every string capped.
 fn event_of(mut payload: serde_json::Value, agent: String, arg_event: String) -> Option<Event> {
     let map = payload.as_object_mut()?;
     // Which agent this hook was installed for. Absent means Claude Code,
     // so existing hook commands keep working unchanged.
     if !agent.is_empty() {
-        map.insert("nook_agent".into(), serde_json::Value::String(agent));
+        map.insert("oleo_agent".into(), serde_json::Value::String(agent));
     }
     let event = map
         .get("hook_event_name")
@@ -702,7 +702,7 @@ fn event_of(mut payload: serde_json::Value, agent: String, arg_event: String) ->
         }
     }
 
-    // Which terminal the session runs in. Unlike macOS, Nook here accepts
+    // Which terminal the session runs in. Unlike macOS, Oleo here accepts
     // events from every terminal, so this is context only — never a filter.
     for (key, var) in ENV_CONTEXT {
         if !map.contains_key(*key) {
@@ -904,7 +904,7 @@ mod tests {
         );
         assert_eq!(
             decision_json("deny").unwrap(),
-            r#"{"hookSpecificOutput":{"hookEventName":"PermissionRequest","decision":{"behavior":"deny","message":"Denied from Nook"}}}"#
+            r#"{"hookSpecificOutput":{"hookEventName":"PermissionRequest","decision":{"behavior":"deny","message":"Denied from Oleo"}}}"#
         );
         // The old "always" is no answer any more.
         assert!(decision_json("always").is_none());
@@ -996,7 +996,7 @@ mod tests {
 
     #[test]
     fn a_proposed_edit_is_read_from_the_file_and_never_written() {
-        let path = std::env::temp_dir().join(format!("nook-hook-test-{}.txt", std::process::id()));
+        let path = std::env::temp_dir().join(format!("oleo-hook-test-{}.txt", std::process::id()));
         std::fs::write(&path, "alpha\r\nbeta\r\ngamma\r\n").unwrap();
         let file = path.to_string_lossy().to_string();
 
@@ -1029,7 +1029,7 @@ mod tests {
         assert!(title_in(r#"{"type":"user","message":{"content":"the custom-title\" line"}}"#).is_none());
         assert!(title_in("not json -title\"").is_none());
 
-        let path = std::env::temp_dir().join(format!("nook-hook-title-{}.jsonl", std::process::id()));
+        let path = std::env::temp_dir().join(format!("oleo-hook-title-{}.jsonl", std::process::id()));
         std::fs::write(
             &path,
             "{\"type\":\"custom-title\",\"customTitle\":\"First\"}\n{\"type\":\"user\"}\n{\"type\":\"custom-title\",\"customTitle\":\"Second\"}\n{\"type\":\"assistant\"}\n",
@@ -1103,7 +1103,7 @@ mod tests {
         assert_eq!(context_of(&format!("{line}\n{cut}\n")), Some(80_003));
         assert_eq!(context_of(cut), None);
 
-        let path = std::env::temp_dir().join(format!("nook-hook-context-{}.jsonl", std::process::id()));
+        let path = std::env::temp_dir().join(format!("oleo-hook-context-{}.jsonl", std::process::id()));
         let filler = format!("{{\"type\":\"user\",\"message\":{{\"content\":\"{}\"}}}}\n", "x".repeat(1_000));
         let mut text = answer("m", 1, 0, 11_111, "") + "\n";
         text.push_str(&filler.repeat(300));

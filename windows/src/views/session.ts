@@ -840,7 +840,7 @@ export function buildSession(actions: ViewActions): ViewHost {
         goto.addEventListener("dblclick", (e) => e.stopPropagation());
         row.append(goto);
       }
-      // How full its context is, for the one to go and /compact: a cue, as Nook cannot do it.
+      // How full its context is, for the one to go and /compact: a cue, as Oleo cannot do it.
       // Said in words as well as colour; none before an answer has been counted.
       const use = contextUse(session.contextTokens, session.contextWindow, session.model?.id);
       if (use) {

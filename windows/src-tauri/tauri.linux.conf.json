@@ -7,8 +7,8 @@
       "rpm"
     ],
     "resources": {
-      "../target/release/nook-hook.exe": null,
-      "../target/release/nook-hook": "nook-hook",
+      "../target/release/oleo-hook.exe": null,
+      "../target/release/oleo-hook": "oleo-hook",
       "../../LICENSE": "LICENSE",
       "../../NOTICE": "NOTICE"
     },
@@ -32,7 +32,7 @@
     "windows": [
       {
         "label": "island",
-        "title": "Nook",
+        "title": "Oleo",
         "url": "index.html",
         "width": 240,
         "height": 6,

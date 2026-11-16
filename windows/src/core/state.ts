@@ -580,6 +580,8 @@ export interface Settings {
    * "capsule" (the island as it always was).
    */
   foldedStyle: "thread" | "capsule";
+  /** The thread's own colour, "#rrggbb"; empty: each session's segment is in its own colour. */
+  threadColor: string;
   autostart: boolean;
   hooksInstalled: boolean;
   /**
@@ -848,6 +850,7 @@ export const DEFAULT_SETTINGS: Settings = {
   screen: "primary",
   dock: "top",
   foldedStyle: "thread",
+  threadColor: "",
   autostart: false,
   hooksInstalled: false,
   expandShortcut: DEFAULT_EXPAND_SHORTCUT,

@@ -497,7 +497,7 @@ document.addEventListener("keydown", (e) => {
 
 /** The settings each category puts back. Never the connections: those are only ever changed through their diff. */
 const RESET_FIELDS: Partial<Record<Section, readonly (keyof Settings)[]>> = {
-  island: ["screen", "dock", "foldedStyle", "autostart", "autoCloseInterval", "foldedAutoHide", "hideOnlyWhenIdle", "hideInFullscreen", "finishedNotice", "compactMetrics", "weatherLocation"],
+  island: ["screen", "dock", "foldedStyle", "threadColor", "autostart", "autoCloseInterval", "foldedAutoHide", "hideOnlyWhenIdle", "hideInFullscreen", "finishedNotice", "compactMetrics", "weatherLocation"],
   look: ["botMascot", "playfulReactions", "theme", "reduceMotion"],
   sounds: ["soundEnabled", "soundVolume"],
   agents: ["showAgentsList", "agentsListFade", "agentsListFadeOpacity"],
@@ -1641,6 +1641,15 @@ function islandSection(): Kid[] {
     paintPreview(false);
   });
   const foldedStyle = segmented<Settings["foldedStyle"]>("Isla plegada", [["thread", "Hilo"], ["capsule", "Cápsula"]], settings.foldedStyle, (v) => change({ foldedStyle: v }));
+  // The thread's colour: each session's own, or one of the user's.
+  const ownThread = () => /^#[0-9a-f]{6}$/i.test(settings.threadColor);
+  const threadInput = h("input", { type: "color", value: ownThread() ? settings.threadColor : "#f4aa86", "aria-label": "Color del hilo" });
+  const threadFold = h("div", { class: `sp-fold${ownThread() ? " open" : ""}` }, h("div", {}, threadInput));
+  const threadColor = segmented<"session" | "own">("Color del hilo", [["session", "Por sesión"], ["own", "Elegir"]], ownThread() ? "own" : "session", (v) => {
+    threadFold.classList.toggle("open", v === "own");
+    change({ threadColor: v === "own" ? threadInput.value : "" });
+  });
+  threadInput.addEventListener("input", () => change({ threadColor: threadInput.value }));
   const autostart = toggle(settings.autostart, "Iniciar Oleo con Windows", (on) => change({ autostart: on }));
 
   // When it closes and hides.
@@ -1688,6 +1697,9 @@ function islandSection(): Kid[] {
     screen.set(settings.screen);
     dock.set(settings.dock);
     foldedStyle.set(settings.foldedStyle);
+    threadColor.set(ownThread() ? "own" : "session");
+    threadFold.classList.toggle("open", ownThread());
+    if (ownThread() && document.activeElement !== threadInput) threadInput.value = settings.threadColor;
     autostart.set(settings.autostart);
     hideAfter.set(hideAfterOf());
     neverFold.classList.toggle("open", hideAfterOf() === "0");
@@ -1707,6 +1719,8 @@ function islandSection(): Kid[] {
         "position edge top bottom left right side move place taskbar dock where", dock.el),
       stackRow("Isla plegada", "Hilo: una línea en el borde que deja pasar todos los clics; la mascota se asoma unos segundos cuando una sesión cambia o te necesita. Cápsula: la isla de siempre.",
         "folded compact thread line capsule peek tabs click through cover style look", foldedStyle.el),
+      stackRow("Color del hilo", "Por sesión: cada tramo toma el color de su sesión. Elegir: todo el hilo en un solo color.",
+        "thread line colour color bar stripe accent custom", threadColor.el, threadFold),
       row("Iniciar Oleo con Windows", "Oleo se abre al iniciar sesión.", autostart.el,
         "startup start up launch login log in sign in boot automatically autostart open")),
     group("Cuándo se muestra y se oculta",

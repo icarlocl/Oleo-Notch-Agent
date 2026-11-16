@@ -218,6 +218,7 @@ export class Island {
   /** The folded island in its "thread" style: a line along the edge, a segment per session. */
   private threadEl!: HTMLElement;
   private threadKey = "";
+  private wasThread = false;
   /** When the bot, shown for a moment, goes back into the thread (performance.now()); 0 when it is not out. */
   private peekUntil = 0;
   private peekTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1757,8 +1758,8 @@ export class Island {
     // (HIT_MARGIN), which covers all of a folded island's ears and most of an
     // open one's — and a click on one does nothing, like a click on the rest
     // of that margin.
-    // The thread style takes no pointer at all: an empty shape, so the window lets every click through.
-    const rect = this.threadFolded ? { x: 0, y: 0, w: 0, h: 0 } : { x, y, w, h: hh };
+    // The thread style takes the pointer on the line alone, and nothing else of it.
+    const rect = this.threadFolded ? this.threadHitRect() : { x, y, w, h: hh };
     const p = this.pushedRect;
     if (
       this.forceRect ||
@@ -1914,6 +1915,13 @@ export class Island {
     this.wakeStrip.addEventListener("mouseenter", () => {
       Sound.resume();
       if (State.mode === "hidden") this.wake(() => this.fsm.mouseEntered());
+    });
+
+    // The thread is the one thing of the folded island that takes a click: it opens the panel.
+    this.threadEl.addEventListener("mousedown", () => {
+      Sound.resume();
+      State.lastActivity = performance.now();
+      if (this.threadFolded) this.fsm.click();
     });
 
     this.islandEl.addEventListener("mousedown", (e) => {
@@ -2113,6 +2121,27 @@ export class Island {
     return State.settings.foldedStyle === "thread" && State.mode === "compact";
   }
 
+  /**
+   * What the window takes of the pointer in the thread style: the line itself and a few
+   * pixels around it, so a click on it opens the panel and the tabs under it keep the rest.
+   * Rust takes HIT_MARGIN around whatever rect it is given, so this one is smaller by that
+   * much on every side and pushed out of the screen by it across the edge.
+   */
+  private threadHitRect(): { x: number; y: number; w: number; h: number } {
+    const W = this.windowW;
+    const H = this.windowH;
+    const L = 168;
+    const T = 4;
+    const reach = 6;
+    const m = HIT_MARGIN;
+    switch (Room.dock) {
+      case "bottom": return { x: (W - L) / 2 + m, y: H + m - reach, w: L - 2 * m, h: T };
+      case "left": return { x: -m - T + reach, y: (H - L) / 2 + m, w: T, h: L - 2 * m };
+      case "right": return { x: W + m - reach, y: (H - L) / 2 + m, w: T, h: L - 2 * m };
+      default: return { x: (W - L) / 2 + m, y: -m - T + reach, w: L - 2 * m, h: T };
+    }
+  }
+
   /** The thread stays: only the shortcut, or a full-screen app, takes it away. The capsule hides after the time chosen. */
   private foldedDelay(): number {
     return State.settings.foldedStyle === "thread" ? 0 : foldedAutoHide(State.settings);
@@ -2147,16 +2176,24 @@ export class Island {
     classes.toggle("peek", peeking);
     classes.toggle("peek-near", peeking && this.peekNear);
     this.threadEl.classList.toggle("on", thread);
+    // The style changed under a folded island: what the window takes of the pointer follows at once.
+    if (thread !== this.wasThread) {
+      this.wasThread = thread;
+      this.forceRect = true;
+    }
 
     // The segments: one per session, in its colour; one that calls stands taller and breathes.
+    // Chosen in Settings, one colour is all the thread is; otherwise each segment has its session's.
+    const own = /^#[0-9a-f]{6}$/i.test(State.settings.threadColor) ? State.settings.threadColor : "";
     const segs = plan.live.slice(0, 6);
-    const key = segs.map((e) => `${e.color}${e.rank === 0 ? "!" : ""}`).join("|");
+    const key = `${own}/` + segs.map((e) => `${e.color}${e.rank === 0 ? "!" : ""}`).join("|");
     if (key !== this.threadKey) {
       this.threadKey = key;
+      this.threadEl.title = "Abrir Oleo";
       this.threadEl.replaceChildren(
         ...(segs.length
-          ? segs.map((e) => h("span", { class: e.rank === 0 ? "calls" : "", style: `background:${e.color};color:${e.color}` }))
-          : [h("span", { class: "none" })]),
+          ? segs.map((e) => h("span", { class: e.rank === 0 ? "calls" : "", style: `background:${own || e.color};color:${own || e.color}` }))
+          : [h("span", { class: "none", style: own ? `background:${own}` : "" })]),
       );
     }
   }
@@ -2530,8 +2567,6 @@ export class Island {
     this.compact.sync(plan);
     this.compact.el.classList.toggle("on", State.mode === "compact");
     this.syncThread();
-    // The style may have changed under a folded island: what the window takes of the pointer follows at once.
-    if (this.threadFolded !== (this.pushedRect.w === 0 && this.pushedRect.h === 0)) this.forceRect = true;
     const was = this.compactSize;
     if (State.mode === "compact" && (Math.abs(plan.width - was.w) > 0.5 || Math.abs(plan.height - was.h) > 0.5)) {
       // One of the two is the folded island's own (width in the row, height in the column); the other stays.

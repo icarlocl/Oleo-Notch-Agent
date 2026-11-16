@@ -6653,7 +6653,8 @@ input[type="range"]::-webkit-slider-thumb {
 #thread {
   display: none;
   position: absolute;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   gap: 3px;
 }
 
@@ -6744,4 +6745,11 @@ input[type="range"]::-webkit-slider-thumb {
   :root:not([data-motion="full"]) #thread span.calls {
     animation: none;
   }
+}
+
+/* A little more to click on than the 4 px it is drawn in. */
+#thread::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
 }

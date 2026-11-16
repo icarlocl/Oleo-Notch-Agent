@@ -23,6 +23,9 @@ pub struct Settings {
     /// changes) or "capsule" (the island as it always was): one of `FOLDED_STYLES`.
     #[serde(default = "default_folded_style")]
     pub folded_style: String,
+    /// The thread's own colour, "#rrggbb"; empty: each session's segment is in its own colour.
+    #[serde(default)]
+    pub thread_color: String,
     pub autostart: bool,
     pub hooks_installed: bool,
     /// The global shortcut that opens the session panel large, or shrinks it
@@ -133,6 +136,17 @@ pub const FOLDED_STYLES: &[&str] = &["thread", "capsule"];
 
 fn default_folded_style() -> String {
     FOLDED_STYLES[0].into()
+}
+
+/// "#rrggbb", lower-cased, or empty (each session in its own colour): nothing else is kept.
+pub fn thread_color(said: &str) -> String {
+    let said = said.trim();
+    let hex = said.strip_prefix('#').unwrap_or("");
+    if hex.len() == 6 && hex.chars().all(|c| c.is_ascii_hexdigit()) {
+        said.to_ascii_lowercase()
+    } else {
+        String::new()
+    }
 }
 
 /// The least and most the idle opacity of the agents list can be, in percent
@@ -280,6 +294,7 @@ impl Settings {
         self.compact_metrics = compact_metrics(&self.compact_metrics);
         self.dock = one_of(crate::dock::DOCKS, &self.dock);
         self.folded_style = one_of(FOLDED_STYLES, &self.folded_style);
+        self.thread_color = thread_color(&self.thread_color);
         self.theme = one_of(THEMES, &self.theme);
         self.reduce_motion = one_of(REDUCE_MOTION, &self.reduce_motion);
         self.bot_mascot = one_of(BOT_MASCOTS, &self.bot_mascot);
@@ -311,6 +326,7 @@ impl Default for Settings {
             screen: "primary".into(),
             dock: default_dock(),
             folded_style: default_folded_style(),
+            thread_color: String::new(),
             autostart: false,
             hooks_installed: false,
             expand_shortcut: "Ctrl+Alt+Space".into(),
@@ -702,6 +718,19 @@ mod tests {
         }
         let json = serde_json::to_string(&Settings { folded_style: "capsule".into(), ..Settings::default() }.validated()).unwrap();
         assert!(json.contains(r#""foldedStyle":"capsule""#), "{json}");
+    }
+
+    #[test]
+    fn the_threads_colour_is_a_hex_colour_or_nothing() {
+        assert_eq!(Settings::default().thread_color, "");
+        assert_eq!(thread_color("#FFB547"), "#ffb547");
+        for bad in ["", "ffb547", "#fb5", "#gggggg", "red", "#ffb54777", "url(#a)"] {
+            assert_eq!(thread_color(bad), "", "{bad:?}");
+        }
+        let kept = Settings { thread_color: "#5AA9FF".into(), ..Settings::default() }.validated();
+        assert_eq!(kept.thread_color, "#5aa9ff");
+        let old: Settings = serde_json::from_str(r#"{"screen":"cursor"}"#).unwrap();
+        assert_eq!(old.thread_color, "");
     }
 
     #[test]

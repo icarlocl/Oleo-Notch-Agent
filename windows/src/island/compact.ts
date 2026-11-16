@@ -203,7 +203,8 @@ const initialOf = (name: string): string => (name.match(/[\p{L}\p{N}]/u)?.[0] ??
 /** What the folded island holds now, and how wide that makes it. */
 export function compactPlan(): CompactPlan {
   const { live } = roster();
-  const kinds = compactMetrics(State.settings);
+  // The thread style folds to a line and a short peek of the bot: no readings, only the sessions.
+  const kinds = State.settings.foldedStyle === "thread" ? [] : compactMetrics(State.settings);
   // The mark way (Settings → Island): a turn's end waits on the bot until the session is opened. The card way tells nothing here.
   const unseen = finishedNotice(State.settings) === "mark"
     ? live.filter((entry) => entry.session != null && entry.unseen).sort((a, b) => b.since - a.since)

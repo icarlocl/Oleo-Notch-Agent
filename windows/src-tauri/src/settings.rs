@@ -18,6 +18,11 @@ pub struct Settings {
     /// The edge of the display the island hangs from: one of dock.rs `DOCKS`.
     #[serde(default = "default_dock")]
     pub dock: String,
+    /// How the island looks folded: "thread" (a line along the edge that lets
+    /// every click through, and shows the bot for a few seconds when a session
+    /// changes) or "capsule" (the island as it always was): one of `FOLDED_STYLES`.
+    #[serde(default = "default_folded_style")]
+    pub folded_style: String,
     pub autostart: bool,
     pub hooks_installed: bool,
     /// The global shortcut that opens the session panel large, or shrinks it
@@ -122,6 +127,13 @@ pub struct WeatherLocation {
 
 /// The choices of "Auto-hide the folded island after", in seconds; 0 is never.
 pub const FOLDED_AUTO_HIDE: &[f64] = &[5.0, 10.0, 30.0, 60.0, 0.0];
+
+/// What `Settings::folded_style` can say: the first is the default.
+pub const FOLDED_STYLES: &[&str] = &["thread", "capsule"];
+
+fn default_folded_style() -> String {
+    FOLDED_STYLES[0].into()
+}
 
 /// The least and most the idle opacity of the agents list can be, in percent
 /// (src/core/state.ts holds the same), and what it is out of the box.
@@ -267,6 +279,7 @@ impl Settings {
         });
         self.compact_metrics = compact_metrics(&self.compact_metrics);
         self.dock = one_of(crate::dock::DOCKS, &self.dock);
+        self.folded_style = one_of(FOLDED_STYLES, &self.folded_style);
         self.theme = one_of(THEMES, &self.theme);
         self.reduce_motion = one_of(REDUCE_MOTION, &self.reduce_motion);
         self.bot_mascot = one_of(BOT_MASCOTS, &self.bot_mascot);
@@ -297,6 +310,7 @@ impl Default for Settings {
             absence_interval: 180.0,
             screen: "primary".into(),
             dock: default_dock(),
+            folded_style: default_folded_style(),
             autostart: false,
             hooks_installed: false,
             expand_shortcut: "Ctrl+Alt+Space".into(),
@@ -671,6 +685,23 @@ mod tests {
         let json = serde_json::to_string(&off).unwrap();
         assert!(json.contains(r#""playfulReactions":false"#), "{json}");
         assert!(!serde_json::from_str::<Settings>(&json).unwrap().validated().playful_reactions);
+    }
+
+    #[test]
+    fn the_folded_island_is_a_thread_by_default_and_held_to_its_choices() {
+        // A file from before the thread: it gets the default, which is the thread.
+        let old: Settings = serde_json::from_str(r#"{"soundEnabled":false,"screen":"cursor"}"#).unwrap();
+        assert_eq!(old.folded_style, "thread");
+        assert_eq!(Settings::default().folded_style, "thread");
+        for style in FOLDED_STYLES {
+            let kept = Settings { folded_style: (*style).into(), ..Settings::default() }.validated();
+            assert_eq!(kept.folded_style, *style);
+        }
+        for bad in ["", "Thread", "line", "capsule "] {
+            assert_eq!(Settings { folded_style: bad.into(), ..Settings::default() }.validated().folded_style, "thread", "{bad:?}");
+        }
+        let json = serde_json::to_string(&Settings { folded_style: "capsule".into(), ..Settings::default() }.validated()).unwrap();
+        assert!(json.contains(r#""foldedStyle":"capsule""#), "{json}");
     }
 
     #[test]

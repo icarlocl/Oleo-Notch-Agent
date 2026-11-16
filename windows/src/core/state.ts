@@ -574,6 +574,12 @@ export interface Settings {
   screen: "primary" | "cursor";
   /** The edge of the display the island hangs from. */
   dock: Dock;
+  /**
+   * How the island looks folded: "thread" (a line along the edge that lets every
+   * click through, and shows the bot for a few seconds when a session changes) or
+   * "capsule" (the island as it always was).
+   */
+  foldedStyle: "thread" | "capsule";
   autostart: boolean;
   hooksInstalled: boolean;
   /**
@@ -841,6 +847,7 @@ export const DEFAULT_SETTINGS: Settings = {
   absenceInterval: 180,
   screen: "primary",
   dock: "top",
+  foldedStyle: "thread",
   autostart: false,
   hooksInstalled: false,
   expandShortcut: DEFAULT_EXPAND_SHORTCUT,

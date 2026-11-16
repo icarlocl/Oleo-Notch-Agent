@@ -858,3 +858,5 @@ if (params.get("tab") === "shelf") {
 }
 State.notify();
 finishStage(stage);
+// For a hand-driven look at the folded island: window.__realStop() ends a turn, window.__hook(payload) sends any hook.
+Object.assign(window, { __hook: hook, __realStop: realStop });

@@ -497,7 +497,7 @@ document.addEventListener("keydown", (e) => {
 
 /** The settings each category puts back. Never the connections: those are only ever changed through their diff. */
 const RESET_FIELDS: Partial<Record<Section, readonly (keyof Settings)[]>> = {
-  island: ["screen", "dock", "autostart", "autoCloseInterval", "foldedAutoHide", "hideOnlyWhenIdle", "hideInFullscreen", "finishedNotice", "compactMetrics", "weatherLocation"],
+  island: ["screen", "dock", "foldedStyle", "autostart", "autoCloseInterval", "foldedAutoHide", "hideOnlyWhenIdle", "hideInFullscreen", "finishedNotice", "compactMetrics", "weatherLocation"],
   look: ["botMascot", "playfulReactions", "theme", "reduceMotion"],
   sounds: ["soundEnabled", "soundVolume"],
   agents: ["showAgentsList", "agentsListFade", "agentsListFadeOpacity"],
@@ -1640,6 +1640,7 @@ function islandSection(): Kid[] {
     change({ dock: v });
     paintPreview(false);
   });
+  const foldedStyle = segmented<Settings["foldedStyle"]>("Isla plegada", [["thread", "Hilo"], ["capsule", "Cápsula"]], settings.foldedStyle, (v) => change({ foldedStyle: v }));
   const autostart = toggle(settings.autostart, "Iniciar Oleo con Windows", (on) => change({ autostart: on }));
 
   // When it closes and hides.
@@ -1686,6 +1687,7 @@ function islandSection(): Kid[] {
     customFold.classList.toggle("open", picked() === "custom");
     screen.set(settings.screen);
     dock.set(settings.dock);
+    foldedStyle.set(settings.foldedStyle);
     autostart.set(settings.autostart);
     hideAfter.set(hideAfterOf());
     neverFold.classList.toggle("open", hideAfterOf() === "0");
@@ -1703,12 +1705,14 @@ function islandSection(): Kid[] {
         "screen display monitor second screen multiple main primary pointer mouse", screen.el),
       stackRow("Borde de la pantalla", "La isla se sitúa en este borde, fuera de la barra de tareas. En los laterales se muestra en vertical.",
         "position edge top bottom left right side move place taskbar dock where", dock.el),
+      stackRow("Isla plegada", "Hilo: una línea en el borde que deja pasar todos los clics; la mascota se asoma unos segundos cuando una sesión cambia o te necesita. Cápsula: la isla de siempre.",
+        "folded compact thread line capsule peek tabs click through cover style look", foldedStyle.el),
       row("Iniciar Oleo con Windows", "Oleo se abre al iniciar sesión.", autostart.el,
         "startup start up launch login log in sign in boot automatically autostart open")),
     group("Cuándo se muestra y se oculta",
       stackRow("Cerrar la isla después de", "Tiempo que permanece abierta tras retirar el cursor.",
         "close auto-close timer seconds stay open delay", autoClose.el, customFold),
-      stackRow("Ocultar la isla compacta después de", "Tiempo que la isla compacta permanece visible. Reaparece al señalar el borde o cuando hay actividad.",
+      stackRow("Ocultar la isla compacta después de", "Tiempo que la cápsula permanece visible. Reaparece al señalar el borde o cuando hay actividad. El hilo no se oculta.",
         "hide auto-hide autohide compact folded small closed disappear timer never always visible", hideAfter.el, neverFold),
       row("Mostrar mientras haya sesiones activas", "La cuenta regresiva para ocultar la isla empieza cuando todas las sesiones están inactivas.", whenIdle.el,
         "busy working active idle keep visible hide thinking"),

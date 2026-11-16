@@ -215,6 +215,18 @@ export class Island {
   private compact!: CompactStrip;
   private countdown!: HTMLElement;
   private wakeStrip!: HTMLElement;
+  /** The folded island in its "thread" style: a line along the edge, a segment per session. */
+  private threadEl!: HTMLElement;
+  private threadKey = "";
+  /** When the bot, shown for a moment, goes back into the thread (performance.now()); 0 when it is not out. */
+  private peekUntil = 0;
+  private peekTimer: ReturnType<typeof setTimeout> | null = null;
+  /** When the last peek ended: a short rest between two, but for a session that calls. */
+  private peekEnded = -Infinity;
+  /** What asked for the user at the last look: a new one is what makes the bot peek out. */
+  private attention: Set<string> | null = null;
+  /** The pointer is over the bot's peek: it fades, to leave what is under it readable. */
+  private peekNear = false;
 
   private header!: ViewHost;
   private weatherHover: ReturnType<typeof setTimeout> | null = null;
@@ -538,7 +550,8 @@ export class Island {
     this.greetingCanvas.style.width = `${EXPANDED_W}px`;
     this.greetingCanvas.style.height = "150px";
 
-    this.root.append(this.wakeStrip, this.islandEl);
+    this.threadEl = h("div", { id: "thread", "aria-hidden": "true" });
+    this.root.append(this.wakeStrip, this.islandEl, this.threadEl);
     this.applyGeometry();
   }
 
@@ -548,7 +561,7 @@ export class Island {
     this.fsm.homeToPetitDelay = State.settings.autoCloseInterval;
     // The greeting is short (bot/greeting.ts): it folds right after its last beat.
     this.fsm.greetAutoCollapseDelay = 0.1;
-    this.fsm.petitToHiddenDelay = foldedAutoHide(State.settings);
+    this.fsm.petitToHiddenDelay = this.foldedDelay();
     this.fsm.holds = () => (State.settings.hideOnlyWhenIdle && this.active) || this.unread;
     this.fsm.onTransition = (from, to) => {
       switch (to) {
@@ -1744,7 +1757,8 @@ export class Island {
     // (HIT_MARGIN), which covers all of a folded island's ears and most of an
     // open one's — and a click on one does nothing, like a click on the rest
     // of that margin.
-    const rect = { x, y, w, h: hh };
+    // The thread style takes no pointer at all: an empty shape, so the window lets every click through.
+    const rect = this.threadFolded ? { x: 0, y: 0, w: 0, h: 0 } : { x, y, w, h: hh };
     const p = this.pushedRect;
     if (
       this.forceRect ||
@@ -2092,13 +2106,91 @@ export class Island {
     });
   }
 
+  // ── The thread: the folded island that never takes a click ─────────────────
+
+  /** Folded in the "thread" style: a line along the edge, and the bot out for a moment when a session needs a look. */
+  private get threadFolded(): boolean {
+    return State.settings.foldedStyle === "thread" && State.mode === "compact";
+  }
+
+  /** The thread stays: only the shortcut, or a full-screen app, takes it away. The capsule hides after the time chosen. */
+  private foldedDelay(): number {
+    return State.settings.foldedStyle === "thread" ? 0 : foldedAutoHide(State.settings);
+  }
+
+  /** How far from the bot's peek the pointer is when it starts to fade it, in logical pixels. */
+  private static readonly PEEK_ZONE = 40;
+  private static readonly PEEK_MS = 4000;
+  private static readonly PEEK_REST_MS = 8000;
+
+  /** The segment per session, and the bot's peek: what the thread style shows, from what the sessions are. */
+  private syncThread() {
+    const thread = this.threadFolded;
+    const plan = compactPlan();
+    // What asks for the user, now: a new one makes the bot peek out. The first look only learns.
+    const asks = new Set(plan.live.filter((e) => e.rank === 0 || e.unseen).map((e) => `${e.id}:${e.rank === 0 ? "c" : "u"}`));
+    if (this.attention) {
+      let calls = false;
+      let fresh = false;
+      for (const token of asks) {
+        if (this.attention.has(token)) continue;
+        fresh = true;
+        if (token.endsWith(":c")) calls = true;
+      }
+      if (thread && fresh) this.peekOut(calls);
+    }
+    this.attention = asks;
+
+    const classes = this.islandEl.classList;
+    const peeking = thread && performance.now() < this.peekUntil;
+    classes.toggle("thread", thread);
+    classes.toggle("peek", peeking);
+    classes.toggle("peek-near", peeking && this.peekNear);
+    this.threadEl.classList.toggle("on", thread);
+
+    // The segments: one per session, in its colour; one that calls stands taller and breathes.
+    const segs = plan.live.slice(0, 6);
+    const key = segs.map((e) => `${e.color}${e.rank === 0 ? "!" : ""}`).join("|");
+    if (key !== this.threadKey) {
+      this.threadKey = key;
+      this.threadEl.replaceChildren(
+        ...(segs.length
+          ? segs.map((e) => h("span", { class: e.rank === 0 ? "calls" : "", style: `background:${e.color};color:${e.color}` }))
+          : [h("span", { class: "none" })]),
+      );
+    }
+  }
+
+  private peekOut(calls: boolean) {
+    const now = performance.now();
+    if (!calls && now < this.peekEnded + Island.PEEK_REST_MS) return;
+    this.peekUntil = now + Island.PEEK_MS;
+    if (this.peekTimer != null) clearTimeout(this.peekTimer);
+    this.peekTimer = setTimeout(() => {
+      this.peekTimer = null;
+      this.peekEnded = performance.now();
+      this.peekNear = false;
+      this.syncThread();
+    }, Island.PEEK_MS + 20);
+  }
+
   /** Cursor in window-logical coordinates. `gone`: it has no position any more (it left the page, with no global cursor). */
   onCursor(x: number, y: number, gone = false) {
     State.mouse = { x, y };
     const rect = this.islandRect();
     State.mouseInIsland = { x: x - rect.x, y: y - rect.y };
 
-    const inIsland =
+    const thread = this.threadFolded;
+    if (thread) {
+      // Nothing here takes the pointer: it only fades the peek, to leave what is under it readable.
+      const zone = Island.PEEK_ZONE;
+      const near = !gone && x >= rect.x - zone && x <= rect.x + rect.w + zone && y >= rect.y - zone && y <= rect.y + rect.h + zone;
+      if (near !== this.peekNear) {
+        this.peekNear = near;
+        this.syncThread();
+      }
+    }
+    const inIsland = !thread &&
       x >= rect.x - HIT_MARGIN && x <= rect.x + rect.w + HIT_MARGIN &&
       y >= rect.y - HIT_MARGIN && y <= rect.y + rect.h + HIT_MARGIN;
 
@@ -2437,6 +2529,9 @@ export class Island {
     const plan = compactPlan();
     this.compact.sync(plan);
     this.compact.el.classList.toggle("on", State.mode === "compact");
+    this.syncThread();
+    // The style may have changed under a folded island: what the window takes of the pointer follows at once.
+    if (this.threadFolded !== (this.pushedRect.w === 0 && this.pushedRect.h === 0)) this.forceRect = true;
     const was = this.compactSize;
     if (State.mode === "compact" && (Math.abs(plan.width - was.w) > 0.5 || Math.abs(plan.height - was.h) > 0.5)) {
       // One of the two is the folded island's own (width in the row, height in the column); the other stays.
@@ -2555,7 +2650,7 @@ export class Island {
     Sound.setVolume(State.settings.soundVolume);
     this.fsm.homeToPetitDelay = State.settings.autoCloseInterval;
     // Settings → Island → Visibility: applied to an island already folded, from now.
-    const hideAfter = foldedAutoHide(State.settings);
+    const hideAfter = this.foldedDelay();
     const restart = hideAfter !== this.fsm.petitToHiddenDelay;
     this.fsm.petitToHiddenDelay = hideAfter;
     this.fsm.refresh(restart);

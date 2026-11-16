@@ -1,0 +1,42 @@
+Oleo
+Copyright (c) 2026 Franco Ruiz. All rights reserved.
+
+PROPRIETARY LICENSE
+
+This software and its source code, including all modifications, additions,
+artwork and documentation made by Franco Ruiz ("Oleo"), are proprietary and
+confidential. No part of Oleo may be copied, modified, distributed, sublicensed,
+sold or used, in whole or in part, without the prior written permission of
+Franco Ruiz.
+
+Oleo is derived from Nook, itself a fork of Coucou. The portions of the source
+code that come from Nook and Coucou remain available under the MIT License below,
+which applies only to those portions and not to Oleo's own work. See NOTICE.
+
+THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+--------------------------------------------------------------------------------
+Third-party base: Nook and Coucou
+--------------------------------------------------------------------------------
+
+MIT License
+
+Copyright (c) 2026 Louis Raillé
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

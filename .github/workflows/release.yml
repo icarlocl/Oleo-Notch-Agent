@@ -1,0 +1,170 @@
+name: Release
+
+# Builds the Windows installer from a `v*` tag (or by hand) and attaches it to
+# the GitHub release together with SHA256SUMS.txt. Only the release job gets
+# write access to this repository. The scoop job then points nook.json in the
+# Scoop bucket (zubairbinshaukat/scoop-bucket) at the new release; it is the one
+# place a secret is used (SCOOP_BUCKET_TOKEN), and it skips when that is not set.
+#
+# The build is not code-signed yet. Planned: the SignPath Foundation's free
+# programme, once the project qualifies (see README, "Code signing policy").
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows
+    outputs:
+      version: ${{ steps.pack.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: windows/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: windows
+
+      - run: npm ci
+
+      # Three files carry the version and they drift silently.
+      - name: Check the tag and every version agree
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $tag   = "${{ github.ref_name }}" -replace '^v', ''
+          $conf  = (Get-Content src-tauri/tauri.conf.json | ConvertFrom-Json).version
+          $pkg   = (Get-Content package.json | ConvertFrom-Json).version
+          $cargo = (Select-String -Path Cargo.toml -Pattern '^version\s*=\s*"(.+)"').Matches[0].Groups[1].Value
+          "tag=$tag tauri.conf=$conf package.json=$pkg Cargo.toml=$cargo"
+          $bad = @()
+          if ($tag -ne $conf)  { $bad += "tauri.conf.json says $conf" }
+          if ($tag -ne $pkg)   { $bad += "package.json says $pkg" }
+          if ($tag -ne $cargo) { $bad += "Cargo.toml says $cargo" }
+          if ($bad) { throw "tag says $tag but $($bad -join '; ')" }
+
+      # The same script a release is made with by hand: tauri build (which
+      # builds nook-hook first and bundles it), then scripts/pack.mjs.
+      - name: Build the installer
+        id: pack
+        shell: pwsh
+        run: |
+          npm run pack
+          $version = (Get-Content src-tauri/tauri.conf.json | ConvertFrom-Json).version
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      # SHA-256 of exactly what is uploaded: the installer and the two programs inside it.
+      - name: Compute SHA256SUMS.txt
+        shell: pwsh
+        run: |
+          $v = "${{ steps.pack.outputs.version }}"
+          New-Item -ItemType Directory -Force out | Out-Null
+          Copy-Item "release/Nook-Windows-$v-setup.exe" out/
+          Copy-Item target/release/nook.exe, target/release/nook-hook.exe out/
+          Push-Location out
+          Get-ChildItem -File | Sort-Object Name | ForEach-Object {
+            "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name
+          } | Set-Content -Encoding ascii SHA256SUMS.txt
+          Get-Content SHA256SUMS.txt
+          Pop-Location
+
+      # SignPath (planned, not active): sign out/*.exe here, before the hashes above are taken.
+      # - uses: signpath/github-action-submit-signing-request@v1
+      #   with:
+      #     api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+      #     organization-id: <organization id>
+      #     project-slug: nook
+      #     signing-policy-slug: release-signing
+      #     github-artifact-id: <artifact id>
+      #     wait-for-completion: true
+      #     output-artifact-directory: signed
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Nook-Windows
+          path: windows/out/*
+          retention-days: 14
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Nook-Windows
+          path: out
+
+      - name: Attach to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          v="${{ needs.build.outputs.version }}"
+          notes="Nook for Windows $v. Download Nook-Windows-$v-setup.exe and run it. It is not code-signed yet, so Windows SmartScreen shows a warning: choose More info, then Run anyway. Check the download against SHA256SUMS.txt first."
+          if ! gh release view "${{ github.ref_name }}" >/dev/null 2>&1; then
+            gh release create "${{ github.ref_name }}" --title "Nook $v" --notes "$notes" --verify-tag
+          fi
+          gh release upload "${{ github.ref_name }}" out/Nook-Windows-"$v"-setup.exe out/nook.exe out/nook-hook.exe out/SHA256SUMS.txt --clobber
+
+  # `scoop install nook` (bucket "zubyr"): the manifest takes nook.exe and
+  # nook-hook.exe straight from the release, with the hashes from SHA256SUMS.txt.
+  scoop:
+    needs: [build, release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Nook-Windows
+          path: out
+
+      - name: Update nook.json in the Scoop bucket
+        env:
+          TOKEN: ${{ secrets.SCOOP_BUCKET_TOKEN }}
+          V: ${{ needs.build.outputs.version }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::warning::SCOOP_BUCKET_TOKEN is not set, so the Scoop manifest was not updated."
+            exit 0
+          fi
+          app=$(awk '$2 == "nook.exe" { print $1 }' out/SHA256SUMS.txt)
+          hook=$(awk '$2 == "nook-hook.exe" { print $1 }' out/SHA256SUMS.txt)
+          if [ -z "$app" ] || [ -z "$hook" ]; then echo "SHA256SUMS.txt lacks nook.exe or nook-hook.exe"; exit 1; fi
+
+          git clone --depth 1 "https://x-access-token:${TOKEN}@github.com/zubairbinshaukat/scoop-bucket" bucket
+          cd bucket
+          base="https://github.com/zubairbinshaukat/nook/releases/download/v$V"
+          jq --indent 4 --arg v "$V" --arg base "$base" --arg app "$app" --arg hook "$hook" '
+            .version = $v
+            | .architecture."64bit".url = [$base + "/nook.exe", $base + "/nook-hook.exe"]
+            | .architecture."64bit".hash = [$app, $hook]
+          ' bucket/nook.json > nook.json.new
+          mv nook.json.new bucket/nook.json
+
+          if git diff --quiet; then echo "nook.json already at $V"; exit 0; fi
+          git -c user.name="github-actions[bot]" -c user.email="41898283+github-actions[bot]@users.noreply.github.com" \
+            commit -am "chore(scoop): update nook to v$V"
+          git push

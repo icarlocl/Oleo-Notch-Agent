@@ -1,0 +1,26 @@
+# Build artefacts
+*.xcuserstate
+
+# Xcode DerivedData (outside repo — listed for clarity)
+DerivedData/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# iCloud stubs
+*.icloud
+
+# Local only (never published)
+.claude/
+_prive/
+
+# Nook planning notes (local only)
+plans/
+
+# Screenshots made by windows/scripts/shot.mjs
+windows/shots/
+
+# Microsoft's Windows 11 Bloom wallpapers for the screenshot stage: local only, never committed or shipped
+windows/dev/stage/assets/

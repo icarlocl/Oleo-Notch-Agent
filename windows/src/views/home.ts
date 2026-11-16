@@ -10,10 +10,8 @@
 // gauges when a sample comes, and what depends on the time passing — a
 // session fading, "updated 3 min ago" — when the island's slow timer says so.
 
-import { createStateBot, releaseMiniBot, restMiniBot } from "../bot/minibots";
-import { hexToRGB, type BotEngine } from "../bot/engine";
 import { HOME_SIDE_BOT_H, HOME_SIDE_SESSIONS_H, HOME_STAGE, MAX_VISIBLE, washRGBA, type BotStateName, type Wash } from "../core/layout";
-import { DECISION_WORDS, State, USAGE_OLD_MS, USAGE_SOURCE_WORDS, ramPercent, ramWords, usageLevel, usageShown } from "../core/state";
+import { DECISION_WORDS, State, USAGE_OLD_MS, USAGE_SOURCE_WORDS, usageLevel, usageShown } from "../core/state";
 import { clear, h, svg } from "./dom";
 import { ICONS } from "./icons";
 import { LUCIDE, lucide } from "./iconset";
@@ -27,7 +25,6 @@ import type { ViewActions, ViewHost } from "./views";
 
 /** The island's entrance curve (.view.on in style.css): what moves, moves like this. */
 const SPRING = "cubic-bezier(0.3, 1.2, 0.4, 1)";
-const MINI_BOT = 22;
 
 const LANES: { key: Lane; title: string }[] = [
   { key: "needs", title: "Necesita tu atención" },
@@ -41,7 +38,6 @@ const WASH: Partial<Record<BotStateName, Wash>> = {
 
 interface Cell {
   el: HTMLButtonElement;
-  bot: { el: HTMLElement; engine: BotEngine };
   kids: HTMLElement;
   mark: HTMLElement;
   /** What it was last drawn for: nothing is touched when that has not changed. */
@@ -52,23 +48,6 @@ interface Cell {
 /** The icons of the resources column, at the size of its words. */
 const RES_ICON = 12;
 
-/** A line of the machine: its icon and name, a slim bar for how full, and the figure — "—" in the same cell until it is known. */
-function gauge(name: string, icon: string) {
-  const value = h("span", { class: "res-value pct blank", text: "—" });
-  const fill = h("i");
-  const el = h("div", { class: "res-head" }, lucide(icon, RES_ICON), h("b", { text: name }), h("div", { class: "res-bar" }, fill), value);
-  return {
-    el,
-    /** `percent` is null while nothing is known; `more` is what the tooltip adds. */
-    set(percent: number | null, more = "") {
-      value.textContent = percent != null ? `${Math.round(percent)}%` : "—";
-      value.classList.toggle("blank", percent == null);
-      fill.style.width = `${percent ?? 0}%`;
-      el.title = more;
-    },
-  };
-}
-
 export function buildHome(actions: ViewActions): ViewHost {
   // ── Left: the bot's card ────────────────────────────────────────────────────
   /** The tool the session is in — its mark and its name — before the project's. */
@@ -76,6 +55,8 @@ export function buildHome(actions: ViewActions): ViewHost {
   const whoName = h("b", { class: "name" });
   const whoModel = h("span", { class: "model" });
   const whoState = h("span", { class: "words" });
+  /** What the bot says, in a sentence: the one thing that most needs the user's eye. */
+  const say = h("div", { class: "hb-say" });
   const doing = h("div", { class: "hb-doing" });
   /** The session the card speaks for: what its button goes to. */
   let frontId = "";
@@ -86,6 +67,7 @@ export function buildHome(actions: ViewActions): ViewHost {
   const botCard = h(
     "div", { class: "card wash home-bot" },
     h("div", { class: "hb-stage" }),
+    say,
     h("div", { class: "hb-who" }, whoTool, whoName, whoModel, whoState),
     doing,
     actionsRow,
@@ -107,12 +89,10 @@ export function buildHome(actions: ViewActions): ViewHost {
   const foot = h("div", { class: "hs-foot" });
   const empty = h("div", { class: "hs-empty" });
   const list = h("div", { class: "hs-list" });
-  const sessionsCard = h("div", { class: "card home-sessions" }, laneRow, empty, foot, list);
+  const sessHead = h("div", { class: "lane-h hs-head" });
+  const sessionsCard = h("div", { class: "card home-sessions" }, sessHead, laneRow, empty, foot, list);
 
   // ── Right: resources. Every line is built once and only its words change, so nothing moves. ──
-  const cpu = gauge("CPU", LUCIDE.cpu);
-  const gpu = gauge("GPU", LUCIDE.gpu);
-  const ram = gauge("RAM", LUCIDE.memoryStick);
   const usageRows = ([["5 h", LUCIDE.timer], ["7 d", LUCIDE.calendarDays]] as const).map(([label, icon]) => {
     const resets = h("span", { class: "res-sub" });
     const value = h("span", { class: "res-value" });
@@ -125,14 +105,14 @@ export function buildHome(actions: ViewActions): ViewHost {
     return { el, resets, value, fill };
   });
   const noUsage = h("div", { class: "res-none" });
+  const noUsageBtn = h("button", { class: "btn primary", text: "Activar", onclick: () => actions.openSettingsWindow() });
   const usageBox = h("div", { class: "res-usage", title: USAGE_SOURCE_WORDS }, usageRows[0].el, usageRows[1].el, noUsage);
   const ageWhat = h("span", { class: "what", text: "según la última actividad de Claude Code" });
   const ageWhen = h("span", { class: "when" });
   const usageAge = h("div", { class: "res-age" }, ageWhat, ageWhen);
   const resCard = h(
     "div", { class: "card home-res" },
-    h("div", { class: "res-machine" }, cpu.el, gpu.el, ram.el),
-    h("div", { class: "lane-h", text: "Uso de Claude" }),
+    h("div", { class: "lane-h", text: "Claude · uso" }),
     usageBox,
     usageAge,
   );
@@ -180,39 +160,36 @@ export function buildHome(actions: ViewActions): ViewHost {
   }
 
   function makeCell(entry: Entry): Cell {
-    const bot = createStateBot(entry.state, MINI_BOT);
-    // Another agent's bot keeps its pill's colour: it is not one of Claude's.
-    if (entry.task) bot.engine.bodyColor = hexToRGB(entry.task.color);
     // A result nobody has opened: a dot — or, when its reply waits on a decision, a "!" in that colour.
     const mark = h("i", { class: "unseen" }, svg(ICONS.bang, 9));
     const kids = h("span", { class: "kids" });
-    // Which tool it is, at the corner: the bot's colours say what it does, never whose it is.
+    const dot = h("i", { class: "dot" });
+    const name = h("span", { class: "agent-name" });
+    // Which tool it is, at the corner: the chip's colour says what it does, never whose it is.
     const tool = entry.session ? toolMark(entry.session.agent, 9) : null;
     if (tool) tool.classList.add("corner");
-    const cell = h("button", { class: "agent" }, bot.el, mark, kids, tool);
+    const cell = h("button", { class: "agent" }, dot, name, mark, kids, tool);
     const id = entry.id;
     cell.addEventListener("pointerenter", () => { hoverId = id; drawFoot(); });
     cell.addEventListener("pointerleave", () => { if (hoverId === id) hoverId = null; drawFoot(); });
     cell.addEventListener("click", (e) => { e.stopPropagation(); open(id); });
     // A click does not leave it with the focus: the keyboard is the panel's.
     cell.addEventListener("mousedown", (e) => e.preventDefault());
-    return { el: cell, bot, kids, mark, key: "", state: null };
+    return { el: cell, kids, mark, key: "", state: null };
   }
 
   function updateCell(cell: Cell, entry: Entry) {
     const running = entry.session ? runningSubagents(entry.session) : [];
-    const key = [entry.state, entry.lane, entry.unseen, entry.decision, running.map((r) => (r.asking ? "a" : "r")).join("")].join("~");
+    const { name, n } = labelOf(entry);
+    const key = [entry.state, entry.lane, entry.unseen, entry.decision, entry.color, name, n, running.map((r) => (r.asking ? "a" : "r")).join("")].join("~");
     if (key === cell.key) return;
     cell.key = key;
-    const changed = cell.state != null && cell.state !== entry.state;
     cell.state = entry.state;
-    cell.bot.engine.setState(entry.state);
-    const rest = entry.lane === "done";
-    cell.el.classList.toggle("rest", rest);
-    // One at rest is drawn until its state has settled, and then costs nothing.
-    restMiniBot(cell.bot.el, rest, changed);
-    // One mark at its corner: the decision's comes before the plain "unseen". What the bot itself
-    // wears — asking, an error — is not touched by either.
+    cell.el.classList.toggle("rest", entry.lane === "done");
+    cell.el.classList.toggle("calls", entry.lane === "needs");
+    (cell.el.querySelector(".dot") as HTMLElement).style.background = entry.color;
+    (cell.el.querySelector(".agent-name") as HTMLElement).textContent = n == null ? name : `${name} ·${n}`;
+    // One mark at its corner: the decision's comes before the plain "unseen".
     cell.mark.hidden = !(entry.unseen || entry.decision);
     cell.mark.classList.toggle("decide", entry.decision);
     cell.el.title = entry.decision ? DECISION_WORDS : "";
@@ -223,10 +200,7 @@ export function buildHome(actions: ViewActions): ViewHost {
     }
     if (running.length > MAX_CHILD_DOTS) cell.kids.append(h("small", { text: `+${running.length - MAX_CHILD_DOTS}` }));
   }
-
   function release(cell: Cell) {
-    const canvas = cell.bot.el.querySelector("canvas");
-    if (canvas) releaseMiniBot(canvas);
     cell.el.remove();
   }
 
@@ -314,10 +288,10 @@ export function buildHome(actions: ViewActions): ViewHost {
     // "+N" wears the colour of the most urgent session it hides: a hidden request is never silent.
     more.hidden = hidden.length === 0;
     if (hidden.length) {
-      more.textContent = `+${hidden.length}`;
+      more.textContent = `+${hidden.length} más ›`;
       wear(more, hidden[0].color);
       more.classList.toggle("calls", hidden[0].rank === 0);
-      more.title = `${hidden.length} more`;
+      more.title = `${hidden.length} más`;
     } else {
       listOpen = false;
     }
@@ -328,18 +302,33 @@ export function buildHome(actions: ViewActions): ViewHost {
     }
   }
 
-  function drawMain(front: Entry | null, tracked: number) {
+  /** The bot's sentence: fixed templates, the most urgent thing first. No model, no network. */
+  function sayOf(front: Entry, live: Entry[]): string {
+    const who = labelOf(front).name;
+    const needs = live.filter((e) => e.lane === "needs");
+    if (needs.length > 1) return `${needs.length} sesiones te necesitan.`;
+    if (needs.length === 1) return front.session?.question ? `${who} tiene una pregunta.` : `${who} necesita tu permiso.`;
+    if (front.state === "error") return `${who} tuvo un error.`;
+    const working = live.filter((e) => e.lane === "working");
+    if (working.length > 1) return `${working.length} sesiones trabajando.`;
+    if (working.length === 1) return `Trabajando en ${labelOf(working[0]).name}…`;
+    const done = live.filter((e) => e.lane === "done").length;
+    return `Todo en calma. ${done} ${done === 1 ? "sesión terminó" : "sesiones terminaron"}.`;
+  }
+
+  function drawMain(front: Entry | null, tracked: number, live: Entry[]) {
     frontId = front?.session?.id ?? "";
     botCard.classList.toggle("opens", frontId !== "");
     if (!front) {
       const missing = !State.settings.hooksInstalled && tracked === 0;
       botCard.style.setProperty("--wash", washRGBA("soft"));
       whoTool.replaceChildren();
-      whoName.textContent = missing ? "Sin conexión" : "No sessions";
+      whoName.textContent = "Durazno";
+      say.textContent = missing ? "Aún no te oigo. Instala los hooks." : "Sin sesiones. Abre Claude Code.";
       whoName.title = "";
       whoModel.textContent = "";
       whoState.textContent = "";
-      doing.textContent = missing ? "Claude Code can't reach Oleo yet" : "Nothing is running";
+      doing.textContent = missing ? "Claude Code aún no llega a Oleo" : "";
       doing.title = "";
       review.style.display = "none";
       return;
@@ -350,22 +339,22 @@ export function buildHome(actions: ViewActions): ViewHost {
     const tool = front.session?.agent;
     if (tool) whoTool.replaceChildren(toolMark(tool, 11), TOOL_NAME[tool] + " ·");
     else whoTool.replaceChildren();
-    whoName.textContent = labelText(front);
+    whoName.textContent = "Durazno";
+    say.textContent = `«${sayOf(front, live)}»`;
     whoName.title = labelOf(front).path;
     // The model it runs on, when it said: nothing is shown for one that did not.
-    const model = front.session?.model?.label ?? "";
+    const model = "";
     whoModel.textContent = model;
     whoModel.title = front.session?.model?.id ?? "";
     whoModel.hidden = !model;
-    whoState.textContent = stateWords(front);
-    whoState.style.color = resting && !front.decision ? "" : front.color;
+    whoState.textContent = "";
     const what = doingOf(front);
     doing.textContent = what;
     doing.title = what;
     // No Allow here: this card cannot show a request whole, and Allow allows
     // all of it. The button goes to the request's own card, which can — and
     // which arms its buttons from the moment it is on show.
-    const asks = front.session?.question ? "Answer" : front.session?.approval ? "Review" : "";
+    const asks = front.session?.question ? "Responder" : front.session?.approval ? "Revisar" : "";
     review.style.display = asks ? "" : "none";
     reviewLabel.textContent = asks;
   }
@@ -384,14 +373,14 @@ export function buildHome(actions: ViewActions): ViewHost {
       empty.append(
         h("div", { class: "title", text: "Hooks sin instalar" }),
         h("div", { class: "sub", text: "Instala los hooks de Claude Code para ver sus sesiones aquí." }),
-        h("button", { class: "btn secondary", onclick: () => actions.openSettingsWindow() }, svg(ICONS.gear, 12), "Open Settings"),
+        h("button", { class: "btn secondary", onclick: () => actions.openSettingsWindow() }, svg(ICONS.gear, 12), "Abrir Ajustes"),
       );
     } else if (tracked > 0) {
       // Sessions are still followed: they have only been at rest long enough to leave the view.
       empty.append(
         h("div", { class: "title", text: "Sin sesiones activas" }),
-        h("div", { class: "sub", text: `${tracked} session${tracked === 1 ? " is" : "s are"} at rest. ${tracked === 1 ? "It comes" : "They come"} back here when ${tracked === 1 ? "it works" : "they work"} again.` }),
-        h("button", { class: "btn secondary", text: tracked === 1 ? "Show it" : "Show them", onclick: () => { actions.blip(); actions.openSessions(); } }),
+        h("div", { class: "sub", text: `${tracked} ${tracked === 1 ? "sesión está" : "sesiones están"} en reposo. Vuelven aquí cuando trabajen.` }),
+        h("button", { class: "btn secondary", text: tracked === 1 ? "Mostrarla" : "Mostrarlas", onclick: () => { actions.blip(); actions.openSessions(); } }),
       );
     } else {
       empty.append(
@@ -411,7 +400,6 @@ export function buildHome(actions: ViewActions): ViewHost {
     clear(foot);
     if (!entry) {
       foot.classList.add("quiet");
-      foot.append(h("div", { class: "hf-doing", text: "Pasa el cursor sobre un agente para ver su actividad. Haz clic para abrir la sesión." }));
       return;
     }
     foot.classList.remove("quiet");
@@ -465,13 +453,8 @@ export function buildHome(actions: ViewActions): ViewHost {
 
   /** The machine: written when a sample comes, and at no other time. */
   function drawGauges() {
-    const m = State.metrics;
     // CPU and GPU need two readings: "—" in the same cell until the first real
     // one — and, for the GPU, for good on a machine that does not report it.
-    cpu.set(m?.cpu ?? null);
-    gpu.set(m?.gpu ?? null);
-    // The share in use; how many gigabytes that is stays in the tooltip.
-    ram.set(ramPercent(m), ramWords(m));
     drawUsage(Date.now());
   }
 
@@ -497,21 +480,21 @@ export function buildHome(actions: ViewActions): ViewHost {
 
     noUsage.hidden = usage != null;
     if (!usage) {
+      const off = State.usageInstalled !== true;
       const why = State.usageInstalled === false
-        ? "Turn on usage limits in Settings"
-        : State.usageInstalled
-          ? "Appears once a session has run"
-          : "Appears once a session has run with usage limits on in Settings";
-      if (noUsage.dataset.why !== why) {
-        noUsage.dataset.why = why;
+        ? "Actívalos para ver tu límite de 5 h y 7 d."
+        : "Aparecerá cuando una sesión se ejecute.";
+      const key = `${off}:${why}`;
+      if (noUsage.dataset.why !== key) {
+        noUsage.dataset.why = key;
         clear(noUsage);
-        noUsage.append(h("b", { text: "Aún no hay datos de uso" }), h("span", { text: why }));
+        noUsage.append(h("b", { text: "Aún sin datos de uso" }), h("span", { text: why }));
+        if (off && State.usageInstalled === false) noUsage.append(noUsageBtn);
       }
     }
-
     // How old the numbers are, said as what they are: Claude Code's last word. Ticks with the home view's slow timer.
     const age = usage ? now - usage.updatedAt : 0;
-    const when = !usage ? "" : age < 60_000 ? " · just now" : ` · ${span(age)} ago`;
+    const when = !usage ? "" : age < 60_000 ? " · ahora" : ` · hace ${span(age)}`;
     usageAge.style.visibility = usage ? "visible" : "hidden";
     usageAge.classList.toggle("old", usage != null && age > USAGE_OLD_MS);
     if (ageWhen.textContent !== when) ageWhen.textContent = when;
@@ -535,7 +518,9 @@ export function buildHome(actions: ViewActions): ViewHost {
       drawLanes(visible, hidden);
       drawEmpty(live.length === 0, faded);
       // The bot speaks for the most urgent one, whatever the pointer holds in place.
-      drawMain(live[0] ?? null, faded);
+      sessHead.textContent = `Sesiones · ${live.length}`;
+      sessHead.hidden = live.length === 0;
+      drawMain(live[0] ?? null, faded, live);
       drawList(hidden, now);
       if (hoverId && !visible.some((e) => e.id === hoverId)) hoverId = null;
       drawFoot();

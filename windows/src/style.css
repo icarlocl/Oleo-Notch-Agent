@@ -6753,3 +6753,44 @@ input[type="range"]::-webkit-slider-thumb {
   position: absolute;
   inset: -3px;
 }
+
+/* ── Home, "Durazno te cuenta": a sentence, named chips, the usage ─────────── */
+.hb-say {
+  max-width: 100%;
+  margin-top: 4px;
+  font: 650 15px/1.2 var(--font);
+  color: var(--ink);
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hs-head { padding: 0 3px 6px; }
+.hs-lanes { flex-wrap: wrap; align-content: flex-start; align-items: flex-start; gap: 6px; }
+.lane, .lane-bots { display: contents; }
+.lane > .lane-h { display: none; }
+.agent {
+  flex: 0 0 auto;
+  width: auto;
+  height: 26px;
+  padding: 0 10px;
+  flex-direction: row;
+  gap: 6px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  font: 500 12px var(--font);
+  color: var(--ink);
+  max-width: 100%;
+}
+.agent:hover { transform: none; background: rgba(255, 255, 255, 0.1); }
+.agent .dot { flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%; }
+.agent .agent-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent.calls { border-color: rgba(251, 191, 36, 0.45); background: rgba(251, 191, 36, 0.12); }
+.agent.rest { opacity: 0.88; }
+.res-none .btn { margin-top: 6px; align-self: flex-start; }.hb-who { display: none; }
+.hb-say { font-size: 13.5px; -webkit-line-clamp: 2; margin-top: 2px; }
+.home-bot .hb-doing { -webkit-line-clamp: 1; }
+.agent .tool-mark.corner { display: none; }

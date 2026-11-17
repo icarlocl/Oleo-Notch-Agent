@@ -1,37 +1,29 @@
-// The home view (plans/design-plan.md §1, plans/subagents-plan.md §7): three
-// columns — the bot, speaking for the session that most needs attention; a
-// mini bot per session, in lanes; the machine and Claude's usage limits. On a
-// side dock the three stand one above the other (style.css, layout.ts
+// The home view, one thing at a time (plans: Foco). A card with Durazno on its
+// left says the one thing that most needs the user — a permission, a question,
+// an error — with the command it is about and the buttons to answer it; with
+// nothing waiting it says in a line how the sessions are doing. Under the card,
+// one chip per session (the others, while the card is about one), in a row
+// that scrolls sideways. Claude's usage is in the header (views/header-stats.ts).
+// On a side dock the same two parts stand one above the other (style.css, layout.ts
 // SIDE_LAYOUTS): the same elements, laid out by the stylesheet.
 //
 // The island's own bot is not drawn here: island.ts places it over the stage
-// the left card keeps for it (layout.ts VIEW_LAYOUTS.overview). Nothing here
-// runs on its own either: the view is drawn when the state changes, the
-// gauges when a sample comes, and what depends on the time passing — a
-// session fading, "updated 3 min ago" — when the island's slow timer says so.
+// the card keeps for it (layout.ts VIEW_LAYOUTS.overview). Nothing here runs on
+// its own either: the view is drawn when the state changes, and what depends on
+// the time passing — "3 min ago", a session fading — when the island's slow
+// timer says so.
 
-import { HOME_SIDE_BOT_H, HOME_SIDE_SESSIONS_H, HOME_STAGE, MAX_VISIBLE, washRGBA, type BotStateName, type Wash } from "../core/layout";
-import { decisionWords, State, USAGE_OLD_MS, usageSourceWords, usageLevel, usageShown } from "../core/state";
+import { HOME_STAGE, HOME_SIDE_BOT_H, REQUEST_ARM_MS, Room, homeFitted, sideDock, washRGBA, type BotStateName, type Wash } from "../core/layout";
+import { State } from "../core/state";
 import { clear, h, svg } from "./dom";
 import { currentLang, t } from "../core/i18n";
 import { ICONS } from "./icons";
-import { LUCIDE, lucide } from "./iconset";
-import { TOOL_NAME, toolMark } from "./tool";
-import { wear } from "./palette";
-import {
-  MAX_CHILD_DOTS, doingOf, labelOf, labelText, roster, runningSubagents, span, stateWords, subagentColor,
-  subagentWords, type Entry, type Lane,
-} from "./roster";
+import { toolMark } from "./tool";
+import { roster, doingOf, labelOf, labelText, runningSubagents, span, stateWords, subagentColor, MAX_CHILD_DOTS, type Entry } from "./roster";
 import type { ViewActions, ViewHost } from "./views";
 
 /** The island's entrance curve (.view.on in style.css): what moves, moves like this. */
 const SPRING = "cubic-bezier(0.3, 1.2, 0.4, 1)";
-
-const LANES: { key: Lane; title: () => string }[] = [
-  { key: "needs", title: () => t("home.lane.needs") },
-  { key: "working", title: () => t("home.lane.working") },
-  { key: "done", title: () => t("home.lane.done") },
-];
 
 const WASH: Partial<Record<BotStateName, Wash>> = {
   approval: "amber", question: "cyan", error: "red", finished: "green",
@@ -43,157 +35,141 @@ interface Cell {
   mark: HTMLElement;
   /** What it was last drawn for: nothing is touched when that has not changed. */
   key: string;
-  state: BotStateName | null;
 }
 
-/** The icons of the resources column, at the size of its words. */
-const RES_ICON = 12;
+/** What the card is for. */
+type Mode = "allow" | "review" | "error" | "calm" | "empty";
 
-export function buildHome(actions: ViewActions): ViewHost {
-  // ── Left: the bot's card ────────────────────────────────────────────────────
-  /** The tool the session is in — its mark and its name — before the project's. */
-  const whoTool = h("span", { class: "who-tool" });
-  const whoName = h("b", { class: "name" });
-  const whoModel = h("span", { class: "model" });
-  const whoState = h("span", { class: "words" });
-  /** What the bot says, in a sentence: the one thing that most needs the user's eye. */
-  const say = h("div", { class: "hb-say" });
-  const doing = h("div", { class: "hb-doing" });
-  /** The session the card speaks for: what its button goes to. */
+export function buildHome(actions: ViewActions, onResize: () => void): ViewHost {
+  // ── The card ────────────────────────────────────────────────────────────────
+  const dot = h("i", { class: "dot" });
+  const name = h("b", { class: "hf-name" });
+  const words = h("span", { class: "hf-words" });
+  const ago = h("span", { class: "hf-ago" });
+  const head = h("div", { class: "hf-head" }, dot, name, words, ago);
+  const title = h("div", { class: "hf-title" });
+  const sub = h("div", { class: "hf-sub" });
+  /** What is asked, whole: a long command wraps and scrolls, as on the request's own card. */
+  const code = h("div", { class: "code asked hf-code" });
+
+  /** The session the card speaks for: what its buttons go to. */
   let frontId = "";
-  // Built once: rebuilt between a mouse-down and its mouse-up, it would swallow the click.
-  const reviewLabel = h("span");
-  const review = h("button", { class: "btn primary", onclick: () => frontId && actions.reviewRequest(frontId) }, reviewLabel);
-  const actionsRow = h("div", { class: "hb-actions" }, review);
-  const botCard = h(
-    "div", { class: "card wash home-bot" },
-    h("div", { class: "hb-stage" }),
-    say,
-    h("div", { class: "hb-who" }, whoTool, whoName, whoModel, whoState),
-    doing,
-    actionsRow,
-  );
-  botCard.addEventListener("click", (e) => {
-    if (!frontId || (e.target as Element).closest("button")) return;
+  /** The permission the Allow and Deny on the card answer; "" when there is none. */
+  let askedId = "";
+  /** From when a fresh permission takes clicks: see REQUEST_ARM_MS. */
+  let armedAt = 0;
+  let mode: Mode = "calm";
+  let emptyAct: (() => void) | null = null;
+
+  // Built once: rebuilt between a mouse-down and its mouse-up, a button would swallow the click.
+  const decide = (decision: "allow" | "deny") => {
+    // The request a click answers is the one the card has drawn, in front of the
+    // island, and has shown for long enough. Nothing is allowed that was not read.
+    if (askedId === "" || State.pendingApproval?.requestId !== askedId || performance.now() < armedAt) return;
+    actions.decide(decision);
+  };
+  const allowLabel = h("span");
+  const denyLabel = h("span");
+  const goLabel = h("span");
+  const seeLabel = h("span");
+  const allow = h("button", { class: "btn primary", onclick: () => decide("allow") }, allowLabel);
+  const deny = h("button", { class: "btn secondary", onclick: () => decide("deny") }, denyLabel);
+  const go = h("button", { class: "btn primary", onclick: () => frontId && actions.reviewRequest(frontId) }, goLabel);
+  const see = h("button", { class: "btn ghost end", onclick: () => frontId && open(frontId) }, seeLabel);
+  const emptyLabel = h("span");
+  const emptyBtn = h("button", { class: "btn secondary", onclick: () => emptyAct?.() }, emptyLabel);
+  const buttons = h("div", { class: "actions hf-actions" }, allow, deny, go, see, emptyBtn);
+
+  const stage = h("div", { class: "hf-stage" });
+  const body = h("div", { class: "hf-body" }, head, title, sub, code, buttons);
+  const card = h("div", { class: "card wash home-focus" }, stage, body);
+  card.addEventListener("click", (e) => {
+    if (!frontId || (e.target as Element).closest("button, .code")) return;
     open(frontId);
   });
 
-  // ── Middle: the lanes ───────────────────────────────────────────────────────
-  const lanes = new Map<Lane, { el: HTMLElement; count: HTMLElement; bots: HTMLElement }>();
-  for (const { key, title } of LANES) {
-    const count = h("i");
-    const bots = h("div", { class: "lane-bots" });
-    lanes.set(key, { el: h("div", { class: `lane ${key}` }, h("div", { class: "lane-h" }, title, " ", count), bots), count, bots });
-  }
-  const more = h("button", { class: "hs-more", onclick: (e: Event) => { e.stopPropagation(); toggleList(); } });
-  const laneRow = h("div", { class: "hs-lanes" }, ...LANES.map((l) => lanes.get(l.key)!.el), more);
-  const foot = h("div", { class: "hs-foot" });
-  const empty = h("div", { class: "hs-empty" });
-  const list = h("div", { class: "hs-list" });
-  const sessHead = h("div", { class: "lane-h hs-head" });
-  const sessionsCard = h("div", { class: "card home-sessions" }, sessHead, laneRow, empty, foot, list);
+  // ── The chips: one per session ──────────────────────────────────────────────
+  const alsoLabel = h("span", { class: "hc-label" });
+  const row = h("div", { class: "hc-row" });
+  const turnOn = h("button", { class: "hc-turnon", onclick: () => actions.openSettingsWindow() });
+  const chips = h("div", { class: "home-chips" }, alsoLabel, row, turnOn);
+  row.addEventListener("scroll", () => edge(), { passive: true });
+  // Its width is known only once it is on show: the fade is drawn then.
+  new ResizeObserver(() => edge()).observe(row);
+  // A wheel turned over the row moves it sideways: that is the way it goes.
+  row.addEventListener("wheel", (e) => {
+    if (sideDock(Room.dock) || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    row.scrollLeft += e.deltaY;
+    e.preventDefault();
+  }, { passive: false });
 
-  // ── Right: resources. Every line is built once and only its words change, so nothing moves. ──
-  const usageRows = ([["5 h", LUCIDE.timer], ["7 d", LUCIDE.calendarDays]] as const).map(([label, icon]) => {
-    const resets = h("span", { class: "res-sub" });
-    const value = h("span", { class: "res-value" });
-    const fill = h("i");
-    const el = h(
-      "div", { class: "res-row" },
-      h("div", { class: "res-head" }, lucide(icon, RES_ICON), h("b", { text: label }), resets, value),
-      h("div", { class: "res-bar" }, fill),
-    );
-    return { el, resets, value, fill };
-  });
-  const noUsage = h("div", { class: "res-none" });
-  const noUsageBtn = h("button", { class: "btn primary", text: () => t("home.turnOn"), onclick: () => actions.openSettingsWindow() });
-  const usageBox = h("div", { class: "res-usage", title: usageSourceWords }, usageRows[0].el, usageRows[1].el, noUsage);
-  const ageWhat = h("span", { class: "what", text: () => t("home.usageAge") });
-  const ageWhen = h("span", { class: "when" });
-  const usageAge = h("div", { class: "res-age" }, ageWhat, ageWhen);
-  const resCard = h(
-    "div", { class: "card home-res" },
-    h("div", { class: "lane-h", text: () => t("home.usageHead") }),
-    usageBox,
-    usageAge,
-  );
-
-  // The lanes and the resources: two more columns at the top and bottom (the
-  // wrapper has no box of its own there); on a side, what scrolls under the
-  // bot's card when the window is too short for all three (style.css `.home-rest`).
-  const rest = h("div", { class: "home-rest" }, sessionsCard, resCard);
-  const el = h("div", { class: "view" }, h("div", { class: "home" }, botCard, rest));
-  // Home upright on a side: its cards' heights and the stage's width, said once (layout.ts), read by the stylesheet.
+  const home = h("div", { class: "home" }, card, chips);
+  const el = h("div", { class: "view" }, home);
+  // Home upright on a side: the card's height and the stage's width, said once (layout.ts), read by the stylesheet.
   el.style.setProperty("--home-side-bot", `${HOME_SIDE_BOT_H}px`);
-  el.style.setProperty("--home-side-sessions", `${HOME_SIDE_SESSIONS_H}px`);
-  el.style.setProperty("--hb-side-stage", `${HOME_STAGE.column.w}px`);
-  el.style.setProperty("--hb-stage-h", `${HOME_STAGE.column.h}px`);
+  el.style.setProperty("--hf-side-stage", `${HOME_STAGE.column.w}px`);
+  el.style.setProperty("--hf-stage-h", `${HOME_STAGE.column.h}px`);
 
   // ── What is on show ─────────────────────────────────────────────────────────
   const cells = new Map<string, Cell>();
   let entries = new Map<string, Entry>();
-  let hoverId: string | null = null;
-  let listOpen = false;
-  /** Where each stood last time: nothing reshuffles in a lane under the pointer. */
+  /** Where each stood last time: nothing reshuffles in the row under the pointer. */
   let lastIndex = new Map<string, number>();
   let pointerInRow = false;
   let orderKey = "";
-  let footKey = "";
-  let listKey = "";
   let emptyKey = "";
+  let fitted: number | undefined;
 
-  laneRow.addEventListener("pointerenter", () => { pointerInRow = true; });
-  laneRow.addEventListener("pointerleave", () => { pointerInRow = false; State.notify(); });
-  // A click anywhere else puts the list away.
-  el.addEventListener("click", (e) => {
-    if (listOpen && !list.contains(e.target as Node)) {
-      listOpen = false;
-      State.notify();
-    }
-  });
+  row.addEventListener("pointerenter", () => { pointerInRow = true; });
+  row.addEventListener("pointerleave", () => { pointerInRow = false; State.notify(); });
 
   /** A session's panel — or, when it is waiting for an answer, the card that asks. Another agent's pill has neither. */
   function open(id: string) {
     const entry = entries.get(id);
     if (!entry?.session) return;
-    listOpen = false;
     actions.openSessionOf(id);
+  }
+
+  /** The row fades out at the edge where there is more of it to scroll to. */
+  function edge() {
+    row.classList.toggle("more", row.scrollLeft + row.clientWidth < row.scrollWidth - 2);
   }
 
   function makeCell(entry: Entry): Cell {
     // A result nobody has opened: a dot — or, when its reply waits on a decision, a "!" in that colour.
     const mark = h("i", { class: "unseen" }, svg(ICONS.bang, 9));
     const kids = h("span", { class: "kids" });
-    const dot = h("i", { class: "dot" });
-    const name = h("span", { class: "agent-name" });
+    const dotEl = h("i", { class: "dot" });
+    const label = h("span", { class: "agent-name" });
+    const state = h("span", { class: "agent-state" });
     // Which tool it is, at the corner: the chip's colour says what it does, never whose it is.
     const tool = entry.session ? toolMark(entry.session.agent, 9) : null;
     if (tool) tool.classList.add("corner");
-    const cell = h("button", { class: "agent" }, dot, name, mark, kids, tool);
+    const cell = h("button", { class: "agent" }, dotEl, label, state, mark, kids, tool);
     const id = entry.id;
-    cell.addEventListener("pointerenter", () => { hoverId = id; drawFoot(); });
-    cell.addEventListener("pointerleave", () => { if (hoverId === id) hoverId = null; drawFoot(); });
     cell.addEventListener("click", (e) => { e.stopPropagation(); open(id); });
     // A click does not leave it with the focus: the keyboard is the panel's.
     cell.addEventListener("mousedown", (e) => e.preventDefault());
-    return { el: cell, kids, mark, key: "", state: null };
+    return { el: cell, kids, mark, key: "" };
   }
 
   function updateCell(cell: Cell, entry: Entry) {
     const running = entry.session ? runningSubagents(entry.session) : [];
-    const { name, n } = labelOf(entry);
-    const key = [entry.state, entry.lane, entry.unseen, entry.decision, entry.color, name, n, running.map((r) => (r.asking ? "a" : "r")).join(""), currentLang()].join("~");
+    const { name: who, n } = labelOf(entry);
+    const state = stateWords(entry);
+    const doing = doingOf(entry);
+    const key = [entry.state, entry.lane, entry.unseen, entry.decision, entry.color, who, n, state, doing, running.map((r) => (r.asking ? "a" : "r")).join(""), currentLang()].join("~");
     if (key === cell.key) return;
     cell.key = key;
-    cell.state = entry.state;
     cell.el.classList.toggle("rest", entry.lane === "done");
     cell.el.classList.toggle("calls", entry.lane === "needs");
     (cell.el.querySelector(".dot") as HTMLElement).style.background = entry.color;
-    (cell.el.querySelector(".agent-name") as HTMLElement).textContent = n == null ? name : `${name} ·${n}`;
+    (cell.el.querySelector(".agent-name") as HTMLElement).textContent = n == null ? who : `${who} ·${n}`;
+    (cell.el.querySelector(".agent-state") as HTMLElement).textContent = state;
     // One mark at its corner: the decision's comes before the plain "unseen".
     cell.mark.hidden = !(entry.unseen || entry.decision);
     cell.mark.classList.toggle("decide", entry.decision);
-    cell.el.title = entry.decision ? decisionWords() : "";
+    cell.el.title = `${labelOf(entry).path}\n${doing}`.trim();
 
     clear(cell.kids);
     for (const r of running.slice(0, MAX_CHILD_DOTS)) {
@@ -201,27 +177,24 @@ export function buildHome(actions: ViewActions): ViewHost {
     }
     if (running.length > MAX_CHILD_DOTS) cell.kids.append(h("small", { text: `+${running.length - MAX_CHILD_DOTS}` }));
   }
-  function release(cell: Cell) {
-    cell.el.remove();
-  }
 
-  /** A cell that leaves fades where it stands, out of the row's flow, while the others close up. */
+  /** A chip that leaves fades where it stands, out of the row's flow, while the others close up. */
   function dropCell(id: string, cell: Cell) {
     cells.delete(id);
-    if (!cell.el.isConnected || !el.classList.contains("on")) return release(cell);
+    if (!cell.el.isConnected || !el.classList.contains("on")) return cell.el.remove();
     const r = cell.el.getBoundingClientRect();
-    const base = sessionsCard.getBoundingClientRect();
+    const base = chips.getBoundingClientRect();
     cell.el.style.position = "absolute";
     cell.el.style.left = `${r.left - base.left}px`;
     cell.el.style.top = `${r.top - base.top}px`;
     cell.el.style.pointerEvents = "none";
-    sessionsCard.append(cell.el);
+    chips.append(cell.el);
     const gone = cell.el.animate(
       [{ opacity: getComputedStyle(cell.el).opacity, transform: "none" }, { opacity: 0, transform: "scale(0.7)" }],
       { duration: 420, easing: "ease-in", fill: "forwards" },
     );
-    gone.onfinish = () => release(cell);
-    gone.oncancel = () => release(cell);
+    gone.onfinish = () => cell.el.remove();
+    gone.oncancel = () => cell.el.remove();
   }
 
   /** From where it was to where it is, on the island's curve. */
@@ -244,288 +217,191 @@ export function buildHome(actions: ViewActions): ViewHost {
     return order;
   }
 
-  function drawLanes(visible: Entry[], hidden: Entry[]) {
+  /** The chips: the sessions the card is not about, all of them, in the order they are most urgent. */
+  function drawChips(shown: Entry[], also: boolean) {
+    chips.hidden = shown.length === 0;
+    alsoLabel.hidden = !also;
+    alsoLabel.textContent = also ? t("home.also") : "";
     // The row is laid out again only when who stands where has changed.
-    const nextOrder = `${visible.map((e) => `${e.id}:${e.lane}`).join("|")}#${hidden.length}`;
+    const nextOrder = shown.map((e) => e.id).join("|");
     const moved = nextOrder !== orderKey;
     orderKey = nextOrder;
-    const shown = el.classList.contains("on");
+    const on = el.classList.contains("on");
 
     // Where everything stands now, to move it from there to where it goes.
     const before = new Map<string, DOMRect>();
-    let moreBefore: DOMRect | null = null;
-    if (moved && shown) {
-      for (const [id, cell] of cells) before.set(id, cell.el.getBoundingClientRect());
-      moreBefore = more.hidden ? null : more.getBoundingClientRect();
-    }
+    if (moved && on) for (const [id, cell] of cells) before.set(id, cell.el.getBoundingClientRect());
 
     for (const [id, cell] of [...cells]) {
-      if (!visible.some((e) => e.id === id)) dropCell(id, cell);
+      if (!shown.some((e) => e.id === id)) dropCell(id, cell);
     }
-
-    let first = true;
-    for (const { key } of LANES) {
-      const lane = lanes.get(key)!;
-      const mine = visible.filter((e) => e.lane === key);
-      lane.el.hidden = mine.length === 0;
-      lane.el.classList.toggle("sep", !first && mine.length > 0);
-      if (mine.length) first = false;
-      lane.count.textContent = String(mine.length);
-      for (const entry of mine) {
-        let cell = cells.get(entry.id);
-        const fresh = !cell;
-        if (!cell) {
-          cell = makeCell(entry);
-          cells.set(entry.id, cell);
-        }
-        updateCell(cell, entry);
-        if (moved) lane.bots.append(cell.el);
-        if (fresh && shown) {
-          cell.el.animate([{ opacity: 0, transform: "scale(0.6)" }, { opacity: 1, transform: "none" }], { duration: 320, easing: SPRING });
-        }
+    for (const entry of shown) {
+      let cell = cells.get(entry.id);
+      const fresh = !cell;
+      if (!cell) {
+        cell = makeCell(entry);
+        cells.set(entry.id, cell);
       }
+      updateCell(cell, entry);
+      if (moved || fresh) row.append(cell.el);
+      if (fresh && on) cell.el.animate([{ opacity: 0, transform: "scale(0.6)" }, { opacity: 1, transform: "none" }], { duration: 320, easing: SPRING });
     }
+    if (moved && on) for (const [id, cell] of cells) slide(cell.el, before.get(id));
 
-    // "+N" wears the colour of the most urgent session it hides: a hidden request is never silent.
-    more.hidden = hidden.length === 0;
-    if (hidden.length) {
-      more.textContent = t("home.more", { n: hidden.length });
-      wear(more, hidden[0].color);
-      more.classList.toggle("calls", hidden[0].rank === 0);
-      more.title = t("home.moreTitle", { n: hidden.length });
-    } else {
-      listOpen = false;
+    // The way to turn Claude's usage on, while it is off: the header shows it once it is.
+    const off = shown.length > 0 && State.usageInstalled === false;
+    turnOn.hidden = !off;
+    if (off) {
+      turnOn.textContent = t("home.usage.turnOn");
+      turnOn.title = t("home.usage.off");
     }
-
-    if (moved && shown) {
-      for (const [id, cell] of cells) slide(cell.el, before.get(id));
-      if (!more.hidden) slide(more, moreBefore ?? undefined);
-    }
+    edge();
   }
 
-  /** The bot's sentence: fixed templates, the most urgent thing first. No model, no network. */
-  function sayOf(front: Entry, live: Entry[]): string {
-    const who = labelOf(front).name;
-    const needs = live.filter((e) => e.lane === "needs");
-    if (needs.length > 1) return t("home.say.needsMany", { n: needs.length });
-    if (needs.length === 1) return front.session?.question ? t("home.say.question", { who }) : t("home.say.permission", { who });
-    if (front.state === "error") return t("home.say.error", { who });
-    const working = live.filter((e) => e.lane === "working");
-    if (working.length > 1) return t("home.say.workingMany", { n: working.length });
-    if (working.length === 1) return t("home.say.workingOn", { name: labelOf(working[0]).name });
-    const done = live.filter((e) => e.lane === "done").length;
-    return t("home.say.calm", { count: done });
+  /** How long ago, in the words a line of the card says it. */
+  function howLong(since: number, now: number): string {
+    const minutes = Math.floor((now - since) / 60_000);
+    return minutes < 1 ? t("time.justNow") : t("home.since", { span: span(now - since) });
   }
 
-  function drawMain(front: Entry | null, tracked: number, live: Entry[]) {
+  /** The line under the card's title when nothing waits: what the one at work is doing, or the last that finished. */
+  function subOf(live: Entry[], working: Entry[], now: number): string {
+    if (working.length === 1) return doingOf(working[0]);
+    const done = live.filter((e) => e.lane === "done" && e.session && e.session.restedAt > 0).sort((a, b) => b.since - a.since)[0];
+    return done ? t("home.sum.finished", { name: labelText(done), when: howLong(done.since, now) }) : "";
+  }
+
+  function show(node: HTMLElement, on: boolean) {
+    node.hidden = !on;
+  }
+
+  function drawMain(front: Entry | null, tracked: number, live: Entry[], now: number) {
     frontId = front?.session?.id ?? "";
-    botCard.classList.toggle("opens", frontId !== "");
-    if (!front) {
-      const missing = !State.settings.hooksInstalled && tracked === 0;
-      botCard.style.setProperty("--wash", washRGBA("soft"));
-      whoTool.replaceChildren();
-      whoName.textContent = "Durazno";
-      say.textContent = missing ? t("home.say.noHooks") : t("home.say.none");
-      whoName.title = "";
-      whoModel.textContent = "";
-      whoState.textContent = "";
-      doing.textContent = missing ? t("home.notReaching") : "";
-      doing.title = "";
-      review.style.display = "none";
-      return;
-    }
+    card.classList.toggle("opens", frontId !== "");
+    if (!front) return drawEmpty(tracked);
+    emptyKey = "";
+    show(emptyBtn, false);
+
     const resting = front.lane === "done";
     const wash = resting && front.decision ? "indigo" : resting && !front.unseen ? "soft" : (WASH[front.state] ?? (front.unseen ? "green" : "soft"));
-    botCard.style.setProperty("--wash", washRGBA(wash));
-    const tool = front.session?.agent;
-    if (tool) whoTool.replaceChildren(toolMark(tool, 11), TOOL_NAME[tool] + " ·");
-    else whoTool.replaceChildren();
-    whoName.textContent = "Durazno";
-    say.textContent = `«${sayOf(front, live)}»`;
-    whoName.title = labelOf(front).path;
-    // The model it runs on, when it said: nothing is shown for one that did not.
-    const model = "";
-    whoModel.textContent = model;
-    whoModel.title = front.session?.model?.id ?? "";
-    whoModel.hidden = !model;
-    whoState.textContent = "";
-    const what = doingOf(front);
-    doing.textContent = what;
-    doing.title = what;
-    // No Allow here: this card cannot show a request whole, and Allow allows
-    // all of it. The button goes to the request's own card, which can — and
-    // which arms its buttons from the moment it is on show.
-    const asks = front.session?.question ? t("home.answer") : front.session?.approval ? t("home.review") : "";
-    review.style.display = asks ? "" : "none";
-    reviewLabel.textContent = asks;
+    card.style.setProperty("--wash", washRGBA(wash));
+
+    const session = front.session;
+    const approval = session?.approval ?? null;
+    const question = session?.question ?? null;
+
+    if (front.lane === "needs") {
+      // Allowed from here only when it is the request the island itself holds, and it can be read whole:
+      // an edit is read as its diff, which has its own card, and a request too long has no Allow at all.
+      const allowHere = approval != null && question == null && approval.proposal == null && !approval.tooLong && session?.id === State.frontId;
+      mode = allowHere ? "allow" : question || approval ? "review" : "error";
+      const request = question ?? approval;
+      dot.style.background = front.color;
+      name.textContent = labelText(front);
+      name.title = labelOf(front).path;
+      words.textContent = question ? t("views.asking") : stateWords(front);
+      ago.textContent = `· ${howLong(front.since, now)}`;
+      code.textContent = question
+        ? question.questions[0]?.question ?? t("views.aQuestion")
+        : approval
+          ? approval.proposal ? `${approval.tool} · ${approval.proposal.path}` : approval.command || approval.tool || "…"
+          : doingOf(front);
+      code.title = "";
+      // A request that is on the card for the first time takes clicks a moment later.
+      const next = allowHere && approval ? approval.requestId : "";
+      if (next !== askedId) {
+        askedId = next;
+        armedAt = performance.now() + REQUEST_ARM_MS;
+      }
+      allowLabel.textContent = t("views.allow");
+      denyLabel.textContent = t("views.deny");
+      goLabel.textContent = request ? (question ? t("home.answer") : t("home.review")) : t("views.seeSession");
+      seeLabel.textContent = t("views.seeSession");
+    } else {
+      mode = "calm";
+      askedId = "";
+      const working = live.filter((e) => e.lane === "working");
+      title.textContent = working.length > 1
+        ? t("home.sum.working", { count: working.length })
+        : working.length === 1 ? t("home.sum.workingOne", { name: labelText(working[0]) }) : t("home.sum.calm");
+      sub.textContent = subOf(live, working, now);
+      sub.title = sub.textContent;
+    }
+
+    const needs = mode !== "calm";
+    show(head, needs);
+    show(code, needs && code.textContent !== "");
+    show(title, !needs);
+    show(sub, !needs && sub.textContent !== "");
+    show(allow, mode === "allow");
+    show(deny, mode === "allow");
+    show(see, mode === "allow");
+    show(go, (mode === "review" || mode === "error") && frontId !== "");
+    show(buttons, needs);
   }
 
-  function drawEmpty(none: boolean, tracked: number) {
-    empty.hidden = !none;
-    laneRow.hidden = none;
-    foot.hidden = none;
+  /** No session on show: one message, and the way out of it. */
+  function drawEmpty(tracked: number) {
+    mode = "empty";
+    askedId = "";
     const missing = !State.settings.hooksInstalled && tracked === 0;
-    const key = none ? `${missing}:${tracked}:${currentLang()}` : "";
+    card.style.setProperty("--wash", washRGBA("soft"));
+    for (const node of [head, code, allow, deny, go, see]) show(node, false);
+    show(title, true);
+    show(buttons, true);
+    const key = `${missing}:${tracked}:${currentLang()}`;
     if (key === emptyKey) return;
     emptyKey = key;
-    clear(empty);
-    if (!none) return;
     if (missing) {
-      empty.append(
-        h("div", { class: "title", text: t("home.empty.noHooks") }),
-        h("div", { class: "sub", text: t("home.empty.noHooksSub") }),
-        h("button", { class: "btn secondary", onclick: () => actions.openSettingsWindow() }, svg(ICONS.gear, 12), t("home.openSettings")),
-      );
+      title.textContent = t("home.empty.noHooks");
+      sub.textContent = t("home.empty.noHooksSub");
+      emptyLabel.textContent = t("home.openSettings");
+      emptyAct = () => actions.openSettingsWindow();
     } else if (tracked > 0) {
       // Sessions are still followed: they have only been at rest long enough to leave the view.
-      empty.append(
-        h("div", { class: "title", text: t("home.empty.noActive") }),
-        h("div", { class: "sub", text: t("home.empty.resting", { count: tracked }) }),
-        h("button", { class: "btn secondary", text: t("home.empty.show", { count: tracked }), onclick: () => { actions.blip(); actions.openSessions(); } }),
-      );
+      title.textContent = t("home.empty.noActive");
+      sub.textContent = t("home.empty.resting", { count: tracked });
+      emptyLabel.textContent = t("home.empty.show", { count: tracked });
+      emptyAct = () => { actions.blip(); actions.openSessions(); };
     } else {
-      empty.append(
-        h("div", { class: "title", text: t("home.empty.none") }),
-        h("div", { class: "sub" }, t("home.empty.runPre"), h("code", { class: "code", text: "claude" }), t("home.empty.runPost")),
-      );
+      title.textContent = t("home.empty.none");
+      sub.replaceChildren(t("home.empty.runPre"), h("code", { class: "code", text: "claude" }), t("home.empty.runPost"));
+      emptyLabel.textContent = "";
+      emptyAct = null;
     }
+    show(sub, true);
+    show(emptyBtn, emptyAct != null);
   }
 
-  function drawFoot() {
-    const entry = hoverId ? entries.get(hoverId) : null;
-    const key = entry
-      ? [entry.id, entry.session?.agent, labelText(entry), entry.session?.model?.label, stateWords(entry), entry.color, entry.session ? subagentWords(entry.session) : "", doingOf(entry)].join("~")
-      : "";
-    if (key === footKey && foot.firstChild) return;
-    footKey = key;
-    clear(foot);
-    if (!entry) {
-      foot.classList.add("quiet");
-      return;
-    }
-    foot.classList.remove("quiet");
-    const { name, n, path } = labelOf(entry);
-    const model = entry.session?.model;
-    const subs = entry.session ? subagentWords(entry.session) : "";
-    const what = doingOf(entry);
-    foot.append(
-      h("div", { class: "hf-who" },
-        h("i", { class: "dot", style: `width:6px;height:6px;background:${entry.color}` }),
-        entry.session ? toolMark(entry.session.agent, 10) : null,
-        h("b", { text: name, title: path }),
-        n == null ? null : h("em", { text: `·${n}` }),
-        model ? h("span", { class: "model", text: model.label, title: model.id }) : null,
-        h("span", { text: entry.task ? t("home.agentState", { state: stateWords(entry) }) : stateWords(entry) }),
-        subs ? h("span", { class: "subs", text: subs }) : null),
-      h("div", { class: "hf-doing", text: what, title: what }),
-    );
+  /** How tall the island is for what is on the card: its own height and the chips', on a top or bottom dock. */
+  function fit() {
+    const next = sideDock(Room.dock) || home.offsetHeight === 0 ? undefined : homeFitted(home.offsetHeight);
+    if (next === fitted) return;
+    fitted = next;
+    onResize();
   }
-
-  function drawList(hidden: Entry[], now: number) {
-    list.hidden = !listOpen || hidden.length === 0;
-    const key = list.hidden ? "" : hidden.map((e) => [e.id, labelText(e), stateWords(e), e.color, span(now - e.since)].join("~")).join("|");
-    if (key === listKey) return;
-    listKey = key;
-    clear(list);
-    if (list.hidden) return;
-    for (const entry of hidden) {
-      const { name, n, path } = labelOf(entry);
-      const id = entry.id;
-      list.append(h(
-        "button", { class: "gh-row", title: `${path}\n${doingOf(entry)}`.trim(), onclick: (e: Event) => { e.stopPropagation(); open(id); } },
-        h("i", { class: "dot", style: `width:7px;height:7px;background:${entry.color}` }),
-        h("span", { class: "gh-row-title" }, name, n == null ? null : h("em", { text: ` ·${n}` })),
-        h("span", { class: "gh-row-where", text: stateWords(entry) }),
-        h("span", { class: "int-ago", text: span(now - entry.since) }),
-      ));
-    }
-  }
-
-  function toggleList() {
-    listOpen = !listOpen;
-    actions.blip();
-    State.notify();
-    if (listOpen) {
-      list.animate([{ opacity: 0, transform: "translateY(7px) scale(0.985)" }, { opacity: 1, transform: "none" }], { duration: 300, easing: SPRING });
-    }
-  }
-
-  // ── Resources ───────────────────────────────────────────────────────────────
-
-  /** The machine: written when a sample comes, and at no other time. */
-  function drawGauges() {
-    // CPU and GPU need two readings: "—" in the same cell until the first real
-    // one — and, for the GPU, for good on a machine that does not report it.
-    drawUsage(Date.now());
-  }
-
-  /** Claude's limits: how much of each window is used, when it starts again, and how old that is. */
-  function drawUsage(now: number) {
-    const usage = State.usage;
-    const windows = usage ? [usage.fiveHour, usage.sevenDay] : [];
-    usageRows.forEach((row, i) => {
-      // What the window shows now (state.ts `usageShown`): past its reset, 0 % and the words for it.
-      const w = usageShown(windows[i], usage?.updatedAt ?? now, now);
-      row.el.style.visibility = w ? "visible" : "hidden";
-      if (!w) return;
-      const used = w.percent;
-      row.value.textContent = `${used}%`;
-      row.resets.textContent = w.countdown;
-      row.resets.title = w.countdown;
-      row.value.dataset.level = w.state === "reset" ? "" : usageLevel(used);
-      row.el.classList.toggle("dim", w.state !== "fresh");
-      row.fill.style.width = `${used}%`;
-      // The share of the bar's gradient the fill shows (style.css `.res-usage .res-bar i`).
-      row.fill.style.setProperty("--used", String(used / 100));
-    });
-
-    noUsage.hidden = usage != null;
-    if (!usage) {
-      const off = State.usageInstalled !== true;
-      const why = State.usageInstalled === false
-        ? t("home.usage.off")
-        : t("home.usage.later");
-      const key = `${off}:${why}`;
-      if (noUsage.dataset.why !== key) {
-        noUsage.dataset.why = key;
-        clear(noUsage);
-        noUsage.append(h("b", { text: t("home.usage.none") }), h("span", { text: why }));
-        if (off && State.usageInstalled === false) noUsage.append(noUsageBtn);
-      }
-    }
-    // How old the numbers are, said as what they are: Claude Code's last word. Ticks with the home view's slow timer.
-    const age = usage ? now - usage.updatedAt : 0;
-    const when = !usage ? "" : age < 60_000 ? t("home.ageNow") : t("home.ageAgo", { span: span(age) });
-    usageAge.style.visibility = usage ? "visible" : "hidden";
-    usageAge.classList.toggle("old", usage != null && age > USAGE_OLD_MS);
-    if (ageWhen.textContent !== when) ageWhen.textContent = when;
-    const whole = usage ? `${ageWhat.textContent}${when}. ${usageSourceWords()}` : "";
-    if (usageAge.title !== whole) usageAge.title = whole;
-  }
-
-  State.onGauges(drawGauges);
-  drawGauges();
+  new ResizeObserver(fit).observe(home);
 
   return {
     el,
+    get height() {
+      return fitted;
+    },
+    arm() {
+      armedAt = performance.now() + REQUEST_ARM_MS;
+    },
     sync() {
       const now = Date.now();
       const { live, faded } = roster(now);
       const order = showOrder(live);
-      const visible = order.slice(0, MAX_VISIBLE);
-      const hidden = order.slice(MAX_VISIBLE);
       entries = new Map(order.map((e) => [e.id, e]));
-
-      drawLanes(visible, hidden);
-      drawEmpty(live.length === 0, faded);
-      // The bot speaks for the most urgent one, whatever the pointer holds in place.
-      sessHead.textContent = t("home.sessions", { n: live.length });
-      sessHead.hidden = live.length === 0;
-      drawMain(live[0] ?? null, faded, live);
-      drawList(hidden, now);
-      if (hoverId && !visible.some((e) => e.id === hoverId)) hoverId = null;
-      drawFoot();
-      drawUsage(now);
+      // The card speaks for the most urgent one, whatever the pointer holds in place in the row.
+      const front = live[0] ?? null;
+      drawMain(front, faded, live, now);
+      // While the card is about one that needs the user, the chips are the others.
+      if (front != null && front.lane === "needs") drawChips(order.filter((e) => e.id !== front.id), true);
+      else drawChips(order, false);
+      fit();
     },
   };
 }

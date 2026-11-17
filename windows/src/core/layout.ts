@@ -290,11 +290,11 @@ export const SESSION_BOT = {
 } as const;
 
 /**
- * How tall the island is for the home view: three columns — the bot, a row of
- * mini bots, five lines of resources — need more than a card's 160 and less
- * than the session panel's 320.
+ * How tall the island is for the home view before it has measured what it holds
+ * (views/home.ts reports its own height once it is on show): the card and a row
+ * of chips under it.
  */
-export const HOME_H = 248;
+export const HOME_H = 200;
 
 /** Where the views start in the island: under #content's 8 px of padding and the 34 px bar, 10 px in (style.css `#content`, `#header`). */
 const VIEW_TOP = 8 + 34;
@@ -303,10 +303,10 @@ const VIEW_LEFT = 10;
 const CARD_EDGE = 1;
 
 /**
- * The stage the home view's bot card keeps for the island's own bot (style.css
- * `.home-bot`, `.hb-stage`), in the island's coordinates: its box, and its
- * floor — its bottom padding, which the bot's feet stand on. The card is the
- * first thing in the view; it has 8 px of padding on top.
+ * The stage the home view's card keeps for the island's own bot (style.css
+ * `.home-focus`, `.hf-stage`), in the island's coordinates: its box, and its
+ * floor — which the bot's feet stand on. The card is the first thing in the
+ * view; it has 14 px of padding on top.
  */
 export interface StageBox {
   x: number;
@@ -317,9 +317,9 @@ export interface StageBox {
 }
 
 export const HOME_STAGE: Record<"row" | "column", StageBox> = {
-  // Top and bottom: the card is a column 164 px wide with 12 px of padding on
-  // each side, and the stage is across all of it, 73 px tall.
-  row: { x: VIEW_LEFT + CARD_EDGE + 12, y: VIEW_TOP + CARD_EDGE + 8, w: 164 - 2 * CARD_EDGE - 2 * 12, h: 73, floor: 6 },
+  // Top and bottom: the card is as wide as the view, with 16 px of padding on
+  // the left and 14 on top, and the stage a square of 64 px at its left corner.
+  row: { x: VIEW_LEFT + CARD_EDGE + 16, y: VIEW_TOP + CARD_EDGE + 14, w: 64, h: 64, floor: 3 },
   // Left and right: the card is a row the width of the view, and the stage a
   // column of its own at its left, 8 px in, as tall as it is in the row.
   column: { x: VIEW_LEFT + CARD_EDGE + 8, y: VIEW_TOP + CARD_EDGE + 8, w: 76, h: 73, floor: 6 },
@@ -338,7 +338,7 @@ export function botOnStage(stage: StageBox, diameter: number): { x: number; y: n
   return { x: stage.x + stage.w / 2, y: stage.y + stage.h - stage.floor - diameter / 2 };
 }
 
-/** 92, 89: the bot's place on the top and bottom docks' home view. */
+/** 59, 89: the bot's place on the top and bottom docks' home view. */
 const HOME_SEAT = botOnStage(HOME_STAGE.row, HOME_BOT);
 
 /**
@@ -420,6 +420,21 @@ export const CARD_AIR = 22;
  */
 export const CARD_AIR_MIN = 14;
 
+/**
+ * A fresh request's card ignores clicks for this long. The card slides out
+ * under wherever the pointer happens to be, and a click that was aimed at
+ * something else a moment earlier must not allow a command nobody has read.
+ */
+export const REQUEST_ARM_MS = 400;
+
+/**
+ * The island as tall as the home view's card and chips are, and the island's own
+ * bar and margins: no least height, since a card with nothing to ask is short.
+ */
+export function homeFitted(content: number): number {
+  return Math.min(PANEL_H, Math.ceil(content) + ISLAND_CHROME);
+}
+
 export function fittedHeight(content: number, air = CARD_AIR): number {
   return Math.min(PANEL_H, Math.max(VIEW_MIN, Math.ceil(content) + ISLAND_CHROME + 2 * air));
 }
@@ -438,26 +453,21 @@ export function fittedHeight(content: number, air = CARD_AIR): number {
 export const SIDE_W = 320;
 
 /**
- * Home's cards on a side (style.css `.home` on a side, by way of views/home.ts),
- * and the 8 px between them. The bot card: the 73 px stage and its 8 px padding
- * on each side with room to spare, beside the session's name, its tool and
- * model, its state, what it is doing and the button to its request (about
- * 100 px). The lanes: a lane's name and a 52 px mini bot, over the 32 px line
- * that says what the bot under the pointer is. The resources stand as tall as
- * they are (about 110): three lines of the machine beside the two of usage.
+ * Home's two parts on a side (style.css `.home` on a side, by way of views/home.ts),
+ * and the 8 px between them. The card: the 73 px stage and its 8 px padding on
+ * each side, beside the session's name and what it says, the command it asks
+ * for, and its buttons (about 150 when a request waits). The chips: a row that
+ * wraps, with room for "Also" and three lines of them.
  */
-export const HOME_SIDE_BOT_H = 124;
-export const HOME_SIDE_SESSIONS_H = 120;
-const HOME_SIDE_RES_H = 110;
+export const HOME_SIDE_BOT_H = 150;
+export const HOME_SIDE_CHIPS_H = 124;
 const HOME_SIDE_GAP = 8;
 /**
- * The island for Home on a side: 422, the cards and the island's bar and
- * margins. It fits a 1366 × 768 laptop at 150 % (about 426 to grow in, the
- * spring's overshoot kept); where it does not, the lanes and the resources
- * scroll under the bot's card, which stays.
+ * The island for Home on a side: 334, the card, the chips and the island's bar
+ * and margins. It fits a 1366 × 768 laptop at 150 %; where the window is shorter
+ * the chips scroll under the card, which stays.
  */
-export const HOME_SIDE_H =
-  ISLAND_CHROME + HOME_SIDE_BOT_H + HOME_SIDE_GAP + HOME_SIDE_SESSIONS_H + HOME_SIDE_GAP + HOME_SIDE_RES_H;
+export const HOME_SIDE_H = ISLAND_CHROME + HOME_SIDE_BOT_H + HOME_SIDE_GAP + HOME_SIDE_CHIPS_H;
 
 /**
  * The Shelf's cards stacked on a side: each as tall as a card of the row is

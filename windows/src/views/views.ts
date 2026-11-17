@@ -9,7 +9,7 @@ import {
   CLAUDE_ID, State, isQuestion, newSession, repliedWords, requestsOf, subagentName, targetTip, targetWords,
   type AgentTask, type ClaudeSession, type SessionRequest,
 } from "../core/state";
-import { CARD_AIR_MIN, fittedHeight, washRGBA, type IslandViewName, type Wash } from "../core/layout";
+import { CARD_AIR_MIN, REQUEST_ARM_MS, fittedHeight, washRGBA, type IslandViewName, type Wash } from "../core/layout";
 import { buildHome } from "./home";
 import { buildSession, sessionName } from "./session";
 import { buildShelf, type MorphNames } from "./shelf";
@@ -352,12 +352,6 @@ function buildEmpty(): ViewHost {
 
 // ── Approval ──────────────────────────────────────────────────────────────────
 
-/**
- * A fresh request's card ignores clicks for this long. The card slides out
- * under wherever the pointer happens to be, and a click that was aimed at
- * something else a moment earlier must not allow a command nobody has read.
- */
-const REQUEST_ARM_MS = 400;
 /** How many lines of an edit's diff the card shows before "See all the changes". */
 const DIFF_PEEK_LINES = 6;
 /** Asked for whole, the island grows by the height of this many more lines of the diff, at most. */
@@ -1039,7 +1033,7 @@ export function buildViews(
   onResize: () => void,
 ): Map<IslandViewName, ViewHost> {
   const map = new Map<IslandViewName, ViewHost>();
-  map.set("overview", buildHome(actions));
+  map.set("overview", buildHome(actions, onResize));
   map.set("empty", buildEmpty());
   map.set("approval", buildApproval(actions, onResize));
   map.set("question", buildQuestion(actions, onResize));

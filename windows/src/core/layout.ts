@@ -350,15 +350,24 @@ export function botOnStage(stage: StageBox, diameter: number): { x: number; y: n
 const HOME_SEAT = botOnStage(HOME_STAGE.row, HOME_BOT);
 
 /**
- * The Shelf, the island's second tab (plans/tabs-plan.md §2): a row of small
- * cards, each this wide and this far from the next, that scrolls sideways.
- * The island is this tall for it: a card holds three lines and a field under
- * its header.
+ * What the island's own bar and margins take of a view's height: a view is
+ * its content and this.
  */
-export const SHELF_H = 212;
+const ISLAND_CHROME = 52;
+
+/**
+ * The Shelf, the island's second tab (plans/tabs-plan.md §2): a mosaic. What
+ * has something going on stands as a card — up to three side by side, a card
+ * holding three lines and a field under its header — and the rest is a row of
+ * shortcuts under them, one chip each. Nothing scrolls at the top and bottom;
+ * the island is as tall as a row of cards, the gap and a row of chips.
+ */
 export const SHELF_CARD_W = 200;
 export const SHELF_CARD_GAP = 10;
-/** The row's inner width: four whole cards and a sliver of the fifth, so the row reads as one that goes on. */
+export const SHELF_CARD_H = 160;
+export const SHELF_CHIPS_H = 32;
+export const SHELF_H = ISLAND_CHROME + SHELF_CARD_H + SHELF_CARD_GAP + SHELF_CHIPS_H;
+/** The Shelf's inner width: four cards' worth and a sliver, so that three cards are as wide as the small cards were. */
 const SHELF_VISIBLE_CARDS = 4;
 const SHELF_PEEK = 12;
 /** The island's side padding (style.css `#content`). */
@@ -416,7 +425,6 @@ export const PROPOSAL_ROOM = PANEL_H - 160;
  * the card (its bar, its own margins), between a card's usual height and the
  * window's.
  */
-const ISLAND_CHROME = 52;
 const VIEW_MIN = 160;
 /** The air a card that asks something keeps above and below its lines. */
 export const CARD_AIR = 22;
@@ -477,13 +485,14 @@ const HOME_SIDE_GAP = 8;
 export const HOME_SIDE_H = ISLAND_CHROME + HOME_SIDE_BOT_H + HOME_SIDE_GAP + HOME_SIDE_CHIPS_H;
 
 /**
- * The Shelf's cards stacked on a side: each as tall as a card of the row is
- * (the row's height in a SHELF_H island), as wide as the column, as far apart
- * as in the row. Two whole ones and a peek of the third: 416.
+ * The Shelf's cards stacked on a side: each as tall as a card of the row is,
+ * as wide as the column, as far apart as in the row, and the shortcuts as
+ * chips under the last card. Two whole cards and a peek of what follows —
+ * enough of the third card, or of the first line of chips, to say that the
+ * column goes on: 432.
  */
-export const SHELF_CARD_H = SHELF_H - ISLAND_CHROME;
 const SHELF_SIDE_VISIBLE = 2;
-const SHELF_SIDE_PEEK = 24;
+const SHELF_SIDE_PEEK = 44;
 export const SHELF_SIDE_H = ISLAND_CHROME + SHELF_SIDE_VISIBLE * (SHELF_CARD_H + SHELF_CARD_GAP) + SHELF_SIDE_PEEK;
 
 /**

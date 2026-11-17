@@ -1,6 +1,6 @@
 // Projects: the folders Claude Code sessions have run in, most recent first.
-// Small: the two or three latest, each with a button to open it in VS Code.
-// Expanded: all of them, and "New Claude session" in each, which opens Windows
+// On the shelf it is a shortcut with how many folders there are. Expanded: all of
+// them, each with "Open in VS Code" and "New Claude session", which opens Windows
 // Terminal running `claude` there.
 //
 // The list is Rust's (src-tauri/src/projects.rs): a folder is added when a
@@ -17,10 +17,8 @@ import type { ProjectInfo } from "../core/bridge";
 import { ShelfBackend } from "./backend";
 import { notifyShelf } from "./core";
 import { widgetOn } from "./defs";
-import { frame, mini, setIcon, shared, type Widget, type WidgetContext } from "./ui";
+import { frame, setIcon, type Widget, type WidgetContext } from "./ui";
 
-/** How many of the most recent folders the small card shows. */
-const SMALL_PROJECTS = 3;
 /** The list is not asked for again sooner than this while the Shelf stays on show. */
 const STALE_MS = 10_000;
 /** What a button says, for a moment, after it was pressed. */
@@ -97,10 +95,7 @@ export function buildProjects(ctx: WidgetContext): Widget {
     return btn;
   };
 
-  // Small: the most recent folders, each with "open in VS Code".
-  const sList = h("div", { class: "wmini-list" });
-  const small = mini("projects", h("div", { class: "wbody-projects" }, sList));
-
+  // No small card: the projects are a shortcut on the shelf, with how many folders there are.
   // Expanded: every folder, and a new Claude session in each.
   const note = h("div", { class: "fc-note", text: () => t("w.proj.note") });
   const list = h("div", { class: "gh-list fc-list", "aria-label": () => t("w.proj.list") });
@@ -119,23 +114,15 @@ export function buildProjects(ctx: WidgetContext): Widget {
     if (full === shown) return;
     shown = full;
 
-    clear(sList);
-    items.slice(0, SMALL_PROJECTS).forEach((p, i) => {
-      sList.append(h("div", { class: "wmini-proj" },
-        shared(h("b", { text: p.name, title: p.path }), `proj-name-${i}`, "text"),
-        shared(launcher(p, "code", "Code", t("w.proj.openTip", { name: p.name })), `proj-code-${i}`, "text")));
-    });
-    if (items.length === 0) sList.append(h("div", { class: "wmini-none", text: state.asked ? t("w.proj.none") : t("w.proj.looking") }));
-
     clear(list);
-    items.forEach((p, i) => {
+    items.forEach((p) => {
       list.append(h("div", { class: "gh-row proj-row" },
         h("div", { class: "proj-who" },
           h("div", { class: "proj-name" },
-            shared(h("b", { text: p.name }), `proj-name-${i}`, "text"),
+            h("b", { text: p.name }),
             h("span", { class: "int-ago", text: agoText(p.at) })),
           h("div", { class: "gh-sub path", text: p.path, title: p.path })),
-        shared(launcher(p, "code", t("w.proj.openCode"), t("w.proj.openTip", { name: p.name })), `proj-code-${i}`, "text"),
+        launcher(p, "code", t("w.proj.openCode"), t("w.proj.openTip", { name: p.name })),
         launcher(p, "claude", t("w.proj.newSession"), t("w.proj.newSessionTip", { name: p.name }))));
     });
     if (items.length === 0) list.append(h("div", { class: "wmini-none", text: t("w.proj.empty") }));
@@ -143,10 +130,12 @@ export function buildProjects(ctx: WidgetContext): Widget {
 
   return {
     id: "projects",
-    small,
     card: frame("projects", body, ctx.back, count),
     paint,
     // Once a second while the Shelf is on show; the list is asked for no more than every STALE_MS.
     tick: () => void refresh(),
+    // A list of places to go to, not something going on: always a shortcut, with how many folders it holds.
+    live: () => false,
+    shortcut: () => ({ label: t("w.projects"), note: state.list.length ? String(state.list.length) : "" }),
   };
 }

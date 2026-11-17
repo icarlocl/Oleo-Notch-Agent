@@ -309,7 +309,8 @@ export const ISLAND = {
   "wx.stale": ["(sin actualizar)", "(not updated)", "(desatualizado)"],
   "wx.unavailable": ["Clima no disponible", "Weather unavailable", "Clima indisponível"],
   // ── Shelf and replies' markdown (views/shelf.ts, markdown.ts) ──
-  "shelf.soon": ["Próximamente", "Coming soon", "Em breve"],
+  "shelf.edit": ["Editar", "Edit", "Editar"],
+  "shelf.editTip": ["Elegir y ordenar los widgets en Ajustes", "Choose and order widgets in Settings", "Escolher e ordenar os widgets em Ajustes"],
   "shelf.allHidden": ["Todos los widgets están ocultos.", "Every widget is hidden.", "Todos os widgets estão ocultos."],
   "shelf.turnOn": ["Activa alguno en Ajustes → Widgets.", "Turn one on in Settings → Widgets.", "Ative algum em Ajustes → Widgets."],
   "shelf.openSettings": ["Abrir ajustes…", "Open settings…", "Abrir ajustes…"],

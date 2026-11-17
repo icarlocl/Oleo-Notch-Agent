@@ -1,6 +1,6 @@
-// Mirror: the camera, as a mirror. Small: a button, "Turn camera on", and
-// nothing else — there is no camera here, ever. Expanded: a large rounded
-// preview, mirrored, with no audio.
+// Mirror: the camera, as a mirror. On the shelf it is a shortcut and nothing
+// else — there is no camera there, ever. Expanded: a large rounded preview,
+// mirrored, with no audio, and a button that turns the camera on.
 //
 // The camera runs only while Mirror is expanded. It is stopped — every track
 // stopped, the video emptied — the moment Mirror closes, the Shelf is left, the
@@ -12,7 +12,7 @@ import { t, type Key } from "../core/i18n";
 import { h } from "../views/dom";
 import { camera, resetCamera, startCamera, stopCamera } from "./camera";
 import { notifyShelf } from "./core";
-import { frame, mark, mini, shared, type Widget, type WidgetContext } from "./ui";
+import { frame, mark, shared, type Widget, type WidgetContext } from "./ui";
 
 /** The Mirror's one video element. */
 const video = h("video", { class: "mirror-video", muted: true, playsinline: true, "aria-label": () => t("w.cam.preview") });
@@ -33,11 +33,8 @@ const MESSAGES: Record<string, [Key, Key]> = {
 };
 
 export function buildMirror(ctx: WidgetContext): Widget {
-  // Small: one button. It expands Mirror and starts the camera there.
-  const sNote = h("div", { class: "wmini-note", text: () => t("w.cam.smallNote") });
-  const sStart = shared(h("button", { class: "btn secondary wmini-btn", text: () => t("w.cam.turnOn"), onclick: () => ctx.expand("mirror", { camera: true }) }), "mirror-start");
-  const small = mini("mirror", h("div", { class: "wbody-mirror" }, sNote, sStart));
-
+  // No small card: the mirror is a shortcut on the shelf, and the camera is turned on from the
+  // expanded view, by a press on its button.
   // Expanded: the large preview.
   const title = h("div", { class: "title" });
   const sub = h("div", { class: "sub" });
@@ -80,13 +77,13 @@ export function buildMirror(ctx: WidgetContext): Widget {
 
   return {
     id: "mirror",
-    small,
     card,
     paint,
-    opened: (opts) => {
-      resetCamera();
-      if (opts.camera) void startCamera(video);
-    },
+    // Always off when it opens: the camera starts only when its button is pressed.
+    opened: resetCamera,
     stop: (why) => stopCamera(video, why),
+    // The camera never runs by itself: the mirror is always a shortcut, and the camera is turned on once it is open.
+    live: () => false,
+    shortcut: () => ({ label: t("w.mirror") }),
   };
 }

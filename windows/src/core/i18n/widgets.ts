@@ -37,7 +37,6 @@ export const WIDGETS = {
 
   // Mirror (the camera).
   "w.cam.preview": ["Vista previa de la cámara", "Camera preview", "Prévia da câmera"],
-  "w.cam.smallNote": ["Cámara apagada. Solo funciona con el espejo abierto.", "Camera off. It only runs with the mirror open.", "Câmera desligada. Só funciona com o espelho aberto."],
   "w.cam.turnOn": ["Encender cámara", "Turn on camera", "Ligar câmera"],
   "w.cam.waiting": ["Esperando la cámara…", "Waiting for the camera…", "Aguardando a câmera…"],
   "w.cam.slow": [
@@ -76,8 +75,6 @@ export const WIDGETS = {
   "w.proj.openCode": ["Abrir en VS Code", "Open in VS Code", "Abrir no VS Code"],
   "w.proj.newSession": ["Nueva sesión de Claude", "New Claude session", "Nova sessão do Claude"],
   "w.proj.newSessionTip": ["Nueva sesión de Claude Code en {name}", "New Claude Code session in {name}", "Nova sessão do Claude Code em {name}"],
-  "w.proj.none": ["Aún no hay carpetas", "No folders yet", "Ainda sem pastas"],
-  "w.proj.looking": ["Buscando…", "Looking…", "Procurando…"],
   "w.proj.empty": ["Aún no hay carpetas. Aparecerán al usar Claude Code.", "No folders yet. They show up as you use Claude Code.", "Ainda sem pastas. Elas aparecem ao usar o Claude Code."],
 
   // Reminders.
@@ -124,6 +121,8 @@ export const WIDGETS = {
   "w.todo.notesPh": ["Notas…", "Notes…", "Notas…"],
   "w.todo.count": ["{left} por hacer · {done} hechas", "{left} to do · {done} done", "{left} a fazer · {done} feitas"],
   "w.todo.none": ["Sin tareas pendientes", "Nothing to do", "Sem tarefas pendentes"],
+  "w.todo.addShort": ["Añadir tarea", "Add to-do", "Adicionar tarefa"],
+  "w.todo.allDone": ["todo hecho", "all done", "tudo feito"],
   "w.todo.this": ["esta tarea", "this item", "esta tarefa"],
   // @end
 } as const;

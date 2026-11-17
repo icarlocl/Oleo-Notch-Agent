@@ -13,21 +13,35 @@ import { ICONS } from "../views/icons";
 import { lucide } from "../views/iconset";
 import { SHELF_WIDGETS, type ShelfWidgetId } from "./defs";
 
+/** What a widget's shortcut says when it has no card: a short name, and a quieter note after it. */
+export interface Shortcut {
+  label: string;
+  note?: string;
+}
+
 export interface Widget {
   id: ShelfWidgetId;
-  /** The small card on the shelf. */
-  small: HTMLElement;
+  /** The small card on the shelf — a widget that is only ever a shortcut (the mirror, the projects) has none. */
+  small?: HTMLElement;
   /** The expanded view. */
   card: HTMLElement;
   /** Repaints both from the widget's state. */
   paint(): void;
   /**
+   * Something is going on in it right now — a player has a track, a list has
+   * something left to do, a timer is not at rest, a reminder waits — so it earns
+   * a card. One that returns false stands as a shortcut (`shortcut`).
+   */
+  live(): boolean;
+  /** What its chip says, as the widget stands: a short name and a note, in the language on show. */
+  shortcut(): Shortcut;
+  /**
    * Once a second, while the Shelf is on show and this widget is on it (in the
    * row, or expanded): what grows old by itself — a countdown, a position.
    */
   tick?(): void;
-  /** The widget was just expanded (`camera`: by its own "Turn camera on"). */
-  opened?(opts: { camera?: boolean }): void;
+  /** The widget was just expanded. */
+  opened?(): void;
   /** The widget is off the screen — the Shelf was left, an alert took over, the island folded: whatever it holds open is let go. */
   stop?(why: string): void;
 }
@@ -35,8 +49,6 @@ export interface Widget {
 export interface WidgetContext {
   /** The back pill of an expanded view. */
   back(): void;
-  /** Expands a widget; Mirror's "Turn camera on" does, and asks for the camera there. */
-  expand(id: ShelfWidgetId, opts?: { camera?: boolean }): void;
   /** A field wants the keyboard, or gives it back: the island never takes it on its own. */
   keyboard(on: boolean): void;
 }
@@ -78,6 +90,33 @@ export function mini(id: ShelfWidgetId, body: HTMLElement): HTMLElement {
   card.dataset.id = id;
   card.style.setProperty("--c", def.accent);
   return shared(card, "card");
+}
+
+/** A widget's shortcut: a chip with its mark and a short text. A press on it expands the widget, as a press on the card does. */
+export interface ShelfChip {
+  el: HTMLButtonElement;
+  paint(says: Shortcut): void;
+}
+
+export function chip(id: ShelfWidgetId): ShelfChip {
+  const def = SHELF_WIDGETS[id];
+  const label = h("b", { class: "wchip-label" });
+  const note = h("small", { class: "wchip-note" });
+  const el = h("button", { class: `wchip wchip-${id}`, type: "button", title: () => t("w.expand", { name: def.name }) },
+    shared(h("span", { class: "w-mark" }, mark(id, 11)), "icon"),
+    shared(label, "title", "text"),
+    note);
+  el.dataset.id = id;
+  el.style.setProperty("--c", def.accent);
+  shared(el, "card");
+  return {
+    el,
+    paint(says) {
+      if (label.textContent !== says.label) label.textContent = says.label;
+      const words = says.note ?? "";
+      if (note.textContent !== words) note.textContent = words;
+    },
+  };
 }
 
 /** The expanded view: a back pill, the widget's mark and name, its body. */

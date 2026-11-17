@@ -142,5 +142,16 @@ export function buildTodo(ctx: WidgetContext): Widget {
     if (grew) list.scrollTop = list.scrollHeight;
   }
 
-  return { id: "todo", small, card: frame("todo", body, ctx.back, count), paint };
+  const pending = () => todo.items.filter((i) => !i.done).length;
+  return {
+    id: "todo",
+    small,
+    card: frame("todo", body, ctx.back, count),
+    paint,
+    // Something left to do; a list that is done, or empty, stands as a shortcut.
+    live: () => pending() > 0,
+    shortcut: () => (todo.items.length === 0
+      ? { label: t("w.todo.addShort") }
+      : { label: t("w.todo"), note: pending() > 0 ? String(pending()) : t("w.todo.allDone") }),
+  };
 }

@@ -1,11 +1,18 @@
-// The Shelf (plans/tabs-plan.md §2): the island's second tab, a row of small
-// widgets that scroll sideways and come to rest on a card — on a side dock, a
-// column of them that scrolls up and down. Each widget is one
-// thing in two sizes: the small card works where it stands, and the expanded
-// view — the card morphing into it — is the same state with more in it
-// (src/widgets/).
+// The Shelf (plans/tabs-plan.md §2): the island's second tab, a mosaic. What has
+// something going on stands as a small card — up to three side by side — and
+// every other widget is a chip in a row of shortcuts under them; on a side dock
+// the cards are a column that scrolls up and down, with the chips after it.
+// Each widget is one thing in two sizes: the small card works where it stands,
+// and the expanded view — the card, or the chip, morphing into it — is the same
+// state with more in it (src/widgets/).
 //
-// Nothing here runs on its own. The row is drawn when the order changes; a
+// Which widget is a card and which a chip is decided when the Shelf comes on
+// show, from what each one says it has (`Widget.live`), in the order Settings
+// gives. While it stays on show nothing that is a card is taken away — it would
+// leave under the pointer — and what starts to have something takes a free
+// place, if there is one.
+//
+// Nothing here runs on its own. The mosaic is drawn when that changes; a
 // widget is painted when it changes or when the Shelf comes on show; and while
 // it is on show, one timer ticks once a second for what grows old by itself.
 // With the Shelf off the screen — another tab, a card over it, the island
@@ -18,16 +25,13 @@
 import { Bridge } from "../core/bridge";
 import { onLangChange, t } from "../core/i18n";
 import { Spring, clamp } from "../core/anim";
-import { Room, SHELF_CARD_GAP, SHELF_CARD_H, SHELF_CARD_W, sideDock } from "../core/layout";
+import { Room, SHELF_CARD_GAP, SHELF_CARD_H, SHELF_CARD_W, SHELF_CHIPS_H, sideDock } from "../core/layout";
 import { State } from "../core/state";
 import { BUILDERS } from "../widgets";
 import { flushWidgets, onShelfChange } from "../widgets/core";
 import { SHELF_WIDGETS, WIDGET_IDS, expandedSize, shelfWidgets, type ShelfWidgetId } from "../widgets/defs";
 import { enableGestures } from "../widgets/gestures";
-import { mediaOn } from "../widgets/media";
-import { nextReminder } from "../widgets/reminders";
-import { todo } from "../widgets/todo";
-import { CONTROL, mini, type Widget, type WidgetContext } from "../widgets/ui";
+import { CONTROL, chip, type ShelfChip, type Widget, type WidgetContext } from "../widgets/ui";
 import { clear, h } from "./dom";
 import type { ViewActions, ViewHost } from "./views";
 
@@ -36,6 +40,17 @@ export type { ShelfWidgetId };
 
 /** How long a card is held before it lifts to be moved (plans/tabs-plan.md §2). */
 const LONG_PRESS_MS = 350;
+
+/** At most this many widgets stand as cards, side by side; the others are chips. */
+const MAX_CARDS = 3;
+
+/** Who stands as a card and who as a chip, each in the order Settings gives. */
+interface Mosaic {
+  cards: ShelfWidgetId[];
+  chips: ShelfWidgetId[];
+  /** The one card is the timer, standing ready because nothing is going on: it is not kept once something is. */
+  ready: boolean;
+}
 
 /** What the Shelf names for one shared-element transition (see `Shelf` below and the island's `morph`). */
 export interface MorphNames {
@@ -148,15 +163,14 @@ export function settleRow(row: HTMLElement, still: boolean) {
   row.scrollTo(upright() ? { top: to, behavior: "smooth" } : { left: to, behavior: "smooth" });
 }
 
-/** A widget that is not built yet has its place in the row, and nothing in it. */
-function placeholder(id: ShelfWidgetId): HTMLElement {
-  const el = mini(id, h("div", { class: "wmini-none", text: () => t("shelf.soon") }));
-  el.querySelector(".wmini-expand")?.remove();
-  return el;
-}
-
 export function buildShelf(actions: ViewActions): ShelfHost {
   const row = h("div", { class: "shelf-row" });
+  // The chips and, at their end, the way to Settings: the last child of the row.
+  const chipBar = h("div", { class: "shelf-chips" });
+  const edit = h("button", {
+    class: "shelf-edit", type: "button", text: () => t("shelf.edit"), title: () => t("shelf.editTip"),
+    onclick: () => actions.openSettingsWindow(),
+  });
   const empty = h("div", { class: "shelf-empty" },
     h("div", { class: "title", text: () => t("shelf.allHidden") }),
     h("div", { class: "sub", text: () => t("shelf.turnOn") }),
@@ -165,40 +179,40 @@ export function buildShelf(actions: ViewActions): ShelfHost {
   const focusLayer = h("div", { class: "shelf-layer" });
   const el = h("div", { class: "view shelf-view" }, rowLayer, focusLayer);
   // The card's width (its height in a side's column) and the gap, said once (layout.ts): the stylesheet reads them here.
-  el.style.setProperty("--shelf-card-w", `${SHELF_CARD_W}px`);
   el.style.setProperty("--shelf-card-h", `${SHELF_CARD_H}px`);
   el.style.setProperty("--shelf-card-gap", `${SHELF_CARD_GAP}px`);
+  el.style.setProperty("--shelf-chips-h", `${SHELF_CHIPS_H}px`);
 
   // ── The widgets ─────────────────────────────────────────────────────────────
 
   let focus: ShelfWidgetId | null = null;
   const widgets = new Map<ShelfWidgetId, Widget>();
-  const placeholders = new Map<ShelfWidgetId, HTMLElement>();
+  const chips = new Map<ShelfWidgetId, ShelfChip>();
 
   const ctx: WidgetContext = {
     back: () => void closeWidget(),
-    expand: (id, opts) => openWidget(id, opts?.camera === true),
     keyboard: (on) => actions.keyboard(on),
   };
   for (const id of WIDGET_IDS) {
     const make = BUILDERS[id];
-    if (!make) {
-      placeholders.set(id, placeholder(id));
-      continue;
-    }
+    if (!make) continue;
     const widget = make(ctx);
     widgets.set(id, widget);
     focusLayer.append(widget.card);
     // A tap on the card expands it — unless it landed on a control, which then acts by
     // itself. The corner's expand button is the one control that expands. A press that
     // moved never gets this far: gestures.ts swallows its click.
-    widget.small.addEventListener("click", (e) => {
+    widget.small?.addEventListener("click", (e) => {
       // The path as it was when the click began: a control may have redrawn itself since
       // (play turns to pause), and what was clicked is then no longer inside it.
       const control = e.composedPath().find((n): n is Element => n instanceof Element && n.matches(CONTROL));
       if (control && !control.hasAttribute("data-expand")) return;
       openWidget(id);
     });
+    // Its chip, for when it is not a card: a press on it expands the widget too.
+    const shortcut = chip(id);
+    shortcut.el.addEventListener("click", () => openWidget(id));
+    chips.set(id, shortcut);
   }
 
   /** More cards past an edge: that edge fades. In a side's column, "left" is above and "right" below. */
@@ -212,33 +226,74 @@ export function buildShelf(actions: ViewActions): ShelfHost {
   // The row is narrower while the island is still opening.
   new ResizeObserver(edges).observe(row);
 
+  // ── The mosaic ──────────────────────────────────────────────────────────────
+
   /** What the row was last drawn for: nothing is touched when that has not changed. */
   let key: string | null = null;
+  /** Who is a card and who is a chip, as drawn. */
+  let placed: Mosaic = { cards: [], chips: [], ready: false };
+  /** The widgets Settings had on the shelf, in order, when the mosaic was last made. */
+  let madeFor = "";
+  /** The next mosaic is made anew, from what is live: the Shelf is coming on show, or Settings changed what is on it. */
+  let fresh = true;
+
+  /** A widget that can stand as a card: it has a small one. */
+  const hasCard = (id: ShelfWidgetId) => widgets.get(id)?.small != null;
 
   /**
-   * Settings' order, with what has something to say in front: a reminder that
-   * waits, then a list with something left to do. A player with nothing on
-   * goes to the end.
+   * Who stands as a card, up to MAX_CARDS: the widgets with something going on,
+   * in the order Settings gives — and, when nothing is, the timer, ready to
+   * start, so that the island is never a lone row of chips. The rest are chips.
+   * While the Shelf stays on show, a card is not taken away when what it held is
+   * over (it would leave under the pointer); what starts now takes a free place.
    */
-  function ranked(shown: ShelfWidgetId[]): ShelfWidgetId[] {
-    const rank = (id: ShelfWidgetId) =>
-      id === "reminders" && nextReminder() ? 0 : id === "todo" && todo.items.some((i) => !i.done) ? 1 : id === "media" && !mediaOn() ? 3 : 2;
-    return shown.map((id, at) => ({ id, at })).sort((a, b) => rank(a.id) - rank(b.id) || a.at - b.at).map((x) => x.id);
+  function compose(enabled: ShelfWidgetId[]): Mosaic {
+    const there = enabled.filter((id) => widgets.has(id));
+    const live = (id: ShelfWidgetId) => hasCard(id) && widgets.get(id)!.live();
+    let cards: ShelfWidgetId[];
+    let ready = false;
+    if (fresh || placed.ready) {
+      cards = there.filter(live).slice(0, MAX_CARDS);
+      ready = !cards.length && there.includes("timer");
+      if (ready) cards = ["timer"];
+    } else {
+      cards = placed.cards.filter((id) => there.includes(id));
+      for (const id of there) if (cards.length < MAX_CARDS && !cards.includes(id) && live(id)) cards.push(id);
+      cards.sort((a, b) => there.indexOf(a) - there.indexOf(b));
+    }
+    return { cards, chips: there.filter((id) => !cards.includes(id)), ready };
   }
 
-  /** The row, the order Settings says — less what `ranked` moves. */
-  function drawRow(inOrder: ShelfWidgetId[]) {
-    const shown = ranked(inOrder);
-    const next = shown.join();
+  /** The mosaic: the cards, then the row of chips and the way to Settings. */
+  function drawRow(enabled: ShelfWidgetId[]) {
+    const now = enabled.join();
+    if (now !== madeFor) fresh = true;
+    madeFor = now;
+    placed = compose(enabled);
+    fresh = false;
+    const next = `${placed.cards.join()}|${placed.chips.join()}`;
     if (next === key) return;
     key = next;
     clear(row);
-    for (const id of shown) row.append(widgets.get(id)?.small ?? placeholders.get(id)!);
-    row.style.display = shown.length ? "" : "none";
-    empty.style.display = shown.length ? "none" : "";
+    clear(chipBar);
+    for (const id of placed.cards) row.append(widgets.get(id)!.small!);
+    for (const id of placed.chips) chipBar.append(chips.get(id)!.el);
+    chipBar.append(edit);
+    row.append(chipBar);
+    row.style.setProperty("--cols", String(Math.max(1, placed.cards.length)));
+    row.classList.toggle("solo", placed.cards.length === 1);
+    row.classList.toggle("no-cards", placed.cards.length === 0);
+    row.style.display = enabled.length ? "" : "none";
+    empty.style.display = enabled.length ? "none" : "";
     row.scrollTo({ left: 0, top: 0 });
     edges();
   }
+
+  /** The chip of a widget, said again from the widget's state. */
+  const paintChip = (id: ShelfWidgetId) => {
+    const widget = widgets.get(id);
+    if (widget) chips.get(id)?.paint(widget.shortcut());
+  };
 
   // A card dragged to another place, or a swipe: the order is Settings'. The same
   // two settings the Settings window writes, and the island follows it live.
@@ -252,14 +307,18 @@ export function buildShelf(actions: ViewActions): ShelfHost {
     onScrollEnd: () => settleRow(row, actions.reducedMotion()),
     onReorder: (ids) => {
       const moved = ids.filter((id): id is ShelfWidgetId => id in SHELF_WIDGETS);
-      const hidden = new Set(State.settings.shelfHidden);
-      const order = (Array.isArray(State.settings.shelfOrder) ? State.settings.shelfOrder : WIDGET_IDS) as ShelfWidgetId[];
-      // The visible cards in their new order, the hidden ones where they were.
-      let at = 0;
-      const next = [...new Set([...order, ...WIDGET_IDS])].map((id) => (hidden.has(id) ? id : moved[at++] ?? id));
+      const order = [...new Set([...(Array.isArray(State.settings.shelfOrder) ? State.settings.shelfOrder : []), ...WIDGET_IDS])] as ShelfWidgetId[];
+      // The cards trade the places they hold in Settings' order; no other widget moves.
+      const places = order.flatMap((id, at) => (moved.includes(id) ? [at] : []));
+      const next = [...order];
+      moved.forEach((id, k) => (next[places[k]] = id));
       State.settings.shelfOrder = next;
-      // The row already stands as it will be drawn: it is not drawn again.
-      key = moved.join();
+      // The row already stands as it will be drawn: it is not drawn again, and not made anew.
+      placed = { cards: moved, chips: placed.chips, ready: placed.ready };
+      key = `${placed.cards.join()}|${placed.chips.join()}`;
+      madeFor = shelfWidgets().join();
+      // The card dropped last went after the chips in the page; the chips go back to the end.
+      row.append(chipBar);
       void Bridge.saveSettings(State.settings);
       State.notify();
     },
@@ -270,9 +329,12 @@ export function buildShelf(actions: ViewActions): ShelfHost {
   let live = false;
   let tickTimer = 0;
 
-  /** The small cards on the shelf and the expanded one, from their widgets' state. */
+  /** The small cards and the chips on the shelf and the expanded one, from their widgets' state. */
   function paintAll() {
-    for (const id of shelfWidgets()) widgets.get(id)?.paint();
+    for (const id of shelfWidgets()) {
+      widgets.get(id)?.paint();
+      paintChip(id);
+    }
     if (focus) widgets.get(focus)?.paint();
   }
 
@@ -295,12 +357,24 @@ export function buildShelf(actions: ViewActions): ShelfHost {
   });
 
   // A new language: every widget says its words again (painted on the next show if the Shelf is hidden).
-  onLangChange(() => { for (const widget of widgets.values()) widget.paint(); });
+  onLangChange(() => {
+    for (const [id, widget] of widgets) {
+      widget.paint();
+      paintChip(id);
+    }
+  });
 
   /** Once a second, while the Shelf is on show: what is on the row, or the one widget expanded. */
   function tick() {
-    if (focus) widgets.get(focus)?.tick?.();
-    else for (const id of shelfWidgets()) widgets.get(id)?.tick?.();
+    if (focus) {
+      widgets.get(focus)?.tick?.();
+      return;
+    }
+    for (const id of shelfWidgets()) {
+      widgets.get(id)?.tick?.();
+      // A chip says a countdown or a time that grows old by itself.
+      if (!placed.cards.includes(id)) paintChip(id);
+    }
   }
 
   function stopAll(why: string) {
@@ -348,7 +422,12 @@ export function buildShelf(actions: ViewActions): ShelfHost {
     named.clear();
   }
 
-  /** Brings a card wholly into the row's view, at once: what is cut by the row's edge would grow from outside the island. */
+  /** What stands for a widget in the row: its small card, or its chip. */
+  function spot(id: ShelfWidgetId): HTMLElement | null {
+    return placed.cards.includes(id) ? widgets.get(id)?.small ?? null : chips.get(id)?.el ?? null;
+  }
+
+  /** Brings a card or a chip wholly into the row's view, at once: what is cut by the row's edge would grow from outside the island. */
   function revealCard(card: HTMLElement) {
     const up = upright();
     const start = up ? card.offsetTop - row.offsetTop : card.offsetLeft - row.offsetLeft;
@@ -367,14 +446,16 @@ export function buildShelf(actions: ViewActions): ShelfHost {
     return {
       before() {
         unnameAll();
-        if (open) revealCard(widget.small);
-        nameShared(open ? widget.small : widget.card);
+        const from = open ? spot(widget.id) : widget.card;
+        if (open && from) revealCard(from);
+        if (from) nameShared(from);
       },
       after() {
         unnameAll();
-        // Going back: the card it shrinks into stands wholly in the row.
-        if (!open && widget.small.isConnected) revealCard(widget.small);
-        nameShared(open ? widget.card : widget.small);
+        const into = open ? widget.card : spot(widget.id);
+        // Going back: the card or chip it shrinks into stands wholly in the row.
+        if (!open && into?.isConnected) revealCard(into);
+        if (into) nameShared(into);
       },
       clear: unnameAll,
     };
@@ -392,13 +473,13 @@ export function buildShelf(actions: ViewActions): ShelfHost {
     actions.resized(!open);
   }
 
-  function openWidget(id: ShelfWidgetId, camera = false) {
+  function openWidget(id: ShelfWidgetId) {
     if (focus || !widgets.has(id)) return;
     go(() => {
       focus = id;
       render();
       paintAll();
-      widgets.get(id)?.opened?.({ camera });
+      widgets.get(id)?.opened?.();
     }, id, true);
   }
 
@@ -411,6 +492,8 @@ export function buildShelf(actions: ViewActions): ShelfHost {
     go(() => {
       focus = null;
       render();
+      // What was done in the expanded view may have given a widget something to show: a card for it, if there is a place.
+      drawRow(shelfWidgets());
       paintAll();
     }, id, false);
     return true;
@@ -457,6 +540,9 @@ export function buildShelf(actions: ViewActions): ShelfHost {
       if (on === live) return;
       live = on;
       if (on) {
+        // The Shelf comes on show: who is a card and who a chip is made anew, from what is going on now.
+        fresh = true;
+        drawRow(shelfWidgets());
         paintAll();
         tickTimer = window.setInterval(tick, 1000);
         // Not a second late: what is asked of the system (the player) is asked now.

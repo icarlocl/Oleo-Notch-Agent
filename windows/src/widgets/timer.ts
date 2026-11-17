@@ -215,5 +215,14 @@ export function buildTimer(ctx: WidgetContext): Widget {
   }
 
   // Once a second while the Shelf is on show, and only while it runs.
-  return { id: "timer", small, card: frame("timer", body, ctx.back), paint, tick: () => timer.running && paint() };
+  return {
+    id: "timer",
+    small,
+    card: frame("timer", body, ctx.back),
+    paint,
+    tick: () => timer.running && paint(),
+    // Running, paused part-way or up: not at rest. At rest it is a shortcut — or, when nothing else is going on, the card that stands ready.
+    live: () => timer.running || timer.done || timer.remainingMs !== timer.durationMs,
+    shortcut: () => ({ label: t("w.timer"), note: clock(timerLeft()) }),
+  };
 }

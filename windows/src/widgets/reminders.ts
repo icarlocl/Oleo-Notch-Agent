@@ -328,5 +328,17 @@ export function buildReminders(ctx: WidgetContext): Widget {
   }
 
   // "in 12 min" is looked at again once a second while the Shelf is on show, as the other widgets are.
-  return { id: "reminders", small, card: frame("reminders", body, ctx.back, count), paint, tick: paint };
+  return {
+    id: "reminders",
+    small,
+    card: frame("reminders", body, ctx.back, count),
+    paint,
+    tick: paint,
+    // One waits: a card with it. None: the shortcut asks for a new one.
+    live: () => nextReminder() != null,
+    shortcut: () => {
+      const next = nextReminder();
+      return next ? { label: t("w.reminders"), note: untilText(next.at) } : { label: t("w.rem.placeholder") };
+    },
+  };
 }

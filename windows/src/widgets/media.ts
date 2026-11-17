@@ -206,6 +206,12 @@ export function buildMedia(ctx: WidgetContext): Widget {
     small,
     card,
     paint,
+    live: mediaOn,
+    shortcut: () => {
+      const info = media.info;
+      if (info?.kind === "session") return { label: t("w.media"), note: info.playing ? t("w.media.playing") : t("w.media.paused") };
+      return { label: t("w.media"), note: !media.asked ? "" : info?.kind === "unavailable" ? t("w.media.unavailable") : t("w.media.nothing") };
+    },
     // Once a second while a Media card is on show: the system is asked, and nothing else.
     tick: () => void refresh(expandedOn()),
     // The Shelf is off the screen: the art is let go of, and nothing is held.

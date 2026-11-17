@@ -872,21 +872,27 @@ body {
   transition: opacity 0.12s linear;
 }
 
-/* ── The Shelf: a row of small cards ────────────────────────────────────── */
+/* ── The Shelf: a mosaic ────────────────────────────────────────────────── */
 
-/* The row scrolls sideways and comes to rest on a card's left edge. Its cards
-   are --shelf-card-w wide and --shelf-card-gap apart (layout.ts, by way of
-   views/shelf.ts): three stand in the row and the fourth shows its edge. */
+/* The cards stand side by side — one column for each, three at most (views/shelf.ts
+   says how many in --cols) — and under them the row of chips, one for every widget
+   that has nothing going on. Nothing scrolls here; on a side dock the mosaic is a
+   column that does (below). */
 .shelf-row {
   height: 100%;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr) var(--shelf-chips-h);
   gap: var(--shelf-card-gap);
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  overscroll-behavior-x: contain;
+  overflow: hidden;
   scrollbar-width: none;
   border-radius: var(--r-card);
+}
+
+/* No card at all (the timer is off and nothing is going on): the chips alone, in the middle. */
+.shelf-row.no-cards {
+  grid-template-rows: var(--shelf-chips-h);
+  align-content: center;
 }
 
 /* Moved by the island, step by step, with a swipe (views/shelf.ts `scrollRow`):
@@ -895,17 +901,92 @@ body {
   scroll-snap-type: none;
 }
 
-/* More cards past an edge: that edge fades. */
-.shelf-row.more-right {
-  mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent);
+/* The shortcuts: a row under the cards, and at its end the way to Settings. What
+   does not fit is cut from the notes first, then from the names. */
+.shelf-chips {
+  grid-column: 1 / -1;
+  order: 99;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.shelf-row.more-left {
-  mask-image: linear-gradient(to right, transparent, #000 12px);
+.wchip {
+  flex: 0 1 auto;
+  min-width: 0;
+  height: var(--shelf-chips-h);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px 0 6px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: var(--tab-on);
+  color: var(--ink-2);
+  font: 600 var(--t-body) var(--font);
+  cursor: default;
+  user-select: none;
+  transition: background 0.12s ease-out, color 0.12s ease-out;
 }
 
-.shelf-row.more-left.more-right {
-  mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 16px), transparent);
+.wchip:hover {
+  background: color-mix(in srgb, var(--ink) 9%, var(--tab-on));
+  color: var(--ink);
+}
+
+.wchip:focus-visible,
+.shelf-edit:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1.5px #5aa9ff;
+}
+
+/* The widget's colour is worn by its mark alone, as on its card. */
+.wchip .w-mark {
+  width: 20px;
+  height: 20px;
+}
+
+.wchip-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.wchip-note {
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
+}
+
+.wchip-note:empty {
+  display: none;
+}
+
+.shelf-edit {
+  flex: 0 0 auto;
+  margin-left: auto;
+  height: 26px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: var(--tab-on);
+  color: var(--ink);
+  font: 600 var(--t-meta) var(--font);
+  cursor: default;
+  transition: background 0.12s ease-out;
+}
+
+.shelf-edit:hover {
+  background: color-mix(in srgb, var(--ink) 9%, var(--tab-on));
 }
 
 /* The Shelf has two layers: the row of small cards, and the expanded widget.
@@ -938,15 +1019,16 @@ body {
   cursor: grabbing;
 }
 
-/* On a side the row is a column (layout.ts SHELF_SIDE_H): the cards one above
-   the other, the column's width, --shelf-card-h tall; it scrolls up and down
-   and comes to rest on a card's upper edge (views/shelf.ts says which axis).
-   Its edges fade as the row's do: more-left is more above, more-right more below. */
+/* On a side the mosaic is a column (layout.ts SHELF_SIDE_H): the cards one above
+   the other, the column's width, --shelf-card-h tall, and the chips after them,
+   wrapping; it scrolls up and down and comes to rest on a card's upper edge
+   (views/shelf.ts says which axis). Its edges fade: more-left is more above,
+   more-right more below. */
 :root:is([data-dock="left"], [data-dock="right"]) .shelf-row {
+  display: flex;
   flex-direction: column;
   overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior-x: auto;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
 }
@@ -962,6 +1044,14 @@ body {
   height: var(--shelf-card-h);
 }
 
+:root:is([data-dock="left"], [data-dock="right"]) .shelf-chips {
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  overflow: visible;
+  gap: 6px;
+  scroll-snap-align: end;
+}
+
 :root:is([data-dock="left"], [data-dock="right"]) .shelf-row.more-right {
   mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent);
 }
@@ -974,15 +1064,13 @@ body {
   mask-image: linear-gradient(to bottom, transparent, #000 12px, #000 calc(100% - 16px), transparent);
 }
 
-/* A small card: dark, like the expanded views. The widget's colour (--c) is on
-   its mark, in a thin border and in a faint glow inside it — nowhere else.
-   --shelf-card-w wide: three stand in the row and the fourth shows its edge. */
+/* A small card: dark, like the expanded views, and plain. The widget's colour
+   (--c) is on its mark and nowhere else: no coloured border, no glow. A grid
+   cell at the top and bottom, --shelf-card-h tall in a column on a side. */
 .wmini {
   position: relative;
-  flex: 0 0 var(--shelf-card-w);
-  width: var(--shelf-card-w);
   min-width: 0;
-  height: 100%;
+  min-height: 0;
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
@@ -990,28 +1078,54 @@ body {
   padding: 9px 10px 10px;
   border-radius: var(--r-card);
   background: var(--card);
-  border: 1px solid color-mix(in srgb, var(--c) 24%, rgba(255, 255, 255, 0.03));
-  box-shadow: inset 0 0 24px -15px var(--c);
   color: var(--ink);
   overflow: hidden;
   transition:
     transform 0.24s cubic-bezier(0.3, 1.2, 0.4, 1),
     scale 0.16s ease-out,
-    border-color 0.16s ease-out,
+    background 0.16s ease-out,
     box-shadow 0.16s ease-out;
 }
 
 .wmini:hover {
-  border-color: color-mix(in srgb, var(--c) 44%, rgba(255, 255, 255, 0.03));
+  background: color-mix(in srgb, var(--ink) 4%, var(--card));
 }
 
 /* Picked up after a long press: it follows the pointer, the others step aside. */
 .wmini.lifted {
   z-index: 3;
   scale: 0.95;
-  border-color: color-mix(in srgb, var(--c) 70%, #fff);
-  box-shadow: inset 0 0 24px -15px var(--c), 0 8px 22px rgba(0, 0, 0, 0.6);
-  transition: scale 0.16s ease-out, border-color 0.16s ease-out, box-shadow 0.16s ease-out;
+  background: color-mix(in srgb, var(--ink) 4%, var(--card));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 24%, transparent), 0 8px 22px rgba(0, 0, 0, 0.6);
+  transition: scale 0.16s ease-out, background 0.16s ease-out, box-shadow 0.16s ease-out;
+}
+
+/* One card alone, at the top and bottom: it lies down — its mark and name, what it
+   holds, its buttons — instead of stretching. */
+:root:not([data-dock="left"], [data-dock="right"]) .shelf-row.solo :is(.wmini-timer, .wmini-media) {
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+  padding: 0 18px;
+}
+
+:root:not([data-dock="left"], [data-dock="right"]) .shelf-row.solo :is(.wmini-timer, .wmini-media) .wmini-head {
+  flex: 0 0 auto;
+}
+
+:root:not([data-dock="left"], [data-dock="right"]) .shelf-row.solo :is(.wmini-timer, .wmini-media) .wmini-expand {
+  display: none;
+}
+
+:root:not([data-dock="left"], [data-dock="right"]) .shelf-row.solo :is(.wmini-timer, .wmini-media) .wmini-body {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+:root:not([data-dock="left"], [data-dock="right"]) .shelf-row.solo .wmini-timer .wmini-btn {
+  align-self: center;
 }
 
 .shelf-row.no-shift .wmini {
@@ -1334,7 +1448,7 @@ body {
 }
 
 .wmini .check-main {
-  padding: 3px 5px;
+  padding: 2px 5px;
 }
 
 .check-main {
@@ -5791,17 +5905,6 @@ button.sess-state:hover {
 
 /* ── Shelf widget: Mirror ───────────────────────────────────────────────── */
 
-.wbody-mirror {
-  justify-content: space-between;
-  padding: 0 2px;
-}
-
-.wmini-note {
-  padding-top: 2px;
-  font: 400 var(--t-meta)/15px var(--font);
-  color: var(--ink-2);
-}
-
 /* The preview and nothing else: the back pill floats over it. */
 .focus-card.bare .fc-head {
   position: absolute;
@@ -5886,28 +5989,6 @@ button.sess-state:hover {
 }
 
 /* ── Shelf widget: Projects ─────────────────────────────────────────────── */
-
-.wbody-projects .wmini-list {
-  justify-content: space-between;
-  padding: 2px 0 1px;
-}
-
-.wmini-proj {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  padding-left: 5px;
-}
-
-.wmini-proj > b {
-  flex: 1 1 auto;
-  min-width: 0;
-  font: 600 var(--t-meta) var(--font);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 .proj-row {
   gap: 7px;

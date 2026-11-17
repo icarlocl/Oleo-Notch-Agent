@@ -12,7 +12,7 @@
   <img alt="Rust" src="https://img.shields.io/badge/Rust-stable-dea584?style=flat-square&logo=rust&logoColor=white&labelColor=0a1017">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white&labelColor=0a1017">
   <img alt="No telemetry" src="https://img.shields.io/badge/telemetry-none-3ddc97?style=flat-square&labelColor=0a1017">
-  <a href="LICENSE"><img alt="Licence: see LICENSE" src="https://img.shields.io/badge/licence-see%20LICENSE-f2825c?style=flat-square&labelColor=0a1017"></a>
+  <a href="LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/badge/licence-MIT-3ddc97?style=flat-square&labelColor=0a1017"></a>
   <a href="https://github.com/icarlocl/Oleo-Notch-Agent/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/icarlocl/Oleo-Notch-Agent?style=flat-square&color=ffb391&labelColor=0a1017"></a>
   <a href="https://github.com/icarlocl/Oleo-Notch-Agent/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/icarlocl/Oleo-Notch-Agent?style=flat-square&color=ffb391&labelColor=0a1017"></a>
 </p>
@@ -247,13 +247,15 @@ The details are in [`docs/screenshots.md`](docs/screenshots.md).
 
 ## Licence and credits
 
-Oleo's own code, artwork and documentation are © 2026 Franco Ruiz, all rights
-reserved: see [`LICENSE`](LICENSE). The source is public so that you can read
-it and check what it does. The parts that come from Nook and Coucou keep their
-MIT License, reproduced in [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+Oleo is open source, released under the [MIT License](LICENSE). Copyright ©
+2026 Franco Ruiz; the parts that come from Nook and Coucou keep Louis Raillé's
+copyright notice, which is in [`LICENSE`](LICENSE) too. Third-party notices are
+in [`NOTICE`](NOTICE).
 
-Durazno, the app icons and the artwork drawn from them are Oleo's own; see
-[`LICENSE-ASSETS.md`](LICENSE-ASSETS.md).
+Durazno, the app icons and the installer artwork are Oleo's own and are covered
+by the same licence. What the licence does not give is the use of the names
+"Oleo" and "Oleo Notch Agent", or of Durazno, as the brand of another product;
+see [`LICENSE-ASSETS.md`](LICENSE-ASSETS.md).
 
 Oleo is derived from [Nook](https://github.com/zubairbinshaukat/nook) by Zubair
 Bin Shaukat, which is a fork of [Coucou](https://github.com/Louis-CFM/coucou) by

@@ -2058,8 +2058,8 @@ function aboutSection(): Kid[] {
       h("div", { class: "sp-credit" },
         h("p", { class: "sp-made", text: "Franco Ruiz" }),
         h("div", { class: "sp-links", role: "group", "aria-label": "Enlaces de Franco Ruiz" }, ...LINKS.map(link))),
-      h("p", { class: "sp-credits", text: "Software privativo. Basado en Nook y Coucou (licencia MIT)." })),
-    "Made by", "Franco Ruiz. Proprietary software, based on Nook and Coucou (MIT).",
+      h("p", { class: "sp-credits", text: "Código abierto bajo licencia MIT. Basado en Nook y Coucou." })),
+    "Made by", "Franco Ruiz. Open source (MIT), based on Nook and Coucou.",
     "author made by credits github linkedin website portfolio contact licence license open source", true),
   ];
 }

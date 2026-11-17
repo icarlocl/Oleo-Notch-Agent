@@ -1,15 +1,16 @@
 Oleo
 
-Oleo is proprietary software by Franco Ruiz; see LICENSE.
+Oleo is open source software by Franco Ruiz, released under the MIT License;
+see LICENSE.
 
 Oleo is derived from Nook by Zubair Bin Shaukat and contributors
 (https://github.com/zubairbinshaukat/nook), a fork of Coucou by Louis Raillé
 (https://github.com/Louis-CFM/coucou), built on the Windows multi-session work
 by Edurique (https://github.com/Edurique/coucou_edu_windows_implementation).
 
-The portions that come from Nook and Coucou keep their MIT License, reproduced
-in LICENSE with the original copyright notice. Everything added or changed in
-Oleo is covered by Oleo's proprietary licence.
+Nook and Coucou are MIT-licensed, and Oleo keeps their original copyright
+notice in LICENSE, next to Franco Ruiz's. Everything added or changed in Oleo
+is released under the same MIT License.
 
 Coucou's own name, character, icons and sounds are not part of Nook or Oleo;
 see LICENSE-ASSETS.md.

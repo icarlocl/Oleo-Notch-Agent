@@ -31,9 +31,14 @@ From Nook, under its MIT licence:
 The interface icons come from Lucide and Simple Icons under their own licences
 (see [NOTICE](NOTICE)).
 
-The name "Oleo", Durazno and the artwork drawn from it are proprietary:
-© 2026 Franco Ruiz, all rights reserved. They are not covered by the MIT
-licence of the parts that come from Nook and Coucou.
+Oleo's own artwork (Durazno, the app icons and the installer artwork) is
+© 2026 Franco Ruiz and is released under this repository's MIT License, like the
+code.
+
+What the MIT License does not give is the use of the names "Oleo" and "Oleo
+Notch Agent", or of Durazno as the brand of another product. A fork or a derived
+product should have its own name and its own mascot, and must not suggest that
+it is the original or that Oleo endorses it.
 
 Oleo is not affiliated with or endorsed by Nook's or Coucou's authors, or by
 Anthropic.

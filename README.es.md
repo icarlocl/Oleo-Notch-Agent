@@ -12,7 +12,7 @@
   <img alt="Rust" src="https://img.shields.io/badge/Rust-stable-dea584?style=flat-square&logo=rust&logoColor=white&labelColor=0a1017">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white&labelColor=0a1017">
   <img alt="Sin telemetría" src="https://img.shields.io/badge/telemetr%C3%ADa-ninguna-3ddc97?style=flat-square&labelColor=0a1017">
-  <a href="LICENSE"><img alt="Licencia: ver LICENSE" src="https://img.shields.io/badge/licencia-ver%20LICENSE-f2825c?style=flat-square&labelColor=0a1017"></a>
+  <a href="LICENSE"><img alt="Licencia: MIT" src="https://img.shields.io/badge/licencia-MIT-3ddc97?style=flat-square&labelColor=0a1017"></a>
   <a href="https://github.com/icarlocl/Oleo-Notch-Agent/commits/main"><img alt="Último commit" src="https://img.shields.io/github/last-commit/icarlocl/Oleo-Notch-Agent?style=flat-square&color=ffb391&labelColor=0a1017"></a>
   <a href="https://github.com/icarlocl/Oleo-Notch-Agent/stargazers"><img alt="Estrellas" src="https://img.shields.io/github/stars/icarlocl/Oleo-Notch-Agent?style=flat-square&color=ffb391&labelColor=0a1017"></a>
 </p>
@@ -259,14 +259,15 @@ Los detalles están en [`docs/screenshots.md`](docs/screenshots.md).
 
 ## Licencia y créditos
 
-El código, el arte y la documentación propios de Oleo son © 2026 Franco Ruiz,
-todos los derechos reservados: ver [`LICENSE`](LICENSE). El código fuente es
-público para que puedas leerlo y comprobar lo que hace. Las partes que vienen
-de Nook y Coucou conservan su licencia MIT, reproducida en
-[`LICENSE`](LICENSE) y [`NOTICE`](NOTICE).
+Oleo es de código abierto y se publica bajo la [licencia MIT](LICENSE).
+Copyright © 2026 Franco Ruiz; las partes que vienen de Nook y Coucou conservan
+el aviso de copyright de Louis Raillé, que también está en
+[`LICENSE`](LICENSE). Los avisos de terceros están en [`NOTICE`](NOTICE).
 
-Durazno, los iconos de la app y el arte dibujado a partir de ellos son propios
-de Oleo; ver [`LICENSE-ASSETS.md`](LICENSE-ASSETS.md).
+Durazno, los iconos de la app y el arte del instalador son propios de Oleo y
+están cubiertos por la misma licencia. Lo que la licencia no concede es usar los
+nombres «Oleo» y «Oleo Notch Agent», ni a Durazno, como marca de otro producto;
+ver [`LICENSE-ASSETS.md`](LICENSE-ASSETS.md).
 
 Oleo deriva de [Nook](https://github.com/zubairbinshaukat/nook), de Zubair Bin
 Shaukat, que es un fork de [Coucou](https://github.com/Louis-CFM/coucou), de

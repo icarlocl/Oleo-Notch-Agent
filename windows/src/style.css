@@ -4559,12 +4559,6 @@ button.sess-state:hover {
   flex: 1 1 0;
 }
 
-.jr-time {
-  flex: 0 0 auto;
-  font: 400 var(--t-meta) var(--font);
-  color: var(--ink-3);
-}
-
 .jr-chip {
   flex: 0 0 auto;
   padding: 1px 6px;
@@ -4753,124 +4747,19 @@ button.sess-state:hover {
   70%, 100% { box-shadow: 0 0 0 5px transparent; }
 }
 
-.sess-subs {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-/* A subagent, on two lines: how it stands and what it was launched to do;
-   under that, quieter, which agent it is and the model it runs on. */
-.sess-sub {
-  gap: 5px;
-  height: 31px;
-  padding: 0 7px 0 21px;
-  font: 400 var(--t-meta) var(--font);
-}
-
-.session-view.large .sess-sub {
-  height: 35px;
-  padding-left: 24px;
-  font-size: var(--t-meta);
-}
-
-/* The mark stands beside the first line. */
-.sess-sub > .sess-mark {
-  align-self: flex-start;
-  margin-top: 5px;
-}
-
-.session-view.large .sess-sub > .sess-mark {
-  margin-top: 6px;
-}
-
-.sess-sub-words {
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  line-height: 13px;
-}
-
-.session-view.large .sess-sub-words {
-  line-height: 14px;
-}
-
-.sess-sub .sess-mark,
+.jr-subs-h .sess-mark,
 .sess-launch .sess-mark,
 .sess-crumb .sess-mark {
   width: 11px;
   height: 11px;
 }
 
-.sess-sub .sess-mark.run,
+.jr-subs-h .sess-mark.run,
 .sess-launch .sess-mark.run,
 .sess-crumb .sess-mark.run {
   border-width: 1.5px;
 }
 
-/* "<type> · <model>", cut as a whole when it is too long: the tooltip has all of it. */
-.sess-sub-meta {
-  min-width: 0;
-  font-size: var(--t-meta);
-  color: var(--ink-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.session-view.large .sess-sub-meta {
-  font-size: var(--t-meta);
-}
-
-.sess-sub-task {
-  min-width: 0;
-  color: var(--gh-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sess-sub.on .sess-sub-task {
-  color: var(--ink);
-}
-
-/* Finished: still there, and out of the way. */
-.sess-sub.done > *,
-.sess-sub.failed > * {
-  opacity: 0.55;
-}
-
-.sess-sub.failed .sess-mark {
-  opacity: 0.9;
-}
-
-.sess-sub.on > * {
-  opacity: 1;
-}
-
-/* Waiting for the user: the line is amber. */
-.sess-sub.asking {
-  background: color-mix(in srgb, var(--amber) 13%, transparent);
-}
-
-.sess-sub.asking:hover,
-.sess-sub.asking.on {
-  background: color-mix(in srgb, var(--amber) 21%, transparent);
-}
-
-.sess-sub.asking .sess-sub-task,
-.sess-sub.asking .sess-sub-meta {
-  color: var(--amber);
-}
-
-.sess-sub.asking .sess-sub-meta {
-  opacity: 0.75;
-}
-
-/* "needs me", said in words where there is the room for it. */
 /* The model a session or a subagent runs on: a quiet chip, cut before it
    pushes a name out. Never there for one no event named. */
 .sess-model {
@@ -4887,22 +4776,9 @@ button.sess-state:hover {
   text-overflow: ellipsis;
 }
 
-/* In a subagent's own view and on the line it was launched from, the chip keeps its width: the task gives way. */
-.sess-crumb .sess-model,
-.sess-launch .sess-model {
+/* In a subagent's own view, the chip keeps its width: the task gives way. */
+.sess-crumb .sess-model {
   flex: 0 0 auto;
-}
-
-.sess-sub-needs {
-  display: none;
-  flex: 0 0 auto;
-  font: 600 var(--t-meta) var(--font);
-  color: var(--amber);
-  white-space: nowrap;
-}
-
-.session-view.large .sess-sub-needs {
-  display: block;
 }
 
 .sess-mark.needs {
@@ -5033,28 +4909,96 @@ button.sess-state:hover {
   color: var(--red-text);
 }
 
-/* Where a subagent was launched: one line of the main journal. */
-.sess-launch {
+/* The time of a block of the journal, said once above it. */
+.jr-when {
+  margin-bottom: -3px;
+  padding: 0 4px;
+  font: 600 var(--t-meta) var(--font);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.jr-when:not(:first-child) {
+  margin-top: 5px;
+}
+
+/* Where subagents were launched: one block, with how many and how they stand,
+   and under it a tinted list with a line each. */
+.jr-subs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.jr-subs-h {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  height: 18px;
+  padding: 0 4px;
+}
+
+.jr-subs-h > b {
+  flex: 0 0 auto;
+  font: 600 var(--t-body) var(--font);
+  color: var(--ink);
+}
+
+.jr-subs-h > .grow {
+  flex: 1 1 0;
+}
+
+.jr-subs-state {
+  flex: 0 0 auto;
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.jr-subs-state.running {
+  color: #9ccbff;
+}
+
+.jr-subs-state.asking {
+  color: var(--amber);
+}
+
+.jr-subs-state.failed {
+  color: var(--red-text);
+}
+
+.jr-subs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-left: 21px;
+  padding: 3px;
+  border-radius: var(--r-ctl);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+/* A subagent: what it is at, quieter its kind and its model, how it stands. A click opens it. */
+.sess-launch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   min-width: 0;
-  height: 24px;
-  padding: 0 6px 0 5px;
-  border: 1px solid var(--gh-edge);
-  border-radius: var(--r-ctl);
-  background: rgba(255, 255, 255, 0.025);
+  height: 26px;
+  padding: 0 8px 0 7px;
+  border: 0;
+  border-radius: var(--r-xs);
+  background: transparent;
   color: inherit;
   text-align: left;
   cursor: default;
   user-select: none;
-  transition: background 0.12s ease-out, border-color 0.12s ease-out;
+  transition: background 0.12s ease-out;
 }
 
 .sess-launch:hover {
-  background: var(--gh-plate);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
 }
 
 .sess-launch:focus-visible {
@@ -5063,38 +5007,32 @@ button.sess-state:hover {
 }
 
 .sess-launch.asking {
-  border-color: color-mix(in srgb, var(--amber) 34%, transparent);
-  background: color-mix(in srgb, var(--amber) 8%, transparent);
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
 }
 
-.sess-launch > b {
-  flex: 0 0 auto;
-  font: 600 var(--t-body) var(--font);
-  color: var(--ink);
-}
-
-.sess-launch-type {
-  flex: 0 0 auto;
-  margin-right: -2px;
-  font: 400 var(--t-meta) var(--font);
-  color: var(--gh-text);
-  white-space: nowrap;
+.sess-launch.asking:hover {
+  background: color-mix(in srgb, var(--amber) 20%, transparent);
 }
 
 .sess-launch-task {
   flex: 0 1 auto;
   min-width: 24px;
-  font: 400 var(--t-meta) var(--font);
-  color: var(--gh-text);
+  font: 400 var(--t-body) var(--font);
+  color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.sess-launch-sep {
-  flex: 0 0 auto;
-  margin: 0 -2px;
+/* Cut first, before the task is. */
+.sess-launch-meta {
+  flex: 0 100 auto;
+  min-width: 0;
+  font: 400 var(--t-meta) var(--font);
   color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sess-launch > .grow {
@@ -5115,8 +5053,7 @@ button.sess-state:hover {
 }
 
 .session-view.large .sess-launch {
-  height: 27px;
-  padding: 0 9px 0 7px;
+  height: 30px;
 }
 
 /* ── The session panel: a subagent's own view ───────────────────────────── */

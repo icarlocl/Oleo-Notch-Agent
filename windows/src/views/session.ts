@@ -8,9 +8,11 @@
 // Claude did in the order it did it — a file read, an edit with its diff,
 // typed as it lands, a command, a question with what was picked, a permission
 // with what was decided — and what Claude said to end its turn. Above the
-// journal, chips that keep one kind of step. A subagent has a journal of its
-// own, reached from the line of the main journal where it was launched,
-// ending on what it came back with. Behind the journal, the files the session
+// journal, chips that keep one kind of step. The time is said once above each
+// block of steps ("Now", "3 min ago"), not on every line. Subagents launched
+// one after the other are one block of the journal, where they were, with a
+// line each; a line opens the subagent's own journal, ending on what it
+// came back with. Behind the journal, the files the session
 // has changed and each one's whole diff. It is for watching: to answer, there
 // is Claude Code.
 //
@@ -371,6 +373,26 @@ const fullName = (a: Subagent) => (subagentTask(a) ? `${subagentKind(a)} · ${su
 /** When a line of the journal happened, as a clock shows it. */
 const clock = (at: number) => new Date(at).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" });
 
+/**
+ * The journal says the time once per block of steps, not on each: a block
+ * ends where nothing happened for `BLOCK_GAP_MS`, and never runs past
+ * `BLOCK_SPAN_MS`, so a long stretch of steady work is still dated now and then.
+ */
+const BLOCK_GAP_MS = 2 * 60_000;
+const BLOCK_SPAN_MS = 10 * 60_000;
+
+/** How long ago a block began: "Now", "3 min ago", "2 h ago". */
+function whenWords(at: number): string {
+  const minutes = Math.floor(Math.max(0, Date.now() - at) / 60_000);
+  if (minutes < 1) return t("sess.when.now");
+  if (minutes < 60) return t("sess.when.m", { n: minutes });
+  const hours = Math.floor(minutes / 60);
+  return hours < 24 ? t("sess.when.h", { n: hours }) : t("sess.when.d", { n: Math.floor(hours / 24) });
+}
+
+/** The exact moment, for a tooltip. */
+const whenTip = (at: number) => new Date(at).toLocaleString(locale(), { dateStyle: "medium", timeStyle: "short" });
+
 /** Several options picked for one question come back as one answer, joined like this. */
 const ANSWER_JOIN = ", ";
 
@@ -427,7 +449,7 @@ function journalEntry(step: SessionStep, large: boolean, said: Said, typed?: ToT
     return h(
       "div",
       { class: "jr jr-reply" },
-      h("div", { class: "sess-said" }, dot(COLOR.green, 6), h("b", { text: "Claude" }), h("span", { text: clock(step.at) })),
+      h("div", { class: "sess-said", title: clock(step.at) }, dot(COLOR.green, 6), h("b", { text: "Claude" })),
       step.target ? replyView(step.target, said.opener, said.fold(step)) : h("div", { class: "jr-waiting", text: t("sess.noReply") }),
     );
   }
@@ -449,7 +471,8 @@ function journalEntry(step: SessionStep, large: boolean, said: Said, typed?: ToT
   else if (step.questions && step.state === "running") head.append(chip(t("sess.waitingAnswer"), COLOR.cyan));
   if (step.state === "running") head.append(MARKS.running());
   else if (step.state === "failed" && !step.questions && !step.permission) head.append(chip(t("sess.failed"), COLOR.red));
-  head.append(h("span", { class: "jr-time", text: clock(step.at) }));
+  // The time is said once, above a block of steps; here only as a tooltip.
+  head.title = clock(step.at);
 
   const el = h("div", { class: `jr jr-step ${step.state} ${step.kind}` }, head);
   if (step.questions) el.append(askedView(step));
@@ -995,12 +1018,15 @@ export function buildSession(actions: ViewActions): ViewHost {
   let shownSession = "";
 
   /**
-   * The place in the main journal where a subagent was launched: one line,
-   * with how it stands. A click opens the subagent's own view.
+   * A subagent, on its line of the block where it was launched: what it is
+   * at, quieter its kind and its model, and how it stands. A click opens its
+   * own view.
    */
   function launchRow(session: ClaudeSession, a: Subagent): HTMLElement {
     const stands = subagentStanding(session, a);
     const task = subagentTask(a);
+    // With nothing said of what it is at, its kind is the line.
+    const meta = (task ? [subagentKind(a), a.model?.label] : [a.model?.label]).filter(Boolean).join(" · ");
     const row = h(
       "button",
       {
@@ -1009,20 +1035,80 @@ export function buildSession(actions: ViewActions): ViewHost {
         onclick: () => openAgent(session.id, a.id),
       },
       MARKS[stands](),
-      h("b", { text: t("sess.launched") }),
-      // Its kind, then what it is at; with nothing said of that, its kind alone.
-      h("span", { class: "sess-launch-type", text: task ? `${subagentKind(a)}:` : subagentKind(a) }),
-      task ? h("span", { class: "sess-launch-task", text: task }) : null,
-      h("span", { class: "sess-launch-sep", text: "·" }),
-      statusOf(session, a),
+      h("span", { class: "sess-launch-task", text: task || subagentKind(a) }),
+      meta ? h("span", { class: "sess-launch-meta", text: meta, title: a.model?.id }) : null,
       h("span", { class: "grow" }),
-      ...modelChip(a.model),
-      h("span", { class: "jr-time", text: clock(a.startedAt) }),
+      statusOf(session, a),
       h("i", { class: "sess-launch-go" }, svg(ICONS.chevronRight, 9, { stroke: 2.8 })),
     );
     // What the arrows reach from the row of sessions (and from each other).
     row.dataset.sub = a.id;
     return row;
+  }
+
+  /** The line that dates a block of the journal, kept for the step that begins the block. */
+  const whens = new WeakMap<SessionStep, HTMLElement>();
+  function whenLabel(step: SessionStep): HTMLElement {
+    let label = whens.get(step);
+    if (!label) {
+      label = h("div", { class: "jr jr-when" });
+      whens.set(step, label);
+    }
+    // The clock of the panel (tick) writes the words again from this.
+    label.dataset.at = String(step.at);
+    const words = whenWords(step.at);
+    if (label.textContent !== words) label.textContent = words;
+    label.title = whenTip(step.at);
+    return label;
+  }
+
+  interface SubsBlock {
+    el: HTMLElement;
+    head: HTMLElement;
+    list: HTMLElement;
+    key: string;
+  }
+  const subsBlocks = new WeakMap<SessionStep, SubsBlock>();
+
+  /**
+   * Subagents launched one after the other, where they were: one block with
+   * how many, how they stand (the one that needs the user first), and a line
+   * for each. Kept for the step that begins it, so its lines are not rebuilt
+   * under a click.
+   */
+  function subsBlock(session: ClaudeSession, first: SessionStep, agents: Subagent[], rows: HTMLElement[]): HTMLElement {
+    let found = subsBlocks.get(first);
+    if (!found) {
+      const head = h("div", { class: "jr-subs-h" });
+      const list = h("div", { class: "jr-subs-list" });
+      found = { el: h("div", { class: "jr jr-subs" }, head, list), head, list, key: "" };
+      subsBlocks.set(first, found);
+    }
+    const block = found;
+    const standing = agents.map((a) => subagentStanding(session, a));
+    const of = (what: string) => standing.filter((s) => s === what).length;
+    const asking = of("asking");
+    const going = of("running");
+    const failed = of("failed");
+    const key = `${standing.join()}~${currentLang()}`;
+    if (block.key !== key) {
+      block.key = key;
+      const overall = asking > 0 ? "asking" : going > 0 ? "running" : failed > 0 ? "failed" : "done";
+      const words =
+        asking > 0 ? t("sess.subs.asking", { count: asking })
+        : going > 0 ? t("sess.nRunning", { n: going })
+        : failed > 0 ? t("sess.subs.failed", { count: failed })
+        : t("sess.subs.done", { count: agents.length });
+      block.head.replaceChildren(
+        MARKS[overall](),
+        h("b", { text: t("sess.subs.launched", { count: agents.length }) }),
+        h("span", { class: "grow" }),
+        h("span", { class: `jr-subs-state ${overall}`, text: words }),
+      );
+    }
+    const same = block.list.children.length === rows.length && rows.every((row, i) => block.list.children[i] === row);
+    if (!same) block.list.replaceChildren(...rows);
+    return block.el;
   }
 
   /** What a subagent's view ends on, kept while it says the same: its buttons are not rebuilt under a click. */
@@ -1137,10 +1223,37 @@ export function buildSession(actions: ViewActions): ViewHost {
     const said: Said = { opener: openerOf(session), fold: foldOf };
     const nodes: HTMLElement[] = [];
     const steps = agent ? agent.steps : session.steps;
+
+    // Subagents launched one after the other are one block, where they were
+    // launched; the time is said once above each block of steps.
+    let group: { first: SessionStep; agents: Subagent[]; rows: HTMLElement[]; fresh: boolean } | null = null;
+    const closeGroup = () => {
+      if (!group) return;
+      const { first, agents, rows, fresh } = group;
+      group = null;
+      const isNew = !subsBlocks.has(first);
+      const block = subsBlock(session, first, agents, rows);
+      // A block that comes in rises as one, not each of its lines.
+      if (isNew && fresh) {
+        for (const row of rows) row.classList.remove("in", "more");
+        block.classList.add("in");
+      }
+      nodes.push(block);
+    };
+    let blockFrom = -1;
+    let lastAt = 0;
+
     for (const step of told ? steps.filter(wanted) : []) {
-      // Where a subagent was launched: a line of its own, drawn from how the subagent stands.
+      // Where a subagent was launched: a line in the block, drawn from how the subagent stands.
       const launched = step.kind === "launch" ? session.subagents.find((a) => a.id === step.agentId) : null;
       if (step.kind === "launch" && !launched) continue;
+      if (blockFrom < 0 || step.at - lastAt >= BLOCK_GAP_MS || step.at - blockFrom >= BLOCK_SPAN_MS) {
+        closeGroup();
+        nodes.push(whenLabel(step));
+        blockFrom = step.at;
+      }
+      lastAt = step.at;
+      if (!launched) closeGroup();
       const key = launched
         ? [launched.type, subagentTask(launched), subagentStanding(session, launched), launched.endedAt, launched.timed, launched.model?.label].join("~") + currentLang()
         : entryKey(step, large, said.opener) + currentLang();
@@ -1160,8 +1273,13 @@ export function buildSession(actions: ViewActions): ViewHost {
         entries.set(step, entry);
         if (lines.length > 0) toType = { lines, kind: fileKind(step.target ?? "") };
       }
-      nodes.push(entry.el);
+      if (launched) {
+        group ??= { first: step, agents: [], rows: [], fresh: !entering };
+        group.agents.push(launched);
+        group.rows.push(entry.el);
+      } else nodes.push(entry.el);
     }
+    closeGroup();
     if (!told) nodes.push(apart);
     else if (nodes.length === 0) {
       empty.textContent =
@@ -1354,7 +1472,13 @@ export function buildSession(actions: ViewActions): ViewHost {
     const seen = State.mode === "expanded" && State.view === "session";
     const going = seen ? el.querySelectorAll<HTMLElement>(".sess-elapsed") : null;
     for (const span of going ?? []) span.textContent = elapsed(Date.now() - Number(span.dataset.since));
-    if (going && going.length > 0) return;
+    // "Now", "3 min ago": written only when the words change.
+    const dated = seen ? el.querySelectorAll<HTMLElement>(".jr-when") : null;
+    for (const label of dated ?? []) {
+      const words = whenWords(Number(label.dataset.at));
+      if (label.textContent !== words) label.textContent = words;
+    }
+    if ((going && going.length > 0) || (dated && dated.length > 0)) return;
     if (clockTimer != null) window.clearInterval(clockTimer);
     clockTimer = null;
   }
@@ -1463,7 +1587,7 @@ export function buildSession(actions: ViewActions): ViewHost {
         headKey = "";
         drawTop(session, agent);
         syncJournal(session, agent);
-        if (clockTimer == null && State.mode === "expanded" && el.querySelector(".sess-elapsed")) {
+        if (clockTimer == null && State.mode === "expanded" && el.querySelector(".sess-elapsed, .jr-when")) {
           clockTimer = window.setInterval(tick, 1000);
           tick();
         }

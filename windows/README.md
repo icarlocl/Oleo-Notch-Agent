@@ -66,11 +66,13 @@ trust and its hash matches (below): choose **More info**, then **Run anyway**.
 To check a download against `SHA256SUMS.txt`:
 
 ```powershell
-Get-FileHash .\Oleo-Windows-0.2.2-setup.exe -Algorithm SHA256
+Get-FileHash .\Oleo-Windows-0.2.3-setup.exe -Algorithm SHA256
 ```
 
 The hash printed must be the one on the installer's line in `SHA256SUMS.txt`.
-The same works for an installed `oleo.exe` or `oleo-hook.exe`.
+The same works for an installed `oleo-hook.exe`. The installed `oleo.exe` is the
+listed one with three bytes changed: the bundler marks it as installed by the
+NSIS installer. The installer's own hash covers it, so that is the one to check.
 
 Both programs carry version information (Properties → Details): product
 "Oleo", author Franco Ruiz, and the version.

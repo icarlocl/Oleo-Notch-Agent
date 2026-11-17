@@ -11,7 +11,7 @@
 //   npm run shots:list
 //
 // Flags: --list --only a,b --theme dark|light --size WxH --scale N (or --NNN) --out DIR --budget KB --quality N
-//        --check --base-url URL --keep-server --browser EXE.
+//        --check --base-url URL --keep-server --browser EXE --lang TAG (default en-US; the README is in English).
 
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -49,7 +49,7 @@ const val = (name) => {
   if (v === undefined || v.startsWith("--")) fail(`${name} needs a value`);
   return v;
 };
-const known = new Set(["--list", "--only", "--theme", "--size", "--scale", "--out", "--budget", "--quality", "--check", "--base-url", "--keep-server", "--browser", "--help"]);
+const known = new Set(["--list", "--only", "--theme", "--size", "--scale", "--out", "--budget", "--quality", "--check", "--base-url", "--keep-server", "--browser", "--lang", "--help"]);
 let scalePct = 100;
 let scaleFlagged = false; // a --125 or --scale on the command line wins over the manifest's `scale` and puts a suffix on the files
 for (let i = 0; i < argv.length; i++) {
@@ -80,6 +80,9 @@ const budgetFlag = val("--budget") === null ? null : Number(val("--budget"));
 if (budgetFlag !== null && !(budgetFlag > 0)) fail("--budget is a number of KB");
 const startQuality = Math.min(100, Math.max(QUALITY_FLOOR, Number(val("--quality") ?? 90) || 90));
 const keepServer = has("--keep-server");
+/** The browser's language: the pages follow it, so the pictures say what the README says. */
+const langFlag = val("--lang") ?? process.env.SHOTS_LANG ?? "en-US";
+if (!/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(langFlag)) fail(`--lang is a language tag such as en-US or es-CL (got "${langFlag}")`);
 const baseFlag = (val("--base-url") ?? process.env.OLEO_DEV ?? "").replace(/\/$/, "");
 
 // ── The manifest ─────────────────────────────────────────────────────────────
@@ -282,7 +285,7 @@ class Tab {
 
 async function startBrowser(exe) {
   const profile = mkdtempSync(join(tmpdir(), "oleo-shots-"));
-  const flags = ["--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run", "--no-default-browser-check", "--disable-extensions", "--mute-audio",
+  const flags = ["--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run", "--no-default-browser-check", "--disable-extensions", "--mute-audio", `--lang=${langFlag}`, `--accept-lang=${langFlag}`,
     "--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--force-color-profile=srgb", `--user-data-dir=${profile}`, "--remote-debugging-port=0", "about:blank"];
   const child = spawn(exe, flags, { stdio: "ignore" });
   let port = null;
@@ -376,6 +379,11 @@ async function captureShot(port, base, s, variant, previous) {
     try {
       await tab.send("Emulation.setDeviceMetricsOverride", { width: viewport[0], height: viewport[1], deviceScaleFactor: scaleOf(s), mobile: false });
       if (transparent) await tab.send("Emulation.setDefaultBackgroundColorOverride", { color: { r: 0, g: 0, b: 0, a: 0 } });
+      // A shot's own `storage` ({key: value}) is put in localStorage before the page runs: the made-up Shelf keeps its widgets there.
+      if (s.storage) {
+        const source = Object.entries(s.storage).map(([k, v]) => `try { localStorage.setItem(${JSON.stringify(k)}, ${JSON.stringify(JSON.stringify(v))}); } catch (e) {}`).join(";");
+        await tab.send("Page.addScriptToEvaluateOnNewDocument", { source });
+      }
       await tab.send("Page.navigate", { url });
       const t0 = Date.now();
       let ready = false;

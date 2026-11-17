@@ -194,8 +194,8 @@
         "README.md"
       ],
       "out": "session-agents",
-      "alt": "A session page listing its subagents under the parent session, each with its own state.",
-      "notes": "A session with its subagents."
+      "alt": "A session in one column: the header with its title and state, filters by kind of step, and the journal with three subagents launched together as one block.",
+      "notes": "A session with its subagents as one block of the journal."
     },
     {
       "id": "finished-reply",
@@ -245,8 +245,37 @@
         "guides/shelf-widgets"
       ],
       "out": "shelf",
-      "alt": "The Shelf of the island with the six widget cards: To-do, Timer, Reminders, Media, Mirror and Projects.",
-      "notes": "The Shelf tab."
+      "alt": "The Widgets tab as a mosaic: the cards of the widgets that have something going on (media, to-do list, timer) side by side, and a shortcut for each of the others.",
+      "notes": "The Widgets tab: up to three cards for what is live, a shortcut for every other widget. The made-up Shelf is seeded with a to-do list and a paused timer.",
+      "storage": {
+        "oleo.shelf.fake.todo": {
+          "items": [
+            {
+              "id": 1,
+              "text": "Review the relay's diff",
+              "done": false
+            },
+            {
+              "id": 2,
+              "text": "Answer the usage report",
+              "done": false
+            },
+            {
+              "id": 3,
+              "text": "Update the changelog",
+              "done": true
+            }
+          ],
+          "notes": ""
+        },
+        "oleo.shelf.fake.timer": {
+          "durationMs": 1500000,
+          "remainingMs": 1122000,
+          "endsAt": 0,
+          "running": false,
+          "done": false
+        }
+      }
     },
     {
       "id": "settings-connect",
@@ -456,7 +485,7 @@
       ],
       "out": "install-wizard",
       "alt": "The Oleo installer wizard on its first page.",
-      "notes": "Run Oleo-Windows-0.2.2-setup.exe past SmartScreen and capture the first page of the installer window (not the last). Window snip, 100 % scale."
+      "notes": "Run Oleo-Windows-0.2.3-setup.exe past SmartScreen and capture the first page of the installer window (not the last). Window snip, 100 % scale."
     },
     {
       "id": "tray-menu",

@@ -46,7 +46,7 @@ Oleo funciona con **Claude Code**, **Codex** y **Cursor**. Se ejecuta en tu
 equipo y solo habla con tus propios agentes: sin cuenta y sin telemetría.
 
 > [!NOTE]
-> Oleo es una versión temprana (0.2.2). Windows 10 y 11 son el objetivo
+> Oleo es una versión temprana (0.2.3). Windows 10 y 11 son el objetivo
 > principal; el mismo código también compila para Linux, de forma
 > experimental. La interfaz está en español, inglés y portugués. Oleo es un
 > proyecto independiente y no está afiliado ni respaldado por Anthropic, OpenAI
@@ -56,7 +56,7 @@ equipo y solo habla con tus propios agentes: sin cuenta y sin telemetría.
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/hero-light.webp"><img src="docs/assets/screens/hero-dark.webp" alt="Oleo abierto en la vista de Inicio con escala del 125 %: la tarjeta de la sesión que necesita permiso con Durazno, las tres sesiones como etiquetas y los indicadores de CPU, GPU, RAM y uso de Claude." width="860"></picture>
+<picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/hero-light.webp"><img src="docs/assets/screens/hero-dark.webp" alt="Oleo abierto en la vista de Inicio con escala del 125 %: la tarjeta de la sesión que necesita permiso con Durazno, las otras dos sesiones como etiquetas y los indicadores de CPU, GPU, RAM y uso de Claude." width="860"></picture>
 
 </div>
 
@@ -68,8 +68,8 @@ equipo y solo habla con tus propios agentes: sin cuenta y sin telemetría.
 <td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/question-light.webp"><img src="docs/assets/screens/question-dark.webp" alt="Claude Code pregunta qué motor de búsqueda usar; la isla muestra tres opciones y un botón para escribir otra respuesta." width="440"></picture><br><sub><b>Responde preguntas.</b> Elige una opción, escribe la tuya u omítela.</sub></td>
 </tr>
 <tr>
-<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/session-agents-light.webp"><img src="docs/assets/screens/session-agents-dark.webp" alt="La página de una sesión: el diario de lo que hizo Claude Code, con sus subagentes bajo la sesión principal, cada uno con su estado." width="440"></picture><br><sub><b>Sigue una sesión.</b> Un diario de lo que hizo y sus subagentes.</sub></td>
-<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/shelf-light.webp"><img src="docs/assets/screens/shelf-dark.webp" alt="La pestaña Widgets: controles de multimedia, lista de tareas, temporizador y recordatorios." width="440"></picture><br><sub><b>Widgets.</b> Multimedia, tareas, temporizador, recordatorios y más, a un deslizamiento.</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/session-agents-light.webp"><img src="docs/assets/screens/session-agents-dark.webp" alt="Una sesión en una columna: su título, estado y modelo, filtros por tipo de paso y el diario de lo que hizo Claude Code, con tres subagentes lanzados a la vez como un solo bloque." width="440"></picture><br><sub><b>Sigue una sesión.</b> Un diario de lo que hizo y sus subagentes.</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/shelf-light.webp"><img src="docs/assets/screens/shelf-dark.webp" alt="La pestaña Widgets como mosaico: tarjetas para el reproductor, la lista de tareas y el temporizador, y un acceso directo para cada uno de los demás widgets." width="440"></picture><br><sub><b>Widgets.</b> Multimedia, tareas, temporizador, recordatorios y más, a un deslizamiento.</sub></td>
 </tr>
 <tr>
 <td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/over-browser-tabs-light.webp"><img src="docs/assets/screens/over-browser-tabs-dark.webp" alt="La isla de Oleo flotando sobre la barra de pestañas de una ventana de navegador." width="440"></picture><br><sub><b>Sin estorbar.</b> Flota sobre las pestañas y no le quita espacio a tu página.</sub></td>
@@ -131,7 +131,7 @@ tu PC»: elige **Más información** y luego **Ejecutar de todas formas**, una v
 que hayas comprobado el hash:
 
 ```powershell
-Get-FileHash .\Oleo-Windows-0.2.2-setup.exe -Algorithm SHA256
+Get-FileHash .\Oleo-Windows-0.2.3-setup.exe -Algorithm SHA256
 ```
 
 WebView2, que dibuja la isla, viene incluido en Windows 10 y 11.

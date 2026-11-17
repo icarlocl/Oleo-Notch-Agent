@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.2.3
+
+A redesign of the island, Settings and the agents list, on one scale: five
+type sizes, three greys for text and four corner radii, in both themes and in
+English, Spanish and Portuguese.
+
+- Home puts what needs you first: the card of the request with its buttons,
+  and the other sessions in a row under it. When all is calm it is Durazno, one
+  line that sums it up and the chips. The usage limits stay in the header.
+  Allow and Deny appear on Home only for a plain command of the session in
+  front; an edit, a question or a request of another session opens the session
+  with Review or Answer, and a click right after a request appears is ignored.
+- Permission and question cards continue the Home card: who is asking is said
+  in words, the first six lines of an edit are shown whole with "See all N
+  changes", and a question's options are a list with what each one does.
+- A session is one column: a row of sessions, a header with the title, state,
+  model and files, filters by kind of step and the journal. Subagents launched
+  together are one block of the journal, with a line each, and the time is said
+  once per block. Left and Right no longer fold subagents: there is no tree.
+- The Widgets tab is a mosaic. What has something going on is a card, up to
+  three side by side; every other widget is a shortcut under them. The order in
+  Settings decides who goes first. The mirror and the projects are shortcuts
+  only.
+- Settings: Widgets in two columns with the names whole; Settings → About puts
+  each path on a line of its own with an "Open folder" button; the preview in
+  Island follows "Folded island" (the line, in the colour you chose, or the
+  capsule); shortcut keys are named in your language ("Espacio", "Espaço") and
+  a shortcut that works says nothing, while a refusal or a clash says why; the
+  sidebar has one mark of selection.
+- The agents list, when empty, says so with Durazno and tells you when agents
+  will show up there.
+- The folded island can be one line near the edge that turns amber when a
+  session needs you. A language setting (follow the system, English, Spanish
+  or Portuguese) covers the island, Settings, the agents list and the tray.
+
 ## 0.2.2
 
 - Codex's sessions in the island, with Allow / Deny for what Codex asks

@@ -27,6 +27,7 @@ import { Display } from "../src/core/layout";
 import { handleHook, tellModel, type HookPayload } from "../src/island/hooks";
 import { Island } from "../src/island/island";
 import { Sound } from "../src/core/sound";
+import { startWidgets } from "../src/widgets";
 import { EXAMPLE_REPLY, LONG_REPLY } from "./preview-b/session-data";
 import { checkAutoHide, checkShelfSwipe, checkSlots, checkSwipe, checkUsage, checkWake } from "./preview-b/island-check";
 import { finishStage, installStage, placeIsland, rng } from "./stage";
@@ -853,6 +854,8 @@ const ask = (question = false) => {
   handleHook(island, { ...base, ...of, hook_event_name: "PermissionRequest", request_id: `shelf-ask-${++asked}`, ...tool });
 };
 Object.assign(window, { ask });
+// What the made-up Shelf kept (localStorage "oleo.shelf.fake.<widget>"): read once, as main.ts does, so a to-do list or a timer shows.
+startWidgets();
 if (params.get("tab") === "shelf") {
   island.setView("shelf");
   // The swipe's rules on a clock moved by hand (the console says how it went). With check=swipe, on the

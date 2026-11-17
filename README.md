@@ -46,7 +46,7 @@ Oleo works with **Claude Code**, **Codex** and **Cursor**. It runs on your
 machine and talks to nothing but your own agents: no account, no telemetry.
 
 > [!NOTE]
-> Oleo is an early release (version 0.2.2). Windows 10 and 11 are the main
+> Oleo is an early release (version 0.2.3). Windows 10 and 11 are the main
 > target; the same code also builds for Linux, which is experimental. The
 > interface is in English, Spanish and Portuguese. Oleo is an independent project and is not
 > affiliated with or endorsed by Anthropic, OpenAI or Cursor.
@@ -55,7 +55,7 @@ machine and talks to nothing but your own agents: no account, no telemetry.
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/hero-light.webp"><img src="docs/assets/screens/hero-dark.webp" alt="Oleo open on the Home view at 125% scaling: the card of the session that needs permission with Durazno, the three sessions as chips, and the CPU, GPU, RAM and Claude usage readings." width="860"></picture>
+<picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/hero-light.webp"><img src="docs/assets/screens/hero-dark.webp" alt="Oleo open on the Home view at 125% scaling: the card of the session that needs permission with Durazno, the other two sessions as chips, and the CPU, GPU, RAM and Claude usage readings." width="860"></picture>
 
 </div>
 
@@ -67,8 +67,8 @@ machine and talks to nothing but your own agents: no account, no telemetry.
 <td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/question-light.webp"><img src="docs/assets/screens/question-dark.webp" alt="Claude Code asks which search engine to use; the island shows three options and an Other answer button." width="440"></picture><br><sub><b>Answer questions.</b> Pick an option, type your own answer, or skip.</sub></td>
 </tr>
 <tr>
-<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/session-agents-light.webp"><img src="docs/assets/screens/session-agents-dark.webp" alt="A session page: the journal of what Claude Code did, with its subagents listed under the parent session, each with its own state." width="440"></picture><br><sub><b>Follow a session.</b> A journal of what it did, and its subagents.</sub></td>
-<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/shelf-light.webp"><img src="docs/assets/screens/shelf-dark.webp" alt="The Widgets tab: media controls, a to-do list, a timer and reminders." width="440"></picture><br><sub><b>Widgets.</b> Media, to-dos, a timer, reminders and more, one swipe away.</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/session-agents-light.webp"><img src="docs/assets/screens/session-agents-dark.webp" alt="A session in one column: its title, state and model, filters by kind of step, and the journal of what Claude Code did, with three subagents launched together shown as one block." width="440"></picture><br><sub><b>Follow a session.</b> A journal of what it did, and its subagents.</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/shelf-light.webp"><img src="docs/assets/screens/shelf-dark.webp" alt="The Widgets tab as a mosaic: cards for the media player, the to-do list and the timer, and a shortcut for each other widget." width="440"></picture><br><sub><b>Widgets.</b> Media, to-dos, a timer, reminders and more, one swipe away.</sub></td>
 </tr>
 <tr>
 <td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/over-browser-tabs-light.webp"><img src="docs/assets/screens/over-browser-tabs-dark.webp" alt="The Oleo island floating over the tab strip of a browser window." width="440"></picture><br><sub><b>Out of the way.</b> It floats over the tab strip and takes no space from your page.</sub></td>
@@ -76,7 +76,7 @@ machine and talks to nothing but your own agents: no account, no telemetry.
 </tr>
 <tr>
 <td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/settings-hooks-diff-light.webp"><img src="docs/assets/screens/settings-hooks-diff-dark.webp" alt="Oleo Settings, Connections page, showing the exact diff of the changes it would make to Claude Code's settings file, with a dated backup and an Apply button." width="440"></picture><br><sub><b>Nothing changes behind your back.</b> You see the diff of your config before Oleo writes it.</sub></td>
-<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/settings-look-light.webp"><img src="docs/assets/screens/settings-look-dark.webp" alt="Oleo Settings, Appearance page: the mascot picker with Durazno, the interactive mascot switch and the window colours." width="440"></picture><br><sub><b>Meet Durazno.</b> It follows the pointer and reacts to clicks; you can switch that off.</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/settings-look-light.webp"><img src="docs/assets/screens/settings-look-dark.webp" alt="Oleo Settings, Look and colours page: the mascot picker with Durazno, the interactive mascot switch and the window colours." width="440"></picture><br><sub><b>Meet Durazno.</b> It follows the pointer and reacts to clicks; you can switch that off.</sub></td>
 </tr>
 </table>
 
@@ -128,7 +128,7 @@ code-signed, so Windows SmartScreen may say "Windows protected your PC": choose
 **More info**, then **Run anyway**, once you have checked the hash:
 
 ```powershell
-Get-FileHash .\Oleo-Windows-0.2.2-setup.exe -Algorithm SHA256
+Get-FileHash .\Oleo-Windows-0.2.3-setup.exe -Algorithm SHA256
 ```
 
 WebView2, which draws the island, ships with Windows 10 and 11.

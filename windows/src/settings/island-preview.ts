@@ -12,6 +12,9 @@
 // which this window has. When that strip can be built from a plan handed to
 // it, `islandPreview` is the one place to swap it in: `update(kinds)` is all
 // the section calls.
+//
+// Folded as a line, the island is not a capsule: it is a bar along the edge (style.css
+// `#thread`) and shows no numbers. `update` draws that instead when it is handed a line.
 
 import { t } from "../core/i18n";
 import { Tracked } from "../core/anim";
@@ -59,8 +62,10 @@ export interface IslandPreview {
    * Shows these cells, in this order, folded as on this dock: a row hanging
    * from the top or standing on the bottom, a column flush with a side. The
    * island goes to its new length on its own spring unless `animate` is false.
+   * `line` is the colour of the thread when the island is folded to a line ("" for the
+   * neutral one): it is drawn instead of the capsule. Null draws the capsule.
    */
-  update(kinds: readonly CompactMetric[], animate: boolean, dock?: Dock): void;
+  update(kinds: readonly CompactMetric[], animate: boolean, dock?: Dock, line?: string | null): void;
   /** Starts the sample CPU number moving; the returned function stops it. */
   run(): () => void;
 }
@@ -80,7 +85,9 @@ export function islandPreview(bot: Bot): IslandPreview {
   }, h("div", { class: "sp-ci-bot" }, bot.el), dots, cells);
   const words = h("span");
   const width = h("span");
-  const desk = h("div", { class: "sp-desk", role: "img" }, island);
+  // The thread style's line, as style.css `#thread` has it: shown in place of the island while a line is asked for.
+  const thread = h("i", { class: "sp-thread", "aria-hidden": "true" });
+  const desk = h("div", { class: "sp-desk", role: "img" }, island, thread);
   const el = h("div", { class: "sp-live" }, desk, h("div", { class: "sp-live-caption" }, words, width));
 
   const NS = "http://www.w3.org/2000/svg";
@@ -119,8 +126,13 @@ export function islandPreview(bot: Bot): IslandPreview {
   let shown: string | null = null;
   return {
     el,
-    update(kinds, animate, dock = "top") {
+    update(kinds, animate, dock = "top", line = null) {
       side = sideDock(dock) ? dock : null;
+      const asLine = line !== null;
+      desk.classList.toggle("is-line", asLine);
+      desk.dataset.edge = dock;
+      if (line) thread.style.setProperty("--thread", line);
+      else thread.style.removeProperty("--thread");
       // Another dock: the island is drawn at once in its new shape, not sprung from the old one.
       if (side !== drawnFor) {
         drawnFor = side;
@@ -158,10 +170,12 @@ export function islandPreview(bot: Bot): IslandPreview {
       }
       draw();
       const names = on.map((k) => COMPACT_CELLS[k].short);
-      words.textContent = names.length ? t("s.preview.with", { names: names.join(" · ") }) : t("s.preview.none");
-      // Its length along the edge, ears included; on a side, the column's width beside it.
-      width.textContent = side ? `${COMPACT_COLUMN_W} × ${wanted + 2 * EAR_COMPACT} px` : `${wanted + 2 * EAR_COMPACT} px`;
-      desk.setAttribute("aria-label", t("s.preview.aria", { names: on.map((k) => COMPACT_CELLS[k].name).join(", ") || t("s.preview.noNumbers") }));
+      words.textContent = asLine ? t("s.preview.line")
+        : names.length ? t("s.preview.with", { names: names.join(" · ") }) : t("s.preview.none");
+      // Its length along the edge, ears included; on a side, the column's width beside it. A line has none to say.
+      width.textContent = asLine ? "" : side ? `${COMPACT_COLUMN_W} × ${wanted + 2 * EAR_COMPACT} px` : `${wanted + 2 * EAR_COMPACT} px`;
+      desk.setAttribute("aria-label", asLine ? t("s.preview.lineAria")
+        : t("s.preview.aria", { names: on.map((k) => COMPACT_CELLS[k].name).join(", ") || t("s.preview.noNumbers") }));
     },
     run() {
       let tick = 0;

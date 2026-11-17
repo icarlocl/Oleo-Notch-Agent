@@ -12,6 +12,7 @@ import { Bridge, IS_TAURI, onEvent } from "../core/bridge";
 import { DEFAULT_SETTINGS, FADE_MAX, FADE_MIN, usageLevel, usageShown, type Settings, type Usage } from "../core/state";
 import { h } from "../views/dom";
 import { toolMark } from "../views/tool";
+import { mountBot, startBots } from "../settings/bots";
 import { fadeOf } from "./fade";
 import { formatElapsed, formatTokens, readSnapshot, shownStatus, type AgentRow, type AgentStatus } from "./model";
 
@@ -46,12 +47,21 @@ const close = h("button", { class: "ag-x", type: "button", title: () => t("ag.hi
 close.addEventListener("click", () => void Bridge.agentsHide());
 const head = h("header", { class: "ag-head", "data-tauri-drag-region": true }, title, pill5.el, pill7.el, close);
 const list = h("ul", { class: "ag-list", role: "list", "aria-label": () => t("ag.list") });
-const empty = h("p", { class: "ag-empty", role: "status", text: () => t("ag.empty") });
+// Nothing at work: Durazno, and a line that says when agents will show up here.
+const emptyBot = mountBot(44);
+emptyBot.setState("idle");
+const empty = h("div", { class: "ag-empty", role: "status" },
+  h("div", { class: "ag-empty-bot", "aria-hidden": "true" }, emptyBot.el),
+  h("div", { class: "ag-empty-text" },
+    h("b", { text: () => t("ag.empty") }),
+    h("span", { text: () => t("ag.emptyHelp") })));
 const panel = h("div", { id: "ag-panel" }, head, list, empty);
 type Grip = "left" | "right" | "bottom" | "bottom-left" | "bottom-right";
 const GRIPS: Grip[] = ["left", "right", "bottom", "bottom-left", "bottom-right"];
 const grips = GRIPS.map((side) => h("div", { class: `ag-grip ag-grip-${side}`, "aria-hidden": "true" }));
 root.append(panel, ...grips);
+// His first look is drawn at once; this window never takes the keyboard, so he does not move after it.
+startBots(() => page.dataset.motion === "reduce");
 
 // ── The size: the edges and the bottom corners ────────────────────────────────
 // Pressed, an edge captures the pointer and Rust takes the width, or — from the

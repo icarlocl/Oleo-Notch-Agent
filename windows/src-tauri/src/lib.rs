@@ -782,6 +782,12 @@ fn open_log_folder() {
     about::open_log_folder();
 }
 
+/// Opens the folder the settings are in. No argument: the folder is Oleo's own.
+#[tauri::command]
+fn open_settings_folder() {
+    about::open_settings_folder();
+}
+
 /// Closes Oleo and starts it again: what puts a missing relay back in place
 /// (hooks.rs `ensure_hook_exe` runs at launch). It goes through the ordinary
 /// way out, so the global shortcuts and the single-instance lock are let go
@@ -859,6 +865,7 @@ pub fn run() {
             open_link,
             data_paths,
             open_log_folder,
+            open_settings_folder,
             restart_app,
             update::update_check,
             update::update_last,

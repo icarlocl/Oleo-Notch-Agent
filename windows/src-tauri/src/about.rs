@@ -64,6 +64,16 @@ pub fn open_log_folder() {
     platform::reveal_folder(&dir.to_string_lossy());
 }
 
+/// Opens the folder the settings are in, in the file manager.
+pub fn open_settings_folder() {
+    let dir = settings::config_dir();
+    // It is there once anything was saved; made now if not.
+    if platform::ensure_private_dir(&dir).is_err() {
+        return;
+    }
+    platform::reveal_folder(&dir.to_string_lossy());
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

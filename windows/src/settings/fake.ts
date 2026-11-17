@@ -310,6 +310,9 @@ export function fakeBackend(): Backend {
     async openLogFolder() {
       console.info("[fake] the log folder would open in the file manager");
     },
+    async openSettingsFolder() {
+      console.info("[fake] the settings folder would open in the file manager");
+    },
     async restart() {
       console.info("[fake] Oleo would close and start again");
       await wait(400);

@@ -54,6 +54,13 @@ export const SETTINGS = {
   "s.key.left": ["Izquierda", "Left", "Esquerda"],
   "s.key.right": ["Derecha", "Right", "Direita"],
   "s.key.del": ["Supr", "Del", "Del"],
+  "s.key.space": ["Espacio", "Space", "Espaço"],
+  "s.key.enter": ["Intro", "Enter", "Enter"],
+  "s.key.backspace": ["Retroceso", "Backspace", "Backspace"],
+  "s.key.home": ["Inicio", "Home", "Home"],
+  "s.key.end": ["Fin", "End", "End"],
+  "s.key.pageUp": ["Re Pág", "Page Up", "Page Up"],
+  "s.key.pageDown": ["Av Pág", "Page Down", "Page Down"],
 
   // The compact island's preview and its cells.
   "s.cell.cpu": ["Procesador (CPU)", "Processor (CPU)", "Processador (CPU)"],
@@ -69,6 +76,8 @@ export const SETTINGS = {
   "s.preview.none": ["Durazno · sesiones — sin indicadores, la isla es más estrecha", "Durazno · sessions — no numbers, so the island is narrower", "Durazno · sessões — sem indicadores, a ilha fica mais estreita"],
   "s.preview.aria": ["Vista previa de la isla compacta, con valores de ejemplo: {names}", "Preview of the compact island, with sample values: {names}", "Prévia da ilha compacta, com valores de exemplo: {names}"],
   "s.preview.noNumbers": ["sin indicadores", "no numbers", "sem indicadores"],
+  "s.preview.line": ["Plegada: Línea. Pasa el ratón por encima para abrirla. Los indicadores solo salen con «Cápsula».", "Folded: Line. Rest the pointer on it to open it. The numbers only show with “Capsule”.", "Recolhida: Linha. Passe o cursor por cima para abri-la. Os indicadores só aparecem com «Cápsula»."],
+  "s.preview.lineAria": ["Vista previa de la isla plegada como una línea junto al borde", "Preview of the island folded to a line along the edge", "Prévia da ilha recolhida como uma linha junto à borda"],
 
   // Weather.
   "s.wx.placeholder": ["Ciudad o código postal", "City or postcode", "Cidade ou CEP"],
@@ -356,7 +365,8 @@ export const SETTINGS = {
   "s.about.settings": ["Ajustes", "Settings", "Ajustes"],
   "s.about.settingsHelp": ["Lo que eliges en esta ventana", "Your choices in this window", "O que você escolhe nesta janela"],
   "s.about.logsHelp": ["El registro de Oleo y el pequeño programa auxiliar que ejecuta Claude Code", "Oleo's log file, and the small helper program Claude Code runs", "O log do Oleo e o pequeno programa auxiliar que o Claude Code executa"],
-  "s.about.openLogs": ["Abrir la carpeta de registros", "Open the logs folder", "Abrir a pasta de logs"],
+  "s.about.openFolder": ["Abrir carpeta", "Open folder", "Abrir pasta"],
+  "s.about.logs": ["Registro", "Logs", "Logs"],
   "s.about.madeBy": ["Creado por", "Made by", "Criado por"],
   "s.about.links": ["Enlaces de Franco Ruiz", "Franco Ruiz's links", "Links de Franco Ruiz"],
   "s.about.license": ["Código abierto bajo licencia MIT. Basado en Nook y Coucou.", "Open source under the MIT licence. Based on Nook and Coucou.", "Código aberto sob licença MIT. Baseado em Nook e Coucou."],

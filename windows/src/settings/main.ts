@@ -191,8 +191,7 @@ const tile = (id: Section, size: number, extra = "") =>
   h("span", { class: `sp-tile ${extra}`, "data-hue": id, "aria-hidden": "true" }, icon(INFO[id].icon, size, 2));
 
 const app = h("div", { class: "sp-app" });
-const navMark = h("i", { class: "sp-nav-mark", "aria-hidden": "true" });
-const nav = h("div", { class: "sp-nav", role: "tablist", "aria-orientation": "vertical", "aria-label": t("s.nav.aria") }, navMark);
+const nav = h("div", { class: "sp-nav", role: "tablist", "aria-orientation": "vertical", "aria-label": t("s.nav.aria") });
 const tabs = new Map<Section, HTMLButtonElement>();
 {
   let lastGroup: string | null = null;
@@ -228,14 +227,6 @@ nav.addEventListener("keydown", (e) => {
   setSection(SECTIONS[to]);
   tabs.get(SECTIONS[to])!.focus();
 });
-
-/** The marker of the category on show, beside its tab: where the tab is, whatever the group labels above it take. */
-const placeMark = () => {
-  const tab = tabs.get(section);
-  if (tab) navMark.style.setProperty("--y", `${tab.offsetTop + (tab.offsetHeight - 16) / 2}px`);
-};
-// The sidebar folds to its icons, and back: the tabs move, and the marker with them.
-new ResizeObserver(placeMark).observe(nav);
 
 const main = h("main", { class: "sp-main" });
 /** Says what a move or a refusal did, to a screen reader. */
@@ -1214,6 +1205,8 @@ async function refreshClaude() {
 /** A key of a shortcut as it is shown: "KeyK" is K, "Digit1" is 1, "Super" is the Windows key. */
 const KEY_WORDS: Record<string, string> = {
   Super: "Win", ArrowUp: t("s.key.up"), ArrowDown: t("s.key.down"), ArrowLeft: t("s.key.left"), ArrowRight: t("s.key.right"), Escape: "Esc", Delete: t("s.key.del"),
+  Space: t("s.key.space"), Enter: t("s.key.enter"), Backspace: t("s.key.backspace"), Home: t("s.key.home"), End: t("s.key.end"),
+  PageUp: t("s.key.pageUp"), PageDown: t("s.key.pageDown"),
 };
 const keyWord = (key: string) => KEY_WORDS[key] ?? key.replace(/^(Key|Digit)(?=.$)/, "");
 /** "Ctrl+Alt+Space" as its keys: Ctrl, Alt, Space. */
@@ -1290,11 +1283,13 @@ function shortcutRow({ which, label, does, keys }: (typeof SHORTCUTS)[number]): 
     const shown = recording ? partial.map(keyWord) : refused ? refused.keys : shortcutKeys(status.accelerator);
     for (const key of shown) field.append(h("kbd", { text: key }));
     if (recording) field.append(h("span", { class: "wait", text: partial.length ? t("s.sc.aKey") : t("s.sc.press") }));
-    else field.append(h("span", { class: "hint", text: t("s.sc.clickToChange") }));
+    field.title = recording ? "" : t("s.sc.clickToChange");
     field.setAttribute("aria-label", recording ? t("s.sc.recordingAria", { label }) : t("s.sc.changeAria", { label, keys: shortcutKeys(status.accelerator).join(" + ") }));
     power.set(status.enabled);
     const using = shortcutKeys(status.accelerator).join(" + ");
     clear(line);
+    // A notice is for what needs the user: a combination refused, one not taken, one waiting. A shortcut that works says nothing.
+    line.classList.toggle("quiet", state === "ok" || state === "unknown" || (state === "off" && !(dormant && status.enabled)));
     line.append(h("i"), h("span", { text:
       state === "recording" ? t("s.sc.recording")
       : refused ? (status.enabled && status.registered ? t("s.sc.stillUsing", { why: refused.why, keys: using }) : `${refused.why}.`)
@@ -1522,7 +1517,13 @@ const isMetric = (id: string): id is CompactMetric => (COMPACT_METRICS as readon
 
 /** The compact island, live: at the top of the Island page and of Look and colours, whichever is on show. */
 const folded = islandPreview(islandBot);
-const paintPreview = (animate: boolean) => folded.update(compactMetrics(settings), animate && !still(), settings.dock);
+/**
+ * What the preview draws. The Island page follows "Folded island": the line (in the colour chosen; "" is the neutral one)
+ * or the capsule. Look and colours always shows the capsule: the mascot is in it.
+ */
+const previewLine = (): string | null =>
+  section === "look" || settings.foldedStyle !== "thread" ? null : /^#[0-9a-f]{6}$/i.test(settings.threadColor) ? settings.threadColor : "";
+const paintPreview = (animate: boolean) => folded.update(compactMetrics(settings), animate && !still(), settings.dock, previewLine());
 
 /** The metrics to choose from: made once, repainted in place. */
 const metricPicker = (() => {
@@ -1670,7 +1671,10 @@ function islandSection(): Kid[] {
     change({ dock: v });
     paintPreview(false);
   });
-  const foldedStyle = segmented<Settings["foldedStyle"]>(t("s.isl.folded"), [["thread", t("s.isl.line")], ["capsule", t("s.isl.capsule")]], settings.foldedStyle, (v) => change({ foldedStyle: v }));
+  const foldedStyle = segmented<Settings["foldedStyle"]>(t("s.isl.folded"), [["thread", t("s.isl.line")], ["capsule", t("s.isl.capsule")]], settings.foldedStyle, (v) => {
+    change({ foldedStyle: v });
+    paintPreview(false);
+  });
   // The thread's colour: each session's own, or one of the user's.
   const ownThread = () => /^#[0-9a-f]{6}$/i.test(settings.threadColor);
   const threadInput = h("input", { type: "color", value: ownThread() ? settings.threadColor : "#f4aa86", "aria-label": t("s.isl.lineColor") });
@@ -1678,8 +1682,12 @@ function islandSection(): Kid[] {
   const threadColor = segmented<"session" | "own">(t("s.isl.lineColor"), [["session", t("s.isl.neutral")], ["own", t("s.isl.pick")]], ownThread() ? "own" : "session", (v) => {
     threadFold.classList.toggle("open", v === "own");
     change({ threadColor: v === "own" ? threadInput.value : "" });
+    paintPreview(false);
   });
-  threadInput.addEventListener("input", () => change({ threadColor: threadInput.value }));
+  threadInput.addEventListener("input", () => {
+    change({ threadColor: threadInput.value });
+    paintPreview(false);
+  });
   const autostart = toggle(settings.autostart, t("s.isl.autostart"), (on) => change({ autostart: on }));
 
   // When it closes and hides.
@@ -1933,11 +1941,9 @@ const shelfPicker = (() => {
       say(on ? t("s.shelf.shown", { name: def.name }) : t("s.shelf.hidden", { name: def.name }));
     });
     const el = h("div", { class: "sp-card", role: "listitem", tabindex: "0", "data-id": id, style: `--c:${def.accent}` },
-      h("div", { class: "sp-card-head" },
-        h("span", { class: "sp-mark" }, icon(def.icon, 13, 2.2)),
-        h("b", { text: def.name }),
-        shown.el),
-      h("p", { text: def.about }));
+      h("span", { class: "sp-mark" }, icon(def.icon, 15, 2.2)),
+      h("div", { class: "sp-card-text" }, h("b", { text: def.name }), h("p", { text: def.about })),
+      shown.el);
     el.addEventListener("keydown", (e) => {
       const hidden = shelfHidden();
       if (e.target !== el || hidden.has(id)) return;
@@ -2054,10 +2060,10 @@ function updatesGroup(): HTMLElement {
 }
 
 function aboutSection(): Kid[] {
-  const place = (label: string, help: string, path: string | undefined, keys: string) =>
-    findable(h("div", { class: "sp-row" },
-      rowText(label, help),
-      h("span", { class: "sp-path" }, ...(path ? breakable(path) : ["—"]))), label, help, keys);
+  const place = (label: string, help: string, path: string | undefined, keys: string, open: () => void) =>
+    findable(h("div", { class: "sp-row stack sp-place" },
+      h("div", { class: "sp-place-top" }, rowText(label, help), button(t("s.about.openFolder"), "quiet", open)),
+      h("div", { class: "sp-path" }, ...(path ? breakable(path) : ["—"]))), label, help, keys);
   const link = ({ which, name, where, mark }: (typeof LINKS)[number]) =>
     h("button", {
       class: "sp-social", type: "button", title: where,
@@ -2079,13 +2085,12 @@ function aboutSection(): Kid[] {
     t("s.about.privacy"), t("s.about.privacyFind"),
     "privacy private telemetry tracking data network internet offline online send", true),
     group(t("s.about.where"),
-      place(t("s.about.settings"), t("s.about.settingsHelp"), paths?.settings, "files folder location data settings where stored path"),
-      place("Logs", t("s.about.logsHelp"), paths?.local, "logs log folder files helper relay location"),
+      place(t("s.about.settings"), t("s.about.settingsHelp"), paths?.settings, "files folder location data settings where stored path open explorer",
+        () => void oleo.openSettingsFolder()),
+      place(t("s.about.logs"), t("s.about.logsHelp"), paths?.local, "logs log folder files helper relay location open explorer",
+        () => void oleo.openLogFolder()),
       ...(paths?.relayError ? [h("p", { class: "sp-help sp-danger-text", text: t("s.about.relayError", { why: paths.relayError }) })] : []),
-      findable(h("div", { class: "sp-row" },
-        h("button", { class: "sp-link", type: "button", onclick: () => void oleo.openLogFolder() },
-          icon(LUCIDE.folderOpen, 16), h("span", { class: "sp-link-text", text: t("s.about.openLogs") }), icon(LUCIDE.arrowUpRight, 14))),
-      t("s.about.openLogs"), null, "logs log folder open explorer files")),
+    ),
     findable(bare(t("s.about.madeBy"),
       h("div", { class: "sp-credit" },
         h("p", { class: "sp-made", text: "Franco Ruiz" }),
@@ -2166,7 +2171,6 @@ function setSection(next: Section, animate = true) {
     old.hidden = true;
   }
   paintTabs();
-  placeMark();
   refreshBots();
 }
 

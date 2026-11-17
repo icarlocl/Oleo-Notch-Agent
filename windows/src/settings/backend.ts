@@ -53,6 +53,7 @@ export interface Backend {
   openLink(which: AboutLink): Promise<void>;
   dataPaths(): Promise<DataPaths | null>;
   openLogFolder(): Promise<void>;
+  openSettingsFolder(): Promise<void>;
   restart(): Promise<void>;
 }
 
@@ -84,6 +85,7 @@ const oleo: Backend = {
   openLink: async (which) => void (await SettingsBridge.openLink(which)),
   dataPaths: () => SettingsBridge.dataPaths(),
   openLogFolder: async () => void (await SettingsBridge.openLogFolder()),
+  openSettingsFolder: async () => void (await SettingsBridge.openSettingsFolder()),
   restart: async () => void (await SettingsBridge.restart()),
 };
 

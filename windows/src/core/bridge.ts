@@ -486,6 +486,8 @@ export const SettingsBridge = {
   dataPaths: () => call<DataPaths>("data_paths"),
   /** Opens the folder the log is in. Takes no path: the folder is Oleo's own. */
   openLogFolder: () => call<void>("open_log_folder"),
+  /** Opens the folder the settings are in. Takes no path: the folder is Oleo's own. */
+  openSettingsFolder: () => call<void>("open_settings_folder"),
   /** Closes Oleo and starts it again: what puts a missing relay back. */
   restart: () => call<void>("restart_app"),
 };

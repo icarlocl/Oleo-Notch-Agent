@@ -345,25 +345,6 @@ body.settings-window {
   color: var(--on-hue);
 }
 
-/* The marker of the category on show: it slides to it on the island's spring. */
-.sp-nav-mark {
-  position: absolute;
-  z-index: 1;
-  left: -7px;
-  top: 0;
-  width: 3px;
-  height: 16px;
-  border-radius: var(--r-chip);
-  background: var(--accent);
-  transform: translateY(var(--y, 0));
-  transition: transform var(--spring-ms) var(--spring), opacity 0.14s ease-out;
-  pointer-events: none;
-}
-
-.sp-app.searching .sp-nav-mark {
-  opacity: 0;
-}
-
 /* ── Search: a field above the categories ────────────────────────────────── */
 
 .sp-search {
@@ -1323,9 +1304,10 @@ body.settings-window {
 
 .sp-keys {
   appearance: none;
-  width: 100%;
+  align-self: flex-start;
+  max-width: 100%;
   min-height: 38px;
-  padding: 5px 10px 5px 6px;
+  padding: 5px 6px;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -1360,12 +1342,6 @@ body.settings-window {
   font: 600 var(--t-meta) var(--font);
 }
 
-.sp-keys .hint {
-  margin-left: auto;
-  padding-left: 8px;
-  white-space: nowrap;
-}
-
 .sp-keys .wait {
   padding-left: 6px;
   color: var(--accent-text);
@@ -1398,6 +1374,11 @@ body.settings-window {
   min-height: 16px;
   font: 400 var(--t-body)/16px var(--font);
   color: var(--text-2);
+}
+
+/* A shortcut that works says nothing: its line is for a refusal, a clash or a wait. It stays for a screen reader. */
+.sp-shortcut-status.quiet {
+  display: none;
 }
 
 .sp-shortcut-status i {
@@ -1536,6 +1517,61 @@ body.settings-window {
 
 .sp-desk:is([data-dock="left"], [data-dock="right"]) .sp-ci-metric b {
   line-height: 16px;
+}
+
+/* Folded to a line: the island is a bar 8 px from the edge, like style.css `#thread` — white inside a dark ring,
+   or the colour chosen — and it shows no numbers. It grows under the pointer, as the real one does. */
+.sp-thread {
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  width: 134px;
+  height: 5px;
+  transform: translateX(-50%);
+  border-radius: var(--r-chip);
+  background: var(--thread, rgba(255, 255, 255, 0.92));
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.38), 0 1px 6px rgba(0, 0, 0, 0.35);
+  transition: width 0.18s ease, height 0.18s ease, background 0.3s ease;
+}
+
+.sp-desk.is-line .sp-ci {
+  display: none;
+}
+
+.sp-desk.is-line .sp-thread {
+  display: block;
+}
+
+.sp-desk.is-line:hover .sp-thread {
+  width: 184px;
+  height: 7px;
+}
+
+.sp-desk.is-line[data-edge="bottom"] .sp-thread {
+  top: auto;
+  bottom: 8px;
+}
+
+.sp-desk.is-line:is([data-edge="left"], [data-edge="right"]) .sp-thread {
+  top: 50%;
+  width: 5px;
+  height: 134px;
+  transform: translateY(-50%);
+}
+
+.sp-desk.is-line[data-edge="left"] .sp-thread {
+  left: 8px;
+}
+
+.sp-desk.is-line[data-edge="right"] .sp-thread {
+  left: auto;
+  right: 8px;
+}
+
+.sp-desk.is-line:is([data-edge="left"], [data-edge="right"]):hover .sp-thread {
+  width: 7px;
+  height: 184px;
 }
 
 .sp-ci-dots {
@@ -1712,6 +1748,13 @@ body.settings-window {
   color: var(--text-2);
 }
 
+/* A narrow window with the sidebar still open: the rows give back a little room to the names ("Límite de uso de 5 horas"). */
+@container win (max-width: 600px) {
+  .sp-check {
+    gap: 8px;
+  }
+}
+
 .sp-check .name {
   flex: 1 1 auto;
   min-width: 0;
@@ -1833,7 +1876,8 @@ body.settings-window {
   border-radius: var(--r-card);
   background: #000;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  /* Two columns while each card keeps room for a whole name; one when the window is narrow. */
+  grid-template-columns: repeat(auto-fit, minmax(max(230px, calc(50% - 4px)), 1fr));
   gap: 8px;
   color: var(--text);
 }
@@ -1841,11 +1885,11 @@ body.settings-window {
 .sp-card {
   position: relative;
   min-width: 0;
-  min-height: 92px;
-  padding: 9px 10px 10px;
+  min-height: 68px;
+  padding: 10px 12px;
   display: flex;
-  flex-direction: column;
-  gap: 7px;
+  align-items: center;
+  gap: 11px;
   border-radius: var(--r-card);
   background: #141518;
   border: 1px solid color-mix(in srgb, var(--c) 26%, rgba(255, 255, 255, 0.03));
@@ -1865,20 +1909,19 @@ body.settings-window {
   outline-offset: 1px;
 }
 
-.sp-card-head {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-width: 0;
-}
-
-.sp-card-head b {
+.sp-card-text {
   flex: 1 1 auto;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sp-card-text b {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font: 600 var(--t-body) var(--font);
+  font: 600 var(--t-body)/18px var(--font);
 }
 
 /* The widget's mark: the one place its colour is worn in full, as on the shelf. */
@@ -1891,6 +1934,11 @@ body.settings-window {
   place-items: center;
   background: color-mix(in srgb, var(--c) 18%, transparent);
   color: color-mix(in srgb, var(--c) 85%, #fff);
+}
+
+.sp-card .sp-mark {
+  width: 30px;
+  height: 30px;
 }
 
 .sp-card p {
@@ -1993,13 +2041,22 @@ body.settings-window {
   font-variant-numeric: tabular-nums;
 }
 
+/* Where a folder is: the name and its button on one line, the path under them, whole, broken where it must. */
+.sp-place {
+  gap: 6px;
+}
+
+.sp-place-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .sp-path {
-  flex: 0 1 auto;
   min-width: 0;
   font: 400 var(--t-meta)/16px var(--mono);
   color: var(--text-2);
   overflow-wrap: anywhere;
-  text-align: right;
 }
 
 .sp-row .sp-link {
@@ -2190,10 +2247,6 @@ body.settings-window {
     align-self: stretch;
   }
 
-  .sp-nav-mark {
-    left: -5px;
-  }
-
   .sp-tab {
     min-height: 36px;
     padding: 0;
@@ -2369,7 +2422,8 @@ body.settings-window {
 
 .sp-links {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* As many as fit, each wide enough for its name whole: one link today, and it must not be squeezed to a quarter. */
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 8px;
   margin: 12px 0 0 -2px;
 }

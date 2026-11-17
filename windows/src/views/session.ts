@@ -1,17 +1,18 @@
 // The session panel — a Claude Code session, followed from the island.
 //
-// On the left, a sidebar: the bot, the session's name, and under them the tree
-// of every session followed, each with the subagents it launched — how one
-// goes from a session to another, and from a session to one of its subagents.
-// On the right the journal of what is picked, read like a conversation: what
-// was asked, then each thing Claude did in the order it did it — a file read,
-// an edit with its diff, typed as it lands, a command, a question with what
-// was picked, a permission with what was decided — and what Claude said to end
-// its turn. Above it, chips that keep one kind of step. A subagent has a
-// journal of its own, reached from the sidebar or from the line of the main
-// journal where it was launched, ending on what it came back with. Behind the
-// journal, the files the session has changed and each one's whole diff. It is
-// for watching: to answer, there is Claude Code.
+// One column. On top, the sessions followed, a chip each — the row Home has,
+// the one in front lit: how one goes from a session to another. Under it a
+// card: a header with the bot, the session's title and where it is at (its
+// state, its model, the files it changed, where it runs), then the journal of
+// what is picked, read like a conversation: what was asked, then each thing
+// Claude did in the order it did it — a file read, an edit with its diff,
+// typed as it lands, a command, a question with what was picked, a permission
+// with what was decided — and what Claude said to end its turn. Above the
+// journal, chips that keep one kind of step. A subagent has a journal of its
+// own, reached from the line of the main journal where it was launched,
+// ending on what it came back with. Behind the journal, the files the session
+// has changed and each one's whole diff. It is for watching: to answer, there
+// is Claude Code.
 //
 // The panel has two sizes: its normal one, and a large one (the expand button
 // in the island's bar; Escape goes back) where a command is shown whole and
@@ -27,19 +28,18 @@ import { currentLang, locale, t, type Key } from "../core/i18n";
 import { diffLine, extBadge, fileKind, plusMinus, readPatch, splitPath, type FileKind } from "./code";
 import { ICONS } from "./icons";
 import { COLOR } from "./palette";
-import { LUCIDE, lucide } from "./iconset";
 import { collapses, reply as replyView, type PathOpener, type ReplyFold } from "./markdown";
 import { Bridge } from "../core/bridge";
 import {
-  decisionWords, quietWords, State, isQuestion, isQuiet, isTool, repliedWords, requestsOf, stepsApart, subagentKind, subagentName, subagentStanding, subagentTask, subagentTook, targetTip,
+  decisionWords, quietWords, State, isQuestion, isQuiet, isTool, repliedWords, requestsOf, stepsApart, subagentKind, subagentName, subagentStanding, subagentTask, subagentTook, targetTip, targetWords,
   type ChangedFile, type ClaudeSession, type ModelInfo, type SessionStep, type StepKind, type Subagent,
 } from "../core/state";
-import { targetButton, targetIcon } from "./target";
+import { targetIcon } from "./target";
 import { TOOL_NAME, toolMark } from "./tool";
 import { buildReplyBox } from "./reply-box";
 import type { SessionAgent } from "../core/state";
 import { stepIcon, stepName, stepPreview, type ToType } from "./step";
-import { botGlowColor } from "../core/layout";
+import { botGlowColor, SessionRoom } from "../core/layout";
 import { contextUse } from "../core/context";
 import { Reader } from "../core/reading";
 import type { ViewActions, ViewHost } from "./views";
@@ -98,7 +98,7 @@ function go(next: Screen) {
 
 /**
  * Into the panel: on the session's journal, at its end, or on the list of its
- * changes. The sessions to choose from are in the sidebar, whatever is on show.
+ * changes. The sessions to choose from are the row above the card, whatever is on show.
  */
 export function enterSessionPanel(on: "journal" | "changes" | "sessions" = "journal", whole = false) {
   screen = { kind: on === "changes" ? "list" : "live" };
@@ -212,7 +212,7 @@ const counted = (count: number, what: "sess.n.session" | "sess.n.subagent" | "se
 /** A session by its name: the conversation's title, or untitled, the folder it works in. */
 export const sessionName = (session: ClaudeSession) => session.title ?? session.project;
 
-/** Where a session is at, as a colour and in words: what its line of the sidebar shows and says. */
+/** Where a session is at, as a colour and in words: what its chip in the row shows and says. */
 function standing(session: ClaudeSession): { color: string; words: string; quiet?: boolean } {
   if (session.question) return { color: COLOR.cyan, words: t("views.asking") };
   if (session.approval) return { color: COLOR.amber, words: t("views.needsPermission") };
@@ -261,18 +261,6 @@ export function sessionsChip(onOpen: () => void): { el: HTMLElement; sync(): voi
       el.title = calling ? `${sessionName(calling)} ${standing(calling).words}${calling.attention ? ` — ${attentionWords().toLowerCase()}` : ""}` : t("sess.everySession");
     },
   };
-}
-
-/**
- * A project's colour, for the thin stripe beside its sessions in the sidebar:
- * one of eight hues picked by its folder's name. (layout.ts `colorForProject`
- * has four, too few to tell four sessions apart.)
- */
-const STRIPES = ["#3B9EFF", "#F472B6", "#A3E635", "#FB923C", "#8B5CF6", "#2DD4BF", "#FACC15", "#F87171"];
-function stripe(project: string): string {
-  let hash = 0;
-  for (const ch of project) hash = (Math.imul(31, hash) + ch.charCodeAt(0)) | 0;
-  return STRIPES[Math.abs(hash) % STRIPES.length];
 }
 
 /** A session by its folder; two in the same folder are told apart by a number. */
@@ -328,14 +316,6 @@ function diffView(file: ChangedFile, kind: FileKind): HTMLElement {
 }
 
 // ── Subagents: how each stands ────────────────────────────────────────────────
-
-/**
- * The subagents a session's line of the sidebar lists: all it launched in the
- * turn under way, the finished ones dimmed — until that turn is really over,
- * when they clear. (They stay reachable from the lines of the journal where
- * they were launched.)
- */
-const listed = (session: ClaudeSession) => session.subagents.filter((a) => !a.past);
 
 /** How something stands, as a small round mark: going, done, failed — or waiting for the user. */
 const MARKS = {
@@ -505,42 +485,43 @@ function modelChip(model: ModelInfo | null | undefined): HTMLElement[] {
   return model ? [h("span", { class: "sess-model", text: model.label, title: model.id })] : [];
 }
 
-/** Which agent a subagent is, and the model it runs on — "Explore · Haiku 4.5": the model only when an event named it. */
-const subagentMeta = (agent: Pick<Subagent, "type" | "model">) =>
-  agent.model ? `${subagentKind(agent)} · ${agent.model.label}` : subagentKind(agent);
-
 export function buildSession(actions: ViewActions): ViewHost {
   // ── What the panel is made of ───────────────────────────────────────────────
 
-  // The sidebar: the bot (the island draws it, here is its room), whose
-  // session this is, and the tree of the sessions and their subagents.
-  const name = h("b", { text: UNNAMED });
-  const nameSub = h("span");
-  // The model the session runs on, beside its name — in the panel at its
-  // normal size, where the line above the journal has no room for it.
-  const nameModel = h("span", { class: "sess-name-model" });
-  const tree =h("div", { class: "sess-tree", role: "tree", "aria-label": () => t("sess.treeLabel") });
+  // The row of sessions, over the card: the one in front lit. It is there
+  // only with more than one session (`SessionRoom.strip`: the bot goes down by
+  // its height). A row that does not fit goes sideways, fading where there is more.
   // All · Claude Code · Cursor · Codex: there only while sessions of more than one tool are followed.
   let toolFilter: "all" | SessionAgent = "all";
   const toolChips = h("div", { class: "sess-tools", role: "group", "aria-label": () => t("sess.showFrom") });
   toolChips.hidden = true;
-  const rail = h(
-    "div",
-    { class: "sess-rail" },
-    h("div", { class: "sess-rail-head" }, h("div", { class: "sess-bot-slot" }), h("div", { class: "gh-side-who" }, h("div", { class: "sess-name-row" }, name, nameModel), nameSub)),
-    toolChips,
-    tree,
-  );
-  /** The chips of the filter, drawn again when the kinds followed change. */
-  let chipsKey = "";
+  const chipRow = h("div", { class: "hc-row sess-chips", role: "tablist", "aria-label": () => t("sess.chipsLabel") });
+  const strip = h("div", { class: "sess-strip" }, toolChips, chipRow);
+  strip.hidden = true;
+  const fadeChips = () => chipRow.classList.toggle("more", chipRow.scrollLeft + chipRow.clientWidth < chipRow.scrollWidth - 2);
+  chipRow.addEventListener("scroll", fadeChips, { passive: true });
+  new ResizeObserver(fadeChips).observe(chipRow);
+
+  // The header of the card: the bot (the island draws it, here is its room),
+  // the session's title — whole — and under it where it is at. On the right,
+  // the way to where the session runs: an editor's window, a terminal's, the
+  // Claude app; none for a session nothing says the place of.
+  const title = h("b", { class: "sess-title", text: UNNAMED });
+  const line = h("div", { class: "sess-line" });
+  const goBtn = h("button", { class: "sess-go", type: "button", onclick: () => actions.openTerminal() });
+  goBtn.hidden = true;
+  const sessHead = h("div", { class: "sess-head" }, h("div", { class: "sess-bot-slot" }), h("div", { class: "sess-who" }, title, line), goBtn);
+
+  /** The chips of the tool filter, drawn again when the kinds followed change. */
+  let toolsKey = "";
   function drawToolChips() {
     const kinds = (["claude", "cursor", "codex"] as const).filter((kind) => State.sessions.some((s) => s.agent === kind));
     const both = kinds.length > 1;
     if (!both || (toolFilter !== "all" && !kinds.includes(toolFilter))) toolFilter = "all";
     const key = `${kinds.join()}|${toolFilter}|${currentLang()}`;
     toolChips.hidden = !both;
-    if (key === chipsKey) return;
-    chipsKey = key;
+    if (key === toolsKey) return;
+    toolsKey = key;
     clear(toolChips);
     if (!both) return;
     for (const which of ["all", ...kinds] as const) {
@@ -549,26 +530,19 @@ export function buildSession(actions: ViewActions): ViewHost {
         which === "all" ? null : toolMark(which, 10), label);
       chip.addEventListener("click", () => {
         toolFilter = which;
-        railKey = "";
-        chipsKey = "";
+        stripKey = "";
+        toolsKey = "";
         drawToolChips();
-        drawRail(State.session);
+        drawStrip(State.session);
       });
       toolChips.append(chip);
     }
   }
 
-  // Above a journal: the chips that keep one kind of step — and, for the
-  // session's own, where it is at and the way to its changes and to where it
-  // runs. Above a subagent's: where one is, and the way back.
+  // Above a journal: the chips that keep one kind of step. Above a
+  // subagent's: where one is, and the way back.
   const filters = h("div", { class: "sess-filters" });
   const crumb = h("div", { class: "sess-crumb" });
-  // The way to where the session runs — an editor's window, a terminal's, the
-  // Claude app — said by its icon and its tooltip; none for a session nothing
-  // says the place of.
-  const goToSession = () => targetButton("gh-icon", 11, () => actions.openTerminal());
-  /** The one above the changes: built once, it follows the session in front. */
-  const headTarget = goToSession();
 
   // Above the changes and a file's diff: a head like an editor's tab.
   const who = h("b");
@@ -578,7 +552,7 @@ export function buildSession(actions: ViewActions): ViewHost {
   // One step back: from a file to the changes, from the changes to the journal.
   const backBtn = h("button", { class: "gh-icon sess-back", title: () => t("views.q.return") }, svg(ICONS.chevronLeft, 10, { stroke: 2.4 }));
   const tab = h("div", { class: "gh-tab" }, badge, who);
-  const head = h("div", { class: "gh-head" }, backBtn, tab, aside, h("div", { class: "grow" }), sub, headTarget.el);
+  const head = h("div", { class: "gh-head" }, backBtn, tab, aside, h("div", { class: "grow" }), sub);
   // The journal, and behind it the changes: one of the two is on screen.
   const journal = h("div", { class: "gh-list sess-journal" });
   const list = h("div", { class: "gh-list" });
@@ -593,10 +567,10 @@ export function buildSession(actions: ViewActions): ViewHost {
     main.style.setProperty("--rb-h", `${replyBox.el.offsetHeight}px`);
     if (pinned) journal.scrollTop = journal.scrollHeight;
   });
-  const main = h("div", { class: "gh-main" }, head, crumb, filters, journal, list, replyBox.el, jump);
+  const main = h("div", { class: "gh-main" }, sessHead, head, crumb, filters, journal, list, replyBox.el, jump);
   // The panel itself can hold the focus, unseen: keys then reach the island
-  // without any line of the sidebar having been given it.
-  const el = h("div", { class: "view gh-view session-view", tabindex: "-1" }, h("div", { class: "card gh-card" }, rail, main));
+  // without any chip of the row having been given it.
+  const el = h("div", { class: "view gh-view session-view", tabindex: "-1" }, h("div", { class: "gh-card" }, strip, main));
 
   backBtn.addEventListener("click", () => {
     actions.blip();
@@ -682,7 +656,7 @@ export function buildSession(actions: ViewActions): ViewHost {
     placeJump();
   });
 
-  /** A session picked in the sidebar: it comes in front, on its journal. The one in front goes back to its journal. */
+  /** A session picked in the row: it comes in front, on its journal. The one in front goes back to its journal. */
   function pickSession(id: string) {
     actions.blip();
     if (id !== State.frontId) actions.pickSession(id);
@@ -691,242 +665,152 @@ export function buildSession(actions: ViewActions): ViewHost {
     go({ kind: "live" });
   }
 
-  /** A subagent picked — in the sidebar, or on the line where it was launched: its own view. */
+  /** A subagent picked, on the line where it was launched: its own view. */
   function openAgent(sessionId: string, agentId: string) {
     actions.blip();
     if (sessionId !== State.frontId) actions.pickSession(sessionId);
     go({ kind: "agent", session: sessionId, id: agentId });
   }
 
-  // ── The sidebar: a tree of sessions and their subagents ─────────────────────
-  // The sessions stay in the order they were first heard in: a line never
+  // ── The row of sessions ─────────────────────────────────────────────────────
+  // The sessions stay in the order they were first heard in: a chip never
   // moves from under the pointer or the keyboard because a request came in.
   //
-  // What is open. A session's subagents show while one of them runs. Closed by
-  // hand, they stay closed until they are opened by hand or a NEW subagent
-  // starts (the count of subagents is kept at the moment of closing: more than
-  // that, and the line follows its subagents again). Opened by hand, they stay
-  // open — finished subagents too — until closed.
-  //
-  // The keyboard. One tab stop (roving tabindex). Up / Down move through the
-  // lines on show, Home / End go to the first and the last, Enter opens the
-  // line, Ctrl+Enter goes to where a session runs, Right opens a session's subagents (or, open already, goes
-  // to the first), Left closes them (or, on a subagent, goes to its session).
-  // Space is not the tree's: it is the panel's size, wherever the focus is
+  // The keyboard. One tab stop (roving tabindex) in the row. Left / Right move
+  // along it, Home / End go to the first and the last, Enter picks the session,
+  // Ctrl+Enter goes to where it runs, Down goes to the first subagent of the
+  // journal (Up, Left or Home come back to the row), and on the lines of the
+  // subagents Up / Down / Home / End move, and Enter opens the subagent.
+  // Space is not the row's: it is the panel's size, wherever the focus is
   // (island.ts). It works once the island has the keyboard, which a click in
-  // the tree, opening the panel, or the panel going large, asks for. No line
+  // the row, opening the panel, or the panel going large, asks for. No chip
   // is given the focus by any of those: the panel holds it, and the first
-  // arrow pressed puts it on the tree's tab stop.
-
-  type Fold = { open: true } | { open: false; count: number };
-  const folds = new Map<string, Fold>();
-
-  function expanded(session: ClaudeSession, subs: Subagent[]): boolean {
-    if (subs.length === 0) return false;
-    const fold = folds.get(session.id);
-    if (fold?.open) return true;
-    if (fold && subs.length <= fold.count) return false;
-    if (fold) folds.delete(session.id);
-    return subs.some((a) => a.state === "running");
-  }
-
-  function toggle(session: ClaudeSession, open: boolean) {
-    folds.set(session.id, open ? { open: true } : { open: false, count: listed(session).length });
-    State.notify();
-  }
+  // arrow pressed puts it on the row's tab stop.
 
   const sessionKey = (sessionId: string) => `s:${sessionId}`;
-  const agentKey = (sessionId: string, agentId: string) => `a:${sessionId}:${agentId}`;
   const domId = (key: string) => `sess-${key.replace(/[^a-zA-Z0-9]/g, "-")}`;
 
-  /** The line the keyboard is on. */
+  /** The chip the keyboard is on. */
   let focusKey = "";
-  /** The last thing used was the keyboard: the line with the focus wears its ring. */
+  /** The last thing used was the keyboard: the chip with the focus wears its ring. */
   let byKeyboard = false;
-  /** What the tree last drew: drawn again only when it changes, so a click is never lost between its down and its up. */
-  let railKey = "";
+  /** What the row last drew: drawn again only when it changes, so a click is never lost between its down and its up. */
+  let stripKey = "";
 
-  const rows = () => [...tree.querySelectorAll<HTMLElement>(".sess-ti")];
+  const stops = () => [...chipRow.querySelectorAll<HTMLElement>(".sess-sc")];
+  /** The lines of the journal that open a subagent. */
+  const launches = () => [...journal.querySelectorAll<HTMLElement>("[data-sub]")];
 
-  function moveTo(row: HTMLElement | undefined) {
-    if (!row) return;
-    for (const other of rows()) other.tabIndex = other === row ? 0 : -1;
-    focusKey = row.dataset.key!;
-    row.focus();
-    row.scrollIntoView({ block: "nearest" });
+  /** The chip, brought into view along the row — never by `scrollIntoView`, which would move the island's own clip. */
+  function revealChip(chip: HTMLElement | undefined) {
+    if (!chip) return;
+    const left = chip.offsetLeft;
+    const right = left + chip.offsetWidth;
+    if (left < chipRow.scrollLeft) chipRow.scrollLeft = left - 8;
+    else if (right > chipRow.scrollLeft + chipRow.clientWidth) chipRow.scrollLeft = right - chipRow.clientWidth + 8;
   }
 
-  function drawRail(front: ClaudeSession) {
-    const onAgent = screen.kind === "agent" ? screen.id : null;
-    // What each line shows, and whether its subagents are on show.
-    const lines = State.sessions.filter((s) => toolFilter === "all" || s.agent === toolFilter).map((session) => {
-      const subs = listed(session);
-      return { session, subs, open: expanded(session, subs), at: standing(session) };
-    });
-    const next = lines
-      .map(({ session, subs, open, at }) =>
-        [
-          session.id, session.agent, folderOf(session), session.title, at.words, at.color, open, targetTip(session), session.target.kind, session.model?.label, session.decision, session.attention,
-          contextUse(session.contextTokens, session.contextWindow, session.model?.id)?.percent,
-          ...subs.map((a) => [a.id, a.type, subagentTask(a), subagentStanding(session, a), a.model?.label].join(":")),
-        ].join("~"))
-      .concat(front.id, onAgent ?? "", owed?.id ?? "", currentLang())
-      .join("|");
-    if (next === railKey) return;
-    railKey = next;
+  function moveTo(chip: HTMLElement | undefined) {
+    if (!chip) return;
+    for (const other of stops()) other.tabIndex = other === chip ? 0 : -1;
+    focusKey = chip.dataset.key!;
+    chip.focus({ preventScroll: true });
+    revealChip(chip);
+  }
 
-    const hadFocus = tree.contains(document.activeElement);
-    const scroll = tree.scrollTop;
-    clear(tree);
-    for (const { session, subs, open, at } of lines) {
+  function focusLaunch(line: HTMLElement | undefined) {
+    if (!line) return;
+    line.focus({ preventScroll: true });
+    // Inside the journal's own scroller: nothing above it moves.
+    const room = line.getBoundingClientRect();
+    const at = journal.getBoundingClientRect();
+    if (room.top < at.top) journal.scrollTop -= at.top - room.top + REVEAL_GAP;
+    else if (room.bottom > at.bottom) journal.scrollTop += room.bottom - at.bottom + REVEAL_GAP;
+  }
+
+  function drawStrip(front: ClaudeSession) {
+    const onAgent = screen.kind === "agent";
+    const kinds = new Set(State.sessions.map((s) => s.agent));
+    const lines = State.sessions.filter((s) => toolFilter === "all" || s.agent === toolFilter).map((session) => ({ session, at: standing(session) }));
+    const next = lines
+      .map(({ session, at }) =>
+        [
+          session.id, session.agent, folderOf(session), session.title, at.words, at.color, targetTip(session), session.target.kind, session.model?.label, session.decision, session.attention,
+          contextUse(session.contextTokens, session.contextWindow, session.model?.id)?.percent,
+        ].join("~"))
+      .concat(front.id, String(onAgent), owed?.id ?? "", String(kinds.size > 1), currentLang())
+      .join("|");
+    if (next === stripKey) return;
+    stripKey = next;
+
+    const hadFocus = chipRow.contains(document.activeElement);
+    const scroll = chipRow.scrollLeft;
+    clear(chipRow);
+    for (const { session, at } of lines) {
       const inFront = session === front;
       const key = sessionKey(session.id);
-      const groupId = `${domId(key)}-subs`;
-      const asking = subs.filter((a) => subagentStanding(session, a) === "asking").length;
-      const going = subs.filter((a) => a.state === "running").length;
       const folder = folderOf(session);
-      const mark = dot(at.color, 7);
-      if (session.question || session.approval) mark.classList.add("calls");
+      const mark = dot(at.color, 8);
+      const asks = session.question != null || session.approval != null;
+      if (asks) mark.classList.add("calls");
       mark.style.setProperty("--c", at.color);
 
-      const row = h("div", {
-        class: `sess-ti sess-node${inFront ? " front" : ""}${inFront && !onAgent ? " on" : ""}`,
+      const chip = h("div", {
+        class: `agent sess-sc${inFront ? " on" : ""}${asks ? " calls" : ""}`,
         id: domId(key),
-        role: "treeitem",
-        "aria-level": 1,
-        "aria-selected": String(inFront && !onAgent),
-        title: `${TOOL_NAME[session.agent]} — ${folder} — ${session.title ?? TOOL_NAME[session.agent]}${session.model ? ` — ${session.model.label}` : ""} — ${at.words}${subs.length ? ` — ${counted(subs.length, "sess.n.subagent")}, ${t("sess.nRunning", { n: going })}` : ""}`,
+        role: "tab",
+        "aria-selected": String(inFront),
       });
-      row.dataset.key = key;
-      row.dataset.session = session.id;
-      row.style.setProperty("--c", stripe(session.project));
-      if (subs.length > 0) {
-        row.setAttribute("aria-expanded", String(open));
-        row.setAttribute("aria-owns", groupId);
-        const twisty = h("i", { class: "sess-twisty", title: open ? t("sess.hideSubs") : t("sess.showSubs") }, svg(ICONS.chevronRight, 9, { stroke: 2.8 }));
-        twisty.addEventListener("click", (e) => {
-          e.stopPropagation();
-          toggle(session, !open);
-        });
-        row.append(twisty);
-      } else {
-        row.append(h("i", { class: "sess-twisty none" }));
-      }
-      row.append(toolMark(session.agent, 11), h("b", { text: folder }));
-      if (subs.length > 0) {
-        row.append(h("span", {
-          class: asking > 0 ? "sess-count asking" : going > 0 ? "sess-count going" : "sess-count",
-          text: String(subs.length),
-          title: `${counted(subs.length, "sess.n.subagent")}: ${t("sess.nRunning", { n: going })}${asking ? `, ${t("sess.nWaiting", { n: asking })}` : ""}`,
-        }));
-      }
-      // The way to where it runs, from its own line: no need to put it in
-      // front first. Not a tab stop — the tree has one — and a click on it is
-      // not a click on the line. None for a session nothing says the place of.
-      const tip = targetTip(session);
-      const icon = tip ? targetIcon(session.target.kind, 10) : null;
-      if (tip && icon) {
-        const goto = h("i", { class: "sess-goto", title: `${tip} (Ctrl+Enter)`, "aria-label": tip, role: "button" }, icon);
-        goto.dataset.target = session.target.kind;
-        // Not the tree's mouse-down either: going there is not asking for the keyboard.
-        goto.addEventListener("mousedown", (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-        });
-        goto.addEventListener("click", (e) => {
-          e.stopPropagation();
-          actions.blip();
-          actions.goToSession(session.id);
-        });
-        goto.addEventListener("dblclick", (e) => e.stopPropagation());
-        row.append(goto);
+      chip.dataset.key = key;
+      chip.dataset.session = session.id;
+      if (kinds.size > 1) chip.append(toolMark(session.agent, 10));
+      chip.append(h("span", { class: "agent-name", text: folder }), h("span", { class: "agent-state", text: at.words }));
+      chip.prepend(mark);
+
+      // A turn of its ended while the panel was being read: not said by sound or card, but here, until it is opened.
+      const attends = (session.attention && !inFront) || session === owed;
+      if (attends) {
+        chip.classList.add("attn");
+        chip.append(h("i", { class: "sess-new", role: "img", "aria-label": attentionWords(), title: attentionWords() }));
       }
       // How full its context is, for the one to go and /compact: a cue, as Oleo cannot do it.
-      // Said in words as well as colour; none before an answer has been counted.
       const use = contextUse(session.contextTokens, session.contextWindow, session.model?.id);
-      if (use) {
-        const words = t("sess.context", { n: use.percent });
-        row.append(h("i", { class: `sess-ctx ${use.level}`, title: words }, h("u", { style: `width:${use.percent}%` }), h("span", { class: "sess-ctx-words", text: words })));
-        row.title += ` — ${words}`;
-      }
-      // A turn of its ended while the panel was being read: not said by sound or card, but here, until it is opened.
-      if ((session.attention && !inFront) || session === owed) {
-        row.classList.add("attn");
-        row.append(h("i", { class: "sess-new", role: "img", "aria-label": attentionWords(), title: attentionWords() }));
-        row.title += ` — ${attentionWords().toLowerCase()}`;
-      }
-      row.append(mark);
-      row.addEventListener("click", () => pickSession(session.id));
-      tree.append(row);
-      // Nothing heard from it for a long while: a quiet word under its line.
-      if (at.quiet) tree.append(h("div", { class: "sess-quiet", text: at.words, title: quietTip() }));
-      // Its last reply waits on a decision: a mark under its line, whatever its dot says — a request
-      // or an error keeps the dot. A click reads the reply, as a click on the line does.
-      if (session.decision) {
-        tree.append(h(
-          "div", { class: "sess-decide", title: decisionTip(), onclick: () => pickSession(session.id) },
-          lucide(LUCIDE.messageSquareWarning, 10, 2.2), h("span", { text: decisionWords() }),
-        ));
-      }
-
-      if (subs.length === 0 || !open) continue;
-      const group = h("div", { class: "sess-subs", id: groupId, role: "group" });
-      for (const a of subs) {
-        const akey = agentKey(session.id, a.id);
-        const on = inFront && onAgent === a.id;
-        const stands = subagentStanding(session, a);
-        const line = h(
-          "div",
-          {
-            class: `sess-ti sess-sub ${stands}${on ? " on" : ""}`,
-            id: domId(akey),
-            role: "treeitem",
-            "aria-level": 2,
-            "aria-selected": String(on),
-            // All of both lines, however they were cut: its type and task, its model, how it stands.
-            title: `${fullName(a)}${a.model ? ` — ${a.model.label}` : ""} — ${statusWords(session, a)}`,
-          },
-          MARKS[stands](),
-          // Two lines: what it was launched to do, and under it, quieter, which agent it is and the model it runs on.
-          h("span", { class: "sess-sub-words" },
-            h("span", { class: "sess-sub-task", text: subagentTask(a) ?? subagentKind(a) }),
-            h("span", { class: "sess-sub-meta", text: subagentMeta(a) })),
-        );
-        if (stands === "asking") line.append(h("span", { class: "sess-sub-needs", text: t("sess.needsAttention") }));
-        line.dataset.key = akey;
-        line.dataset.session = session.id;
-        line.dataset.agent = a.id;
-        line.addEventListener("click", () => openAgent(session.id, a.id));
-        group.append(line);
-      }
-      tree.append(group);
+      chip.title = [
+        `${TOOL_NAME[session.agent]} — ${folder} — ${session.title ?? TOOL_NAME[session.agent]}`,
+        session.model?.label,
+        at.words,
+        at.quiet ? quietTip() : null,
+        session.decision ? decisionTip() : null,
+        use ? t("sess.context", { n: use.percent }) : null,
+        attends ? attentionWords().toLowerCase() : null,
+      ].filter(Boolean).join(" — ");
+      chip.addEventListener("click", () => pickSession(session.id));
+      chipRow.append(chip);
     }
 
-    // One line holds the tab stop: the one the keyboard was on, or its session when it is no longer on show.
-    const all = rows();
-    let holder = all.find((r) => r.dataset.key === focusKey);
-    if (!holder && focusKey.startsWith("a:")) holder = all.find((r) => r.dataset.key === sessionKey(focusKey.split(":")[1]));
-    holder ??= all.find((r) => r.classList.contains("on")) ?? all[0];
+    // One chip holds the tab stop: the one the keyboard was on, or the lit one.
+    const all = stops();
+    const holder = all.find((r) => r.dataset.key === focusKey) ?? all.find((r) => r.classList.contains("on")) ?? all[0];
     for (const r of all) r.tabIndex = r === holder ? 0 : -1;
     if (holder) focusKey = holder.dataset.key!;
-    tree.scrollTop = scroll;
-    if (hadFocus && holder) {
-      holder.focus();
-      holder.scrollIntoView({ block: "nearest" });
-    }
+    chipRow.scrollLeft = scroll;
+    // The one in front is never out of sight.
+    revealChip(all.find((r) => r.classList.contains("on")));
+    if (hadFocus && holder) holder.focus({ preventScroll: true });
+    fadeChips();
   }
 
-  /** Puts the focus on the tree's tab stop, once the window has the keyboard: the arrows then move through it. */
-  function focusTree() {
+  /** Puts the focus on the row's tab stop, once the window has the keyboard: the arrows then move along it. */
+  function focusStrip() {
     window.setTimeout(() => {
-      if (tree.contains(document.activeElement)) return;
-      rows().find((r) => r.tabIndex === 0)?.focus({ preventScroll: true });
+      if (chipRow.contains(document.activeElement)) return;
+      stops().find((r) => r.tabIndex === 0)?.focus({ preventScroll: true });
     }, FOCUS_MS);
   }
 
   /**
    * The panel opens, or goes large: the panel itself takes the focus, once the
-   * window has the keyboard — never a line of the tree, which would then take
+   * window has the keyboard — never a chip of the row, which would then take
    * the next key for itself and wear a ring nobody asked for. Whatever in the
    * panel has the focus already keeps it.
    */
@@ -939,75 +823,97 @@ export function buildSession(actions: ViewActions): ViewHost {
     }, FOCUS_MS);
   }
 
-  // The first arrow pressed with the focus on the panel, not in the tree: the
-  // tree's tab stop takes it, and wears its ring from then on.
-  const TREE_KEYS: ReadonlySet<string> = new Set(["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Home", "End"]);
+  // The first arrow pressed with the focus on the panel, not in the row or on
+  // a subagent: the row's tab stop takes it — with no row, the first subagent —
+  // and wears its ring from then on.
+  const NAV_KEYS: ReadonlySet<string> = new Set(["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Home", "End"]);
   el.addEventListener("keydown", (e) => {
-    if (!TREE_KEYS.has(e.key) || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (!NAV_KEYS.has(e.key) || e.altKey || e.ctrlKey || e.metaKey) return;
     const target = e.target as HTMLElement;
-    if (tree.contains(target) || target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
-    const stop = rows().find((r) => r.tabIndex === 0);
-    if (!stop) return;
+    if (chipRow.contains(target) || target.closest("[data-sub]") || target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+    const stop = strip.hidden ? undefined : stops().find((r) => r.tabIndex === 0);
+    const first = launches()[0];
+    if (!stop && !first) return;
     e.preventDefault();
     byKeyboard = true;
-    tree.classList.add("kbd");
-    stop.focus();
-    stop.scrollIntoView({ block: "nearest" });
+    chipRow.classList.add("kbd");
+    if (stop) moveTo(stop);
+    else focusLaunch(first);
   });
 
-  // A click in the tree is asking to use it: the island takes the keyboard,
+  // A click in the row is asking to use it: the island takes the keyboard,
   // which its window never has on its own, so the arrows work from then on.
-  tree.addEventListener("mousedown", () => {
+  chipRow.addEventListener("mousedown", () => {
     byKeyboard = false;
-    tree.classList.remove("kbd");
+    chipRow.classList.remove("kbd");
     actions.panelKeyboard();
-    focusTree();
+    focusStrip();
   });
-  tree.addEventListener("focusin", (e) => {
-    const row = (e.target as HTMLElement).closest<HTMLElement>(".sess-ti");
-    if (row?.dataset.key) focusKey = row.dataset.key;
+  chipRow.addEventListener("focusin", (e) => {
+    const chip = (e.target as HTMLElement).closest<HTMLElement>(".sess-sc");
+    if (chip?.dataset.key) focusKey = chip.dataset.key;
   });
-  tree.addEventListener("keydown", (e) => {
-    const all = rows();
-    const row = (e.target as HTMLElement).closest<HTMLElement>(".sess-ti");
-    if (!row) return;
-    const session = State.sessions.find((s) => s.id === row.dataset.session);
+  chipRow.addEventListener("keydown", (e) => {
+    const chip = (e.target as HTMLElement).closest<HTMLElement>(".sess-sc");
+    if (!chip) return;
+    const session = State.sessions.find((s) => s.id === chip.dataset.session);
     if (!session) return;
-    // Ctrl+Enter on a session's line: to where it runs, as its ↗ does.
-    if (e.key === "Enter" && e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey && !row.dataset.agent) {
+    // Ctrl+Enter on a session's chip: to where it runs, as the button of its header does.
+    if (e.key === "Enter" && e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) {
       e.preventDefault();
       if (targetTip(session)) actions.goToSession(session.id);
       return;
     }
     if (e.altKey || e.ctrlKey || e.metaKey) return;
-    const i = all.indexOf(row);
-    const agentId = row.dataset.agent;
-    const hasSubs = row.hasAttribute("aria-expanded");
-    const open = row.getAttribute("aria-expanded") === "true";
+    const all = stops();
+    const i = all.indexOf(chip);
     let handled = true;
     switch (e.key) {
-      case "ArrowDown": moveTo(all[i + 1]); break;
-      case "ArrowUp": moveTo(all[i - 1]); break;
+      case "ArrowRight": moveTo(all[i + 1]); break;
+      case "ArrowLeft": moveTo(all[i - 1]); break;
       case "Home": moveTo(all[0]); break;
       case "End": moveTo(all[all.length - 1]); break;
-      case "Enter":
-        if (agentId) openAgent(session.id, agentId);
-        else pickSession(session.id);
+      case "ArrowDown": {
+        const first = launches()[0];
+        if (first) focusLaunch(first);
+        else handled = false;
         break;
-      case "ArrowRight":
-        if (agentId || !hasSubs) break;
-        if (open) moveTo(all[i + 1]);
-        else toggle(session, true);
+      }
+      case "Enter": pickSession(session.id); break;
+      default: handled = false;
+    }
+    if (!handled) return;
+    byKeyboard = true;
+    chipRow.classList.add("kbd");
+    e.preventDefault();
+  });
+
+  // On the lines of the journal that open a subagent.
+  journal.addEventListener("keydown", (e) => {
+    const line = (e.target as HTMLElement).closest<HTMLElement>("[data-sub]");
+    if (!line || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    const all = launches();
+    const i = all.indexOf(line);
+    const stop = strip.hidden ? undefined : stops().find((r) => r.tabIndex === 0);
+    let handled = true;
+    switch (e.key) {
+      case "ArrowDown": if (all[i + 1]) focusLaunch(all[i + 1]); else handled = false; break;
+      case "ArrowUp":
+        if (all[i - 1]) focusLaunch(all[i - 1]);
+        else if (stop) moveTo(stop);
+        else handled = false;
         break;
+      case "Home": focusLaunch(all[0]); break;
+      case "End": focusLaunch(all[all.length - 1]); break;
       case "ArrowLeft":
-        if (agentId) moveTo(all.find((r) => r.dataset.key === sessionKey(session.id)));
-        else if (open) toggle(session, false);
+        if (stop) moveTo(stop);
+        else handled = false;
         break;
       default: handled = false;
     }
     if (!handled) return;
     byKeyboard = true;
-    tree.classList.add("kbd");
+    chipRow.classList.add("kbd");
     e.preventDefault();
   });
 
@@ -1095,7 +1001,7 @@ export function buildSession(actions: ViewActions): ViewHost {
   function launchRow(session: ClaudeSession, a: Subagent): HTMLElement {
     const stands = subagentStanding(session, a);
     const task = subagentTask(a);
-    return h(
+    const row = h(
       "button",
       {
         class: `jr sess-launch ${stands}`,
@@ -1114,6 +1020,9 @@ export function buildSession(actions: ViewActions): ViewHost {
       h("span", { class: "jr-time", text: clock(a.startedAt) }),
       h("i", { class: "sess-launch-go" }, svg(ICONS.chevronRight, 9, { stroke: 2.8 })),
     );
+    // What the arrows reach from the row of sessions (and from each other).
+    row.dataset.sub = a.id;
+    return row;
   }
 
   /** What a subagent's view ends on, kept while it says the same: its buttons are not rebuilt under a click. */
@@ -1302,11 +1211,16 @@ export function buildSession(actions: ViewActions): ViewHost {
 
   let topKey = "";
 
-  /** The chips that keep one kind of step, each with how many of them the journal has. */
+  /** How many steps of a kind the journal has: "all" counts every tool. */
+  const counts = (steps: SessionStep[], id: Filter) => steps.filter((s) => isTool(s) && (id === "all" || s.kind === (id as StepKind))).length;
+
+  /**
+   * The chips that keep one kind of step, each with how many of them the
+   * journal has. A kind with none is not offered — unless it is the one kept.
+   */
   function chips(steps: SessionStep[]): HTMLElement[] {
-    const tools = steps.filter(isTool);
-    return FILTERS.map(([id, label]) => {
-      const count = id === "all" ? tools.length : tools.filter((s) => s.kind === (id as StepKind)).length;
+    return FILTERS.filter(([id]) => id === "all" || filter === id || counts(steps, id) > 0).map(([id, label]) => {
+      const count = counts(steps, id);
       return h(
         "button",
         {
@@ -1325,41 +1239,17 @@ export function buildSession(actions: ViewActions): ViewHost {
 
   function drawTop(session: ClaudeSession, agent: Subagent | null) {
     const steps = agent ? agent.steps : session.steps;
-    const at = standing(session);
-    const files = State.sessionFiles.length;
-    const waits = session.question != null || session.approval != null;
     const next = [
-      session.id, agent?.id, filter, FILTERS.map(([id]) => steps.filter((s) => isTool(s) && (id === "all" || s.kind === id)).length).join(","),
-      agent
-        ? [agent.type, subagentTask(agent), subagentStanding(session, agent), agent.endedAt, agent.timed, stepsApart(session, agent), folderOf(session), agent.model?.label].join(":")
-        : [at.words, at.color, files, waits, session.target.kind, targetTip(session), session.model?.label, currentLang()].join(":"),
+      session.id, agent?.id, filter, FILTERS.map(([id]) => counts(steps, id)).join(","),
+      agent ? [agent.type, subagentTask(agent), subagentStanding(session, agent), agent.endedAt, agent.timed, stepsApart(session, agent), folderOf(session), agent.model?.label].join(":") : "",
+      currentLang(),
     ].join("~");
     if (next === topKey) return;
     topKey = next;
     clear(filters);
     clear(crumb);
     if (!agent) {
-      // Where the session is at; while it waits for an answer, the way to its card.
-      const state = chip(at.words, at.quiet ? COLOR.grey : at.color);
-      if (at.quiet) state.title = quietTip();
-      if (waits) {
-        state.classList.add("opens");
-        state.title = t("sess.seeRequest");
-        state.addEventListener("click", () => actions.showRequest());
-      }
-      filters.append(...chips(steps), h("div", { class: "grow" }), ...modelChip(session.model), state);
-      if (files > 0) {
-        filters.append(h("button", {
-          class: "sess-files", title: t("sess.filesTip"), text: counted(files, "sess.n.file"),
-          onclick: () => {
-            actions.blip();
-            go({ kind: "list" });
-          },
-        }));
-      }
-      const target = goToSession();
-      target.sync(session);
-      filters.append(target.el);
+      filters.append(...chips(steps));
       return;
     }
     const folder = folderOf(session);
@@ -1382,6 +1272,74 @@ export function buildSession(actions: ViewActions): ViewHost {
     );
     // Its chips count its own steps, and nothing else's. With no agent ids there are none to count.
     if (stepsApart(session, agent)) filters.append(...chips(steps));
+  }
+
+  // ── The header of the card ──────────────────────────────────────────────────
+
+  let whoKey = "";
+
+  /**
+   * The session's title, whole, and under it where it is at: its state, the
+   * model it runs on, the files it changed (the way to them) and how full its
+   * context is — and, on the right, the way to where it runs.
+   */
+  function drawHead(session: ClaudeSession) {
+    const at = standing(session);
+    const files = State.sessionFiles.length;
+    const waits = session.question != null || session.approval != null;
+    const use = contextUse(session.contextTokens, session.contextWindow, session.model?.id);
+    const words = targetWords(session.target);
+    const tip = targetTip(session);
+    const key = [
+      session.id, session.title, folderOf(session), session.agent, at.words, at.color, at.quiet, waits, session.model?.label, files, use?.percent, use?.level,
+      session.target.kind, session.target.label, tip, strip.hidden, currentLang(),
+    ].join("~");
+    if (key === whoKey) return;
+    whoKey = key;
+
+    const name = session.id ? (session.title ?? folderOf(session)) : UNNAMED;
+    title.textContent = name;
+    title.title = name;
+
+    const bits: HTMLElement[] = [];
+    if (session.id) {
+      // With the row of sessions over the card, which one this is is said there; alone, here.
+      if (strip.hidden) bits.push(h("span", { class: "sess-where" }, toolMark(session.agent, 11), session.title ? folderOf(session) : TOOL_NAME[session.agent]));
+      // Where it is at; while it waits for an answer, the way to its card.
+      const state = h(waits ? "button" : "span", { class: "sess-state", text: at.words });
+      state.style.setProperty("--c", at.quiet ? COLOR.grey : at.color);
+      if (at.quiet) state.title = quietTip();
+      if (waits) {
+        state.classList.add("opens");
+        state.title = t("sess.seeRequest");
+        state.addEventListener("click", () => actions.showRequest());
+      }
+      bits.push(state);
+      if (session.model) bits.push(h("span", { class: "sess-meta", text: session.model.label, title: session.model.id }));
+      if (files > 0) {
+        bits.push(h("button", {
+          class: "sess-files", type: "button", title: t("sess.filesTip"), text: counted(files, "sess.n.file"),
+          onclick: () => {
+            actions.blip();
+            go({ kind: "list" });
+          },
+        }));
+      }
+      // How full its context is, for the one to go and /compact: a cue, as Oleo cannot do it.
+      if (use) {
+        const said = t("sess.context", { n: use.percent });
+        bits.push(h("span", { class: "sess-meta sess-use", title: said }, h("i", { class: `sess-ctx ${use.level}` }, h("u", { style: `width:${use.percent}%` })), said));
+      }
+    }
+    line.replaceChildren(...bits.flatMap((bit, i) => (i === 0 ? [bit] : [h("i", { class: "sess-sep", text: "·" }), bit])));
+
+    goBtn.hidden = !(words && tip);
+    if (words && tip) {
+      goBtn.title = tip;
+      goBtn.setAttribute("aria-label", tip);
+      goBtn.dataset.target = session.target.kind;
+      goBtn.replaceChildren(...[targetIcon(session.target.kind, 11), words].filter((part): part is SVGElement | string => part != null));
+    }
   }
 
   // ── Time that runs ──────────────────────────────────────────────────────────
@@ -1415,17 +1373,17 @@ export function buildSession(actions: ViewActions): ViewHost {
     el,
     // The panel has just come on show.
     arm: focusPanel,
-    // Tab and Shift+Tab: the next session in the sidebar's order, round and
-    // round, picked as a click on its line picks it. Subagents are passed
-    // over, and a subagent's view is left for the next session's journal. No
-    // line takes the focus, and none wears a ring for it.
+    // Tab and Shift+Tab: the next session along the row, round and round,
+    // picked as a click on its chip picks it. A subagent's view is left for
+    // the next session's journal. No chip takes the focus, and none wears a
+    // ring for it.
     step(by) {
       const all = State.sessions;
       if (all.length < 2) return;
       const at = all.findIndex((s) => s.id === State.frontId);
       const next = all[(Math.max(0, at) + by + all.length) % all.length];
       pickSession(next.id);
-      // The tree's tab stop follows, so that an arrow pressed next starts from there.
+      // The row's tab stop follows, so that an arrow pressed next starts from there.
       focusKey = sessionKey(next.id);
     },
     sync() {
@@ -1471,32 +1429,29 @@ export function buildSession(actions: ViewActions): ViewHost {
       if (State.large && !wasLarge) focusPanel();
       wasLarge = State.large;
 
-      // The sidebar: whose session, by its folder and its conversation's title, and the tree.
-      // "Claude Code · project" / "Cursor · project", with the tool's mark before it.
-      const heading = session.id ? `${TOOL_NAME[session.agent]} · ${folderOf(session)}` : UNNAMED;
-      name.replaceChildren(...(session.id ? [toolMark(session.agent, 12), heading] : [heading]));
-      name.title = heading;
+      // The row of sessions, with more than one: the card, and the bot in it, go down by its height.
+      const several = State.sessions.length > 1;
+      strip.hidden = !several;
+      SessionRoom.strip = several;
       drawToolChips();
-      nameSub.textContent = nameSub.title = session.title ?? (session.id ? TOOL_NAME[session.agent] : "");
-      nameModel.textContent = session.model?.label ?? "";
-      nameModel.title = session.model?.id ?? "";
-      nameModel.hidden = !session.model;
-      // Before the sidebar is drawn: a reply read whole takes its mark off its line.
+      // Before the row is drawn: a reply read whole takes its mark off its chip.
       if (live) settleReply(session, agent);
-      drawRail(session);
-      tree.classList.toggle("kbd", byKeyboard);
-      // Another session's turn ended: its line shakes, if it is on show.
+      drawStrip(session);
+      chipRow.classList.toggle("kbd", byKeyboard);
+      // Another session's turn ended: its chip shakes, if it is on show.
       for (const s of nudged) {
-        const line = s === session && live ? null : rows().find((r) => r.dataset.key === sessionKey(s.id));
-        if (line) wiggle(line, s);
+        const chip = s === session && live ? null : stops().find((r) => r.dataset.key === sessionKey(s.id));
+        if (chip) wiggle(chip, s);
       }
+      // The header of the card: whose session this is, and where it is at.
+      drawHead(session);
 
       journal.style.display = live ? "" : "none";
       list.style.display = live ? "none" : "";
       head.style.display = live ? "none" : "";
-      headTarget.sync(session);
       crumb.style.display = agent ? "" : "none";
-      filters.style.display = live && (!agent || stepsApart(session, agent)) ? "" : "none";
+      const steps = agent ? agent.steps : session.steps;
+      filters.style.display = live && (!agent || stepsApart(session, agent)) && steps.some(isTool) ? "" : "none";
       main.classList.toggle("of-agent", agent != null);
       // A reply goes to the session, never to one of its subagents; and not from its changes.
       replyBox.sync(screen.kind === "live" ? session : null);

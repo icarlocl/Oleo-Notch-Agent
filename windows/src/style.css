@@ -2760,34 +2760,200 @@ input[type="range"]::-webkit-slider-thumb {
   animation-play-state: paused !important;
 }
 
-/* The sidebar on the left — the bot, whose session this is, and the tree of
-   the sessions and their subagents — and the screen itself in a darker panel
-   on the right. */
+/* One column: the row of sessions on top, the card under it — its header, the
+   chips that keep a kind of step, the journal. The strip's height and the gap
+   under it (26 + 6) are layout.ts SESSION_STRIP_H: the island's bot is put
+   in the header from them. */
 .gh-card {
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
 }
 
-.gh-side-who {
+/* The sessions, a chip each, the row Home has: the one in front lit. */
+.sess-strip {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  min-width: 0;
+  padding: 0 2px;
+}
+
+.sess-chips {
+  position: relative;
+}
+
+.sess-sc {
+  outline: none;
+  user-select: none;
+  transition: background 0.14s ease-out, color 0.14s ease-out, border-color 0.14s ease-out;
+}
+
+.sess-chips .sess-sc.on,
+.sess-chips .sess-sc.on:hover {
+  background: var(--ink);
+  border-color: transparent;
+  color: var(--on-light);
+}
+
+.sess-chips .sess-sc.on .agent-state {
+  color: color-mix(in srgb, var(--on-light) 72%, transparent);
+}
+
+/* The ring is the keyboard's: worn once an arrow has moved along the row,
+   never because a click, or the panel opening, put the focus somewhere. */
+.sess-chips.kbd .sess-sc:focus {
+  box-shadow: 0 0 0 1.5px #5aa9ff;
+}
+
+/* A session waiting for an answer: its dot calls. */
+.sess-sc .dot.calls {
+  animation: sess-call 1.3s ease-in-out infinite;
+}
+
+/* The header of the card: the bot (the island draws it; the slot keeps its
+   room), the session's title, whole, and under it where it is at. */
+.sess-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 10px 6px;
+}
+
+.session-view.large .sess-head {
+  gap: 14px;
+  padding: 10px 14px 8px;
+}
+
+.sess-bot-slot {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+}
+
+.session-view.large .sess-bot-slot {
+  flex-basis: 56px;
+  width: 56px;
+  height: 56px;
+}
+
+.sess-who {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  min-width: 0;
+  gap: 2px;
 }
 
-.gh-side-who b {
-  font: 600 var(--t-label) var(--font);
+.sess-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font: 600 var(--t-title)/1.2 var(--font);
   color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.gh-side-who span {
-  font: 400 var(--t-body) var(--font);
+/* Where it is at, on a line that wraps before it cuts anything. */
+.sess-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  font: 400 var(--t-meta)/17px var(--font);
   color: var(--ink-2);
+}
+
+.sess-sep {
+  margin: 0 7px;
+  font-style: normal;
+  color: var(--ink-3);
+}
+
+.sess-where {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sess-state {
+  display: inline-block;
+  font-weight: 600;
+  color: var(--c);
+}
+
+.sess-state::first-letter {
+  text-transform: uppercase;
+}
+
+button.sess-state {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: 600 var(--t-meta)/17px var(--font);
+  cursor: default;
+}
+
+button.sess-state:hover {
+  text-decoration: underline;
+}
+
+.sess-meta {
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.sess-use {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sess-use .sess-ctx {
+  width: 24px;
+}
+
+/* The files it changed, as a word that opens them. */
+.sess-line .sess-files {
+  height: auto;
+  padding: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+}
+
+.sess-line .sess-files:hover {
+  background: transparent;
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+/* The way to where the session runs. */
+.sess-go {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 11px 0 9px;
+  border: 1px solid var(--gh-edge);
+  border-radius: var(--r-chip);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink-2);
+  font: 400 var(--t-meta) var(--font);
+  white-space: nowrap;
+  cursor: default;
+  transition: background 0.12s ease-out, color 0.12s ease-out;
+}
+
+.sess-go:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ink);
 }
 
 /* The panel wears the colour of the screen on it — on its tab, as an editor
@@ -2807,7 +2973,7 @@ input[type="range"]::-webkit-slider-thumb {
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
-  margin: 7px 8px 7px 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   border-radius: var(--r-card);
@@ -4515,252 +4681,13 @@ input[type="range"]::-webkit-slider-thumb {
   transition: border-color 0.3s ease-out;
 }
 
-/* ── The session panel: the sidebar ─────────────────────────────────────── */
-
-.sess-rail {
-  position: relative;
-  z-index: 1;
-  flex: 0 0 200px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 0 6px 8px 11px;
-  transition: flex-basis 0.3s cubic-bezier(0.3, 1.2, 0.4, 1);
-}
-
-.session-view.large .sess-rail {
-  flex-basis: 276px;
-  padding: 6px 8px 12px 14px;
-}
-
-/* The bot is drawn by the island (layout.ts SESSION_BOT): this keeps its room.
-   Its box is its canvas, wider than its body: the slot takes the body's
-   height and lets the rest overhang, so the name sits close beside it. */
-.sess-bot-slot {
-  flex: 0 0 auto;
-  width: 70px;
-  height: 58px;
-}
-
-.session-view.large .sess-bot-slot {
-  width: auto;
-  height: 112px;
-}
-
-/* At the panel's normal size the session's name sits beside the bot, and the
-   tree under them keeps the height; in the large panel it sits under it. */
-.sess-rail-head {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-
-.session-view.large .sess-rail-head {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0;
-}
-
-.sess-rail .gh-side-who {
-  flex: 1 1 auto;
-}
-
-.sess-rail .gh-side-who b {
-  font-size: var(--t-body);
-}
-
-.session-view.large .sess-rail .gh-side-who b {
-  font-size: var(--t-label);
-}
-
-/* A conversation's title gets a second line before it is cut. */
-.sess-rail .gh-side-who span {
-  font-size: var(--t-meta);
-  line-height: 1.25;
-  white-space: normal;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-/* The session's name, and beside it the model it runs on: the name gives way first. */
-.sess-name-row {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  min-width: 0;
-}
-
-.sess-name-row b {
-  flex: 0 1 auto;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sess-rail .gh-side-who .sess-name-model {
-  flex: 0 0 auto;
-  display: block;
-  font: 400 var(--t-meta) var(--font);
-  color: var(--ink-3);
-  white-space: nowrap;
-}
-
-/* Large, the line above the journal has room for it, as a chip: said once. */
-.session-view.large .sess-name-model,
-.session-view:not(.large) .sess-filters .sess-model {
-  display: none;
-}
-
-/* The tree: sessions, and under each the subagents it launched. */
-.sess-tree {
-  flex: 1 1 auto;
-  min-height: 0;
-  margin: 4px 0 0 -5px;
-  padding: 5px 0 2px;
-  border-top: 1px solid var(--gh-edge);
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
-}
-
-.session-view.large .sess-tree {
-  margin-top: 14px;
-  padding-top: 8px;
-}
-
-.sess-ti {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  border-radius: var(--r-ctl);
-  color: var(--ink-2);
-  cursor: default;
-  outline: none;
-  user-select: none;
-  transition: background 0.12s ease-out, color 0.12s ease-out;
-}
-
-.sess-ti:hover {
-  background: var(--gh-hover);
-  color: var(--gh-text);
-}
-
-/* The line the keyboard is on. */
-/* The ring is the keyboard's: worn once an arrow has moved through the tree,
-   never because a click, or the panel opening, put the focus somewhere. */
+/* The panel itself holds the focus, unseen: keys reach the island through it. */
 .session-view:focus {
   outline: none;
 }
 
-.sess-tree.kbd .sess-ti:focus {
-  box-shadow: inset 0 0 0 1.5px #5aa9ff;
-  color: var(--ink);
-}
-
-/* A session: its project's colour as a thin stripe, the arrow to its
-   subagents, its folder, how many subagents, its state as a dot. */
-.sess-node {
-  gap: 5px;
-  height: 23px;
-  padding: 0 7px 0 5px;
-}
-
-.session-view.large .sess-node {
-  height: 27px;
-}
-
-.sess-node::before {
-  content: "";
-  flex: 0 0 auto;
-  width: 3px;
-  height: 12px;
-  border-radius: var(--r-chip);
-  background: var(--c);
-  opacity: 0.85;
-}
-
-.sess-node b {
-  flex: 1 1 auto;
-  min-width: 0;
-  font: 400 var(--t-meta) var(--font);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.session-view.large .sess-node b {
-  font-size: var(--t-body);
-}
-
-/* The session in front, with one of its subagents on show. */
-.sess-node.front {
-  color: var(--gh-text);
-}
-
-.sess-ti.on {
-  background: var(--gh-plate);
-  color: var(--ink);
-}
-
-.sess-node.on b,
-.sess-node.front b {
-  font-weight: 600;
-}
-
-.sess-twisty {
-  flex: 0 0 auto;
-  width: 13px;
-  height: 17px;
-  margin: 0 -2px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-xs);
-  color: var(--ink-3);
-  transition: transform 0.2s cubic-bezier(0.3, 1.2, 0.4, 1), color 0.12s ease-out;
-}
-
-.sess-twisty:not(.none):hover {
-  color: var(--ink);
-}
-
-.sess-node[aria-expanded="true"] .sess-twisty {
-  transform: rotate(90deg);
-}
-
-/* How many subagents it has: lit while one runs, amber while one waits. */
-.sess-count {
-  flex: 0 0 auto;
-  min-width: 15px;
-  height: 14px;
-  padding: 0 4px;
-  border-radius: var(--r-chip);
-  background: var(--gh-plate);
-  font: 600 var(--t-meta)/14px var(--font);
-  text-align: center;
-  color: var(--ink-2);
-  font-variant-numeric: tabular-nums;
-}
-
-.sess-count.going {
-  background: color-mix(in srgb, #5aa9ff 22%, transparent);
-  color: #9ccbff;
-}
-
-.sess-count.asking {
-  background: color-mix(in srgb, var(--amber) 24%, transparent);
-  color: var(--amber);
-}
-
 /* How full a session's context is: a short bar, green, amber from 60%, red
-   from 85%. The figure is its tooltip and, unseen, its text. */
+   from 85%. The figure is said beside it, in the header. */
 .sess-ctx {
   flex: 0 0 auto;
   position: relative;
@@ -4787,42 +4714,6 @@ input[type="range"]::-webkit-slider-thumb {
   background: var(--red);
 }
 
-.sess-ctx-words {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-/* The way to where a session runs, on its own line of the sidebar. At the
-   panel's normal size the line is narrow: it shows when the line is pointed
-   at or has the focus, so the name keeps its room. In the large panel it is
-   always there. */
-.sess-goto {
-  flex: 0 0 auto;
-  display: none;
-  place-items: center;
-  width: 17px;
-  height: 17px;
-  margin: 0 -2px;
-  border-radius: var(--r-xs);
-  color: var(--ink-2);
-  transition: background 0.12s ease-out, color 0.12s ease-out;
-}
-
-.sess-node:hover .sess-goto,
-.sess-node:focus .sess-goto,
-.session-view.large .sess-goto {
-  display: grid;
-}
-
-.sess-goto:hover {
-  background: var(--gh-plate);
-  color: var(--ink);
-}
-
 /* Nowhere to go: the island blinks once, and says no more. */
 #island-clip.nowhere {
   animation: island-nowhere 0.45s ease-in-out;
@@ -4832,63 +4723,6 @@ input[type="range"]::-webkit-slider-thumb {
   40% {
     opacity: 0.55;
   }
-}
-
-/* A session at work that nothing was heard from for a long while: a quiet word
-   under its line. Not an alert: it does not move, and takes no click. */
-.sess-quiet {
-  flex: 0 0 auto;
-  margin-top: -3px;
-  padding: 0 7px 2px 24px;
-  font: 400 var(--t-meta)/12px var(--font);
-  color: var(--ink-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: default;
-  user-select: none;
-}
-
-/* Its last reply waits on a decision: a mark under its line, in that colour.
-   It does not move and makes no sound; a click reads the reply. */
-.sess-decide {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  align-self: flex-start;
-  max-width: calc(100% - 22px);
-  height: 15px;
-  margin: -2px 0 3px 22px;
-  padding: 0 6px 0 5px;
-  border-radius: var(--r-chip);
-  background: color-mix(in srgb, var(--purple) 16%, transparent);
-  font: 600 var(--t-meta)/15px var(--font);
-  color: #c9adfb;
-  white-space: nowrap;
-  cursor: default;
-  user-select: none;
-  transition: background 0.12s ease-out;
-}
-
-.sess-decide:hover {
-  background: color-mix(in srgb, var(--purple) 28%, transparent);
-}
-
-.sess-decide svg {
-  flex: 0 0 auto;
-}
-
-.sess-decide span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.session-view.large .sess-decide {
-  height: 17px;
-  font-size: var(--t-meta);
-  line-height: 17px;
 }
 
 /* A turn of a session ended while the panel was being read: a small amber dot
@@ -4912,11 +4746,6 @@ input[type="range"]::-webkit-slider-thumb {
   35% { transform: translateX(3px); }
   55% { transform: translateX(-2px); }
   75% { transform: translateX(2px); }
-}
-
-/* A session waiting for an answer: its dot calls. */
-.sess-node .dot.calls {
-  animation: sess-call 1.3s ease-in-out infinite;
 }
 
 @keyframes sess-call {
@@ -5092,7 +4921,7 @@ input[type="range"]::-webkit-slider-thumb {
   gap: 4px;
   min-width: 0;
   height: 31px;
-  padding: 0 6px 0 7px;
+  padding: 0 10px;
   border-bottom: 1px solid var(--gh-edge);
   overflow: hidden;
 }
@@ -5135,31 +4964,10 @@ input[type="range"]::-webkit-slider-thumb {
   color: var(--gh-text);
 }
 
-.sess-filters > .grow {
-  flex: 1 1 0;
-  min-width: 2px;
-}
-
-.sess-filters .jr-chip,
-.sess-filters .sess-files {
-  white-space: nowrap;
-}
-
-/* Where the session is at; while it waits for an answer, the way to its card. */
-.sess-filters .jr-chip.opens:hover {
-  background: color-mix(in srgb, var(--c) 26%, transparent);
-}
-
-.sess-filters .gh-icon {
-  width: 19px;
-  height: 19px;
-  margin-left: 2px;
-}
-
 .session-view.large .sess-filters {
   height: 36px;
   gap: 6px;
-  padding: 0 9px 0 10px;
+  padding: 0 14px;
 }
 
 .session-view.large .sess-f {
@@ -5600,14 +5408,9 @@ input[type="range"]::-webkit-slider-thumb {
    OS's own preference only decides when Settings says "system". */
 :root[data-motion="reduce"] .sess-journal.sess-enter,
 :root[data-motion="reduce"] .sess-mark.needs,
-:root[data-motion="reduce"] .sess-node .dot.calls,
+:root[data-motion="reduce"] .sess-sc .dot.calls,
 :root[data-motion="reduce"] .sess-wiggle {
   animation: none;
-}
-
-/* Without the shake, the amber stays: on the line, and round the button. */
-:root[data-motion="reduce"] .sess-node.attn {
-  background: color-mix(in srgb, var(--amber) 14%, transparent);
 }
 
 :root[data-motion="reduce"] .sess-jump.fresh {
@@ -5619,7 +5422,7 @@ input[type="range"]::-webkit-slider-thumb {
     animation: none;
   }
 
-  :root:not([data-motion="full"]) .sess-node.attn {
+  :root:not([data-motion="full"]) .sess-sc.attn {
     background: color-mix(in srgb, var(--amber) 14%, transparent);
   }
 
@@ -6257,11 +6060,6 @@ input[type="range"]::-webkit-slider-thumb {
   background: rgba(16, 16, 20, 0.82);
 }
 
-.sess-node .tool-mark,
-.sess-name-row b .tool-mark {
-  margin-right: 0;
-}
-
 /* The folded island: Claude Code's dot is solid, Cursor's has a hole in it. */
 .ci-dot.cursor {
   position: relative;
@@ -6277,10 +6075,13 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* The filter of the session list: All · Claude Code · Cursor. */
 .sess-tools {
+  flex: 0 0 auto;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 4px;
-  padding: 4px 6px 2px;
+  padding-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .sess-tools[hidden] {
@@ -6291,8 +6092,10 @@ input[type="range"]::-webkit-slider-thumb {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 18px;
-  padding: 0 7px;
+  flex: 0 0 auto;
+  height: 22px;
+  padding: 0 8px;
+  white-space: nowrap;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--r-chip);
   background: transparent;

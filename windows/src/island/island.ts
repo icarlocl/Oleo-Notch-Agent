@@ -65,9 +65,9 @@ const isField = (target: EventTarget | null) =>
  */
 const EMPTY_SPACE = [
   "#island", "#island-clip", "#content", "#views", "#header", "#header .tabs", "#header .header-actions",
-  ".session-view", ".session-view .gh-card", ".sess-rail", ".sess-rail-head", ".sess-tree",
+  ".session-view", ".session-view .gh-card", ".sess-strip", ".sess-chips", ".sess-head", ".sess-who",
   ".session-view .gh-main", ".session-view .gh-list", ".session-view .gh-head", ".sess-filters", ".sess-crumb",
-  ".sess-filters > .grow", ".sess-crumb > .grow", ".session-view .gh-head > .grow",
+  ".sess-crumb > .grow", ".session-view .gh-head > .grow",
 ].join(", ");
 
 /** The keys that zoom a page with Ctrl: the island is not a page to zoom. */

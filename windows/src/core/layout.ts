@@ -280,16 +280,6 @@ export const WAKE_STRIP_W = 240;
 export const WAKE_STRIP_H = 6;
 
 /**
- * The bot in the session panel: at the head of the sidebar, beside the
- * session's name — and, in the large panel, at full size above it, in the
- * middle of the sidebar (style.css `.sess-bot-slot` keeps the room).
- */
-export const SESSION_BOT = {
-  normal: { x: 57, y: 72, diameter: 46 },
-  large: { x: 152, y: 105, diameter: 71 },
-} as const;
-
-/**
  * How tall the island is for the home view before it has measured what it holds
  * (views/home.ts reports its own height once it is on show): the card and a row
  * of chips under it.
@@ -301,6 +291,24 @@ const VIEW_TOP = 8 + 34;
 const VIEW_LEFT = 10;
 /** A card's border (style.css `.card`). */
 const CARD_EDGE = 1;
+
+/**
+ * The bot in the session panel: at the head of its one column, in the header
+ * of the card, beside the session's name (style.css `.sess-bot-slot` keeps
+ * its room: the card's border, the header's padding, then half the slot).
+ */
+export const SESSION_BOT = {
+  normal: { x: VIEW_LEFT + CARD_EDGE + 10 + 24, y: VIEW_TOP + CARD_EDGE + 8 + 24, diameter: 48 },
+  large: { x: VIEW_LEFT + CARD_EDGE + 14 + 28, y: VIEW_TOP + CARD_EDGE + 10 + 28, diameter: 56 },
+} as const;
+
+/**
+ * The row of sessions above the card (style.css `.sess-strip`): its height and
+ * the gap under it. The row is there only with more than one session, and the
+ * view says so — the card, and the bot in it, are that much lower.
+ */
+export const SESSION_STRIP_H = 32;
+export const SessionRoom = { strip: false };
 
 /**
  * The stage the home view's card keeps for the island's own bot (style.css
@@ -382,10 +390,9 @@ export const VIEW_LAYOUTS: Record<IslandViewName, ViewLayout> = {
   settings: { height: 160, botX: 54, botY: null, botDiameter: 46, agentMode: "none" },
   greeting: { height: 150, botX: 320, botY: 90, botDiameter: 0, agentMode: "none" },
   // Windows only, no macOS counterpart yet: what a Claude Code session did —
-  // its journal, its subagents, the files it changed. A small bot at the head
-  // of the sidebar, beside the session's name, the tree of sessions under it
-  // and the journal in a panel on the right. SESSION_BOT has the bot of the
-  // panel at its large size.
+  // its journal, its subagents, the files it changed. One column: the row of
+  // sessions on top, then the card — a small bot beside the session's name,
+  // the journal under it. SESSION_BOT has the bot, at both sizes.
   session: {
     height: PANEL_H, botX: SESSION_BOT.normal.x, botY: SESSION_BOT.normal.y, botDiameter: SESSION_BOT.normal.diameter,
     agentMode: "none",
@@ -591,7 +598,7 @@ export function botPosition(
     case "expanded": {
       if (view === "session") {
         const at = SESSION_BOT[large ? "large" : "normal"];
-        return { cx: at.x, cy: at.y, diameter: at.diameter, opacity: 1 };
+        return { cx: at.x, cy: at.y + (SessionRoom.strip ? SESSION_STRIP_H : 0), diameter: at.diameter, opacity: 1 };
       }
       const layout = viewLayout(view);
       if (layout.botY != null) {

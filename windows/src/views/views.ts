@@ -267,6 +267,9 @@ export function buildHeader(actions: ViewActions): ViewHost {
   const gearBtn = h("button", { class: "ha", title: () => t("views.settings"), "aria-label": () => t("views.settings"), onclick: () => go("settings") }, lucide(LUCIDE.slidersHorizontal, 15, 1.75));
   const soundBtn = h("button", { class: "ha", onclick: () => actions.toggleSound() });
   let soundKey = "";
+  // The way to fold the island at once, without waiting for it to fold by itself: an arrow toward the edge it is docked to.
+  const foldBtn = h("button", { class: "ha fold", onclick: () => actions.collapse() });
+  let foldKey = "";
   // A newer Oleo is out, and the user asked to be told (core/update.ts): the way to its release page.
   const updateBtn = h("button", { class: "ha ha-update", onclick: () => {
     actions.blip();
@@ -291,7 +294,7 @@ export function buildHeader(actions: ViewActions): ViewHost {
     h("div", { class: "tabs" }, tabHome, tabShelf),
     weather.el,
     stats.el,
-    h("div", { class: "header-actions" }, updateBtn, expandBtn, gearBtn, soundBtn),
+    h("div", { class: "header-actions" }, updateBtn, expandBtn, gearBtn, soundBtn, foldBtn),
   );
 
   return {
@@ -320,6 +323,15 @@ export function buildHeader(actions: ViewActions): ViewHost {
         clear(soundBtn);
         soundBtn.append(lucide(soundOn ? LUCIDE.volume2 : LUCIDE.volumeX, 15, 1.75));
         soundBtn.title = soundBtn.ariaLabel = soundOn ? t("views.mute") : t("views.unmute");
+      }
+      const dock = State.settings.dock;
+      const nextFold = `${dock}:${currentLang()}`;
+      if (nextFold !== foldKey) {
+        foldKey = nextFold;
+        clear(foldBtn);
+        const toward = dock === "bottom" ? ICONS.chevronDown : dock === "left" ? ICONS.chevronLeft : dock === "right" ? ICONS.chevronRight : ICONS.chevronUp;
+        foldBtn.append(svg(toward, 14, { stroke: 2 }));
+        foldBtn.title = foldBtn.ariaLabel = t("views.fold");
       }
       const offered = Update.offered;
       const nextUpdate = `${offered?.latest ?? ""}:${currentLang()}`;

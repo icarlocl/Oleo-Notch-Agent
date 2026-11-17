@@ -581,6 +581,8 @@ body {
   align-items: center;
   margin: 0 -10px;
   transition: opacity 0.2s ease-in-out;
+  /* Its own width decides what fits: on a narrow island (docked to a side) the tabs keep only their icons. */
+  container: header / inline-size;
 }
 
 .tabs {
@@ -619,6 +621,17 @@ body {
 .tab.on {
   background: var(--tab-on);
   color: var(--ink);
+}
+
+/* A narrow island: Home and Widgets as icons (their names stay in the tooltip), so the numbers keep room. */
+@container header (max-width: 440px) {
+  .tab.named {
+    width: 30px;
+    padding: 0;
+    gap: 0;
+    justify-content: center;
+    font-size: 0;
+  }
 }
 
 .header-actions {
@@ -700,11 +713,16 @@ body {
   clip-path: inset(50%);
 }
 
+/* One line, and only whole numbers on it: what does not fit wraps to a second
+   line that the row's height leaves out, so nothing shows cut in half. */
 .hs-row {
   display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
   justify-content: center;
   align-items: center;
-  gap: 11px;
+  column-gap: 11px;
+  row-gap: 0;
   height: 22px;
   overflow: hidden;
   white-space: nowrap;
@@ -715,6 +733,7 @@ body {
   display: flex;
   align-items: center;
   gap: 5px;
+  height: 22px;
 }
 
 .hs[hidden] {
@@ -790,6 +809,9 @@ body {
 
 @container (max-width: 139px) {
   .hs-usage { display: none; }
+  /* Room for one or two at most: they say their names again rather than show an icon. */
+  .hs-label { display: block; }
+  .hs-icon { display: none; }
 }
 
 .header-actions button {

@@ -75,6 +75,7 @@ export const ISLAND = {
   "views.settingsMore": ["Ajustes…", "Settings…", "Ajustes…"],
   "views.mute": ["Silenciar", "Mute", "Silenciar"],
   "views.unmute": ["Activar sonido", "Unmute", "Ativar som"],
+  "views.fold": ["Ocultar la isla", "Hide the island", "Ocultar a ilha"],
   "views.shrink": ["Reducir (Esc)", "Shrink (Esc)", "Reduzir (Esc)"],
   "views.expand": ["Ampliar", "Expand", "Ampliar"],
   "views.updateOut": ["Oleo {v} ya está disponible. Abre su página de descarga.", "Oleo {v} is out. Opens its download page.", "Oleo {v} já saiu. Abre a página de download."],

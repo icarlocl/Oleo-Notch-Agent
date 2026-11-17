@@ -372,10 +372,10 @@ export const VIEW_LAYOUTS: Record<IslandViewName, ViewLayout> = {
   // left (HOME_STAGE, `botOnStage`: its feet 6 px above the stage's bottom edge).
   overview: { height: HOME_H, botX: HOME_SEAT.x, botY: HOME_SEAT.y, botDiameter: HOME_BOT, agentMode: "none" },
   empty: { height: 160, botX: 70, botY: null, botDiameter: 62, agentMode: "none" },
-  approval: { height: 160, botX: 62, botY: null, botDiameter: 56, agentMode: "column" },
+  approval: { height: 160, botX: 56, botY: null, botDiameter: 56, agentMode: "column" },
   // 196 as docs/SPEC.md has it: a question, its options, and a line for what
   // the option under the mouse means.
-  question: { height: 196, botX: 62, botY: null, botDiameter: 56, agentMode: "column" },
+  question: { height: 196, botX: 56, botY: null, botDiameter: 56, agentMode: "column" },
   error: { height: 160, botX: 62, botY: null, botDiameter: 58, agentMode: "column" },
   finished: { height: 160, botX: 62, botY: null, botDiameter: 58, agentMode: "column" },
   confused: { height: 160, botX: 76, botY: null, botDiameter: 66, agentMode: "column" },

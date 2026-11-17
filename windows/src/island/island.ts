@@ -1651,14 +1651,14 @@ export class Island {
 
   /** The island's size on show for a view, open. */
   private sizeFor(view: IslandViewName): { w: number; h: number } {
-    const proposal = State.pendingApproval?.proposal != null;
+    const proposal = State.pendingApproval?.proposal != null && (this.views?.get("approval")?.roomy ?? true);
     const fitted = this.views?.get(view)?.height ?? null;
     const fittedW = this.views?.get(view)?.width ?? null;
     return islandSize("expanded", view, proposal, fitted, State.large, this.compactSize, fittedW);
   }
 
   private targetSize(): { w: number; h: number; r: number; ear: number } {
-    const proposal = State.pendingApproval?.proposal != null;
+    const proposal = State.pendingApproval?.proposal != null && (this.views?.get("approval")?.roomy ?? true);
     // A view that knows how tall its content is has the last word.
     const fitted = this.views?.get(State.view)?.height ?? null;
     const fittedW = this.views?.get(State.view)?.width ?? null;

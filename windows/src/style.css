@@ -1687,6 +1687,21 @@ html.vt-back::view-transition-group(*) {
   background: rgba(255, 255, 255, 0.15);
 }
 
+/* No plate: a way out that is there but does not compete with the two answers. */
+.btn.ghost {
+  background: transparent;
+  color: var(--ink-2);
+  padding-inline: 8px;
+}
+
+.btn.ghost:hover {
+  color: var(--ink);
+}
+
+.actions > .end {
+  margin-left: auto;
+}
+
 .btn .kbd {
   font-size: var(--t-meta);
   padding: 0 4px;
@@ -3658,7 +3673,11 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .q-count {
-  color: var(--ink-3);
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: var(--r-chip);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink-2);
 }
 
 /* Under the options: what the one under the mouse means, and the ways out. */
@@ -3701,6 +3720,29 @@ input[type="range"]::-webkit-slider-thumb {
 .proposed ~ .actions,
 .stack > .code {
   flex: 0 0 auto;
+}
+
+/* The line that says who asks says it in words: the mark of Claude and the task's dot say nothing the name does not. */
+.ask-who .who-row > .dot,
+.ask-who .who-row > .tool-mark.claude {
+  display: none;
+}
+
+/* An edit's diff, as the card shows it before it is asked for whole: a few lines, none cut. */
+.proposed.capped {
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.more-changes {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.more-changes:hover {
+  color: var(--ink);
 }
 
 /* What an edit asking for permission would do: its diff, in the approval card,
@@ -4047,11 +4089,11 @@ input[type="range"]::-webkit-slider-thumb {
 .q-row {
   flex: 0 0 auto;
   display: grid;
-  grid-template-columns: minmax(96px, max-content) 1fr;
-  align-items: center;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  gap: 1px;
   min-height: 36px;
-  padding: 4px 12px;
+  padding: 6px 12px 7px;
   border: 0;
   border-radius: var(--r-ctl);
   background: rgba(255, 255, 255, 0.07);
@@ -4067,7 +4109,6 @@ input[type="range"]::-webkit-slider-thumb {
 .q-row > b {
   font: 600 var(--t-body) var(--font);
   color: var(--ink);
-  max-width: 190px;
 }
 
 .q-row > span {
@@ -4820,14 +4861,6 @@ input[type="range"]::-webkit-slider-thumb {
 .jr-body,
 .jr-asks {
   transition: border-color 0.3s ease-out;
-}
-
-/* A stack whose middle stretches (an approval's diff) would fill its card to
-   the brim: it keeps the air the other cards have above and below. Over the
-   padding the stack is built with, which is set on the element. */
-.stack.airy {
-  padding-top: 20px !important;
-  padding-bottom: 20px !important;
 }
 
 /* ── The session panel: the sidebar ─────────────────────────────────────── */

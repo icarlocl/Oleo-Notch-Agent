@@ -101,6 +101,8 @@ export interface ViewHost {
   readonly height?: number;
   /** How wide, when it is not the usual: an expanded widget. */
   readonly width?: number;
+  /** An approval whose diff is asked for whole: the island is as tall as the window allows (layout.ts `PROPOSAL_ROOM`). */
+  readonly roomy?: boolean;
   /**
    * The view has just come on show. A card that asks something starts its
    * arming again: whatever click brought it up must not also answer it.
@@ -120,7 +122,7 @@ function card(wash: Wash, ...children: (Node | string)[]): HTMLElement {
 
 function btn(
   label: string | Words,
-  kind: "primary" | "secondary",
+  kind: "primary" | "secondary" | "ghost",
   onClick: () => void,
   kbd?: string,
 ): HTMLElement {
@@ -356,11 +358,21 @@ function buildEmpty(): ViewHost {
  * something else a moment earlier must not allow a command nobody has read.
  */
 const REQUEST_ARM_MS = 400;
+/** How many lines of an edit's diff the card shows before "See all the changes". */
+const DIFF_PEEK_LINES = 6;
+/** Asked for whole, the island grows by the height of this many more lines of the diff, at most. */
+const DIFF_MORE_LINES = 10;
+/** A line of a diff, in pixels (`.gh-diff-line`). */
+const DIFF_LINE_H = 16;
+/** The card's column for the bot, and where the text starts: the same for a permission and a question. */
+const CARD_TEXT_LEFT = 92;
 
 function buildApproval(actions: ViewActions, onResize: () => void): ViewHost {
   // The request the card was last armed for, and when its buttons start to count.
   let armedFor = "";
   let armedAt = 0;
+  // The whole diff, over the island's full height, instead of its first lines: asked for per request.
+  let showAll = false;
   const decide = (decision: "allow" | "deny") => {
     // The request a click answers is the one the card has drawn, and has shown
     // for long enough. With several waiting, the next takes the card the
@@ -369,24 +381,48 @@ function buildApproval(actions: ViewActions, onResize: () => void): ViewHost {
     if ((State.pendingApproval?.requestId ?? "") !== armedFor || performance.now() < armedAt) return;
     actions.decide(decision);
   };
-  const who = h("div");
+  const who = h("div", { class: "ask-who" });
   // All of what is asked, however long: it wraps, and scrolls past a few lines.
   const code = h("div", { class: "code asked" });
   // For an edit: the diff it would make, between what is asked and the answer.
   const proposed = h("div", { class: "proposed gh-code" });
+  // Under the diff, when it is longer than what the card shows: all of it, or back.
+  const more = h("button", {
+    class: "link-btn more-changes",
+    onclick: () => {
+      showAll = !showAll;
+      State.notify();
+    },
+  });
   const row = h("div", { class: "actions" });
   // Behind the request on the card: the one that asked next.
   const next = h("div", { class: "who-next" });
-  const lines = stack(116, 16, who, code, proposed, row, next);
+  const lines = stack(CARD_TEXT_LEFT, 16, who, code, proposed, more, row, next);
   const el = h("div", { class: "view" }, card("amber", lines));
-  const air = airy(lines, onResize);
+  // How tall the card was with a few lines of its diff: what asking for all of them grows from.
+  let peekHeight: number | undefined;
+  const air = airy(lines, () => {
+    if (!showAll) peekHeight = air.height;
+    onResize();
+  });
   let rowKey = "";
   let proposedKey = "";
+  // The lines of the diff on the card, and how they are laid out in it: a few, or all.
+  let diffRows: HTMLElement[] = [];
+  let diffFirst = 0;
+  let diffAll: boolean | null = null;
   return {
     el,
-    // With a diff the island is as tall as the window allows, and the diff takes what is left.
+    // An edit's diff, asked for whole: the card grows by the lines it has to show, and the diff takes the room.
+    // Otherwise the card is as tall as its lines, the diff showing a few.
     get height() {
-      return State.pendingApproval?.proposal ? undefined : air.height;
+      if (!State.pendingApproval?.proposal || !showAll) return air.height;
+      const more = Math.min(DIFF_MORE_LINES, Math.max(0, diffRows.length - DIFF_PEEK_LINES));
+      return peekHeight === undefined ? undefined : peekHeight + more * DIFF_LINE_H;
+    },
+    // Not on screen yet, so with no height to grow from: the island's own room for a diff.
+    get roomy() {
+      return State.pendingApproval?.proposal != null && showAll && peekHeight === undefined;
     },
     arm() {
       armedAt = performance.now() + REQUEST_ARM_MS;
@@ -400,6 +436,7 @@ function buildApproval(actions: ViewActions, onResize: () => void): ViewHost {
       if (asked !== armedFor) {
         armedFor = asked;
         armedAt = performance.now() + REQUEST_ARM_MS;
+        showAll = false;
       }
       clear(who);
       const asking = askerWho(approval, t("views.needsPermission"), COLOR.amber);
@@ -416,33 +453,47 @@ function buildApproval(actions: ViewActions, onResize: () => void): ViewHost {
       // What that edit would do, line by line, before it is allowed. Drawn once
       // per request: a list redrawn under the mouse would lose its scroll.
       proposed.style.display = proposal ? "" : "none";
-      // A diff takes all the room it is given: the card keeps the air a
-      // card has above its first line and under its buttons.
-      lines.classList.toggle("airy", proposal != null);
+      // A few lines of it, none cut, or — asked for whole — all the room the card has grown by.
+      proposed.classList.toggle("capped", proposal != null && !showAll);
       const nextProposed = proposal ? (approval?.requestId ?? "") : "";
       if (nextProposed !== proposedKey) {
         proposedKey = nextProposed;
-        clear(proposed);
+        diffAll = null;
+        diffRows = [];
+        diffFirst = 0;
         if (proposal) {
           const kind = fileKind(proposal.path);
-          const diff = h("div", { class: "gh-diff" });
           for (const line of readPatch(proposal.patch)) {
-            if (!("hunk" in line)) diff.append(diffLine(line.new ?? line.old, line.sign, line.text, kind));
+            if (!("hunk" in line)) diffRows.push(diffLine(line.new ?? line.old, line.sign, line.text, kind));
           }
+          diffFirst = Math.max(0, diffRows.findIndex((r) => r.classList.contains("add") || r.classList.contains("del")));
           if (proposal.truncated) {
-            diff.append(
+            diffRows.push(
               h("div", { class: "gh-diff-line hunk" }, h("span", { class: "n", text: "⋯" }), h("span", { class: "s" }), h("span", { class: "t", text: t("views.editRest") })),
             );
           }
-          proposed.append(diff);
-          // Open on the first line that changes, a line of context above it.
-          const first = diff.querySelector<HTMLElement>(".add, .del");
-          proposed.scrollTop = first ? Math.max(0, first.offsetTop - diff.offsetTop - first.offsetHeight) : 0;
         }
       }
-      // Two buttons, built once per kind of request. Rebuilding them between a
-      // mouse-down and a mouse-up would swallow the click. A request too long
-      // to show whole has none: it is answered in Claude Code, which shows it all.
+      // Few lines, whole: from a line of context above the first change, so none is cut in half.
+      // All of them: the diff scrolls in the room the island gives it, opening on that same line.
+      if (diffAll !== showAll) {
+        diffAll = showAll;
+        clear(proposed);
+        if (proposal) {
+          const start = showAll ? 0 : Math.max(0, Math.min(diffFirst - 1, diffRows.length - DIFF_PEEK_LINES));
+          const diff = h("div", { class: "gh-diff" }, ...(showAll ? diffRows : diffRows.slice(start, start + DIFF_PEEK_LINES)));
+          proposed.append(diff);
+          const first = diff.querySelector<HTMLElement>(".add, .del");
+          proposed.scrollTop = showAll && first ? Math.max(0, first.offsetTop - diff.offsetTop - first.offsetHeight) : 0;
+        }
+      }
+      // More lines than the card shows: all of them one click away.
+      const longer = proposal != null && diffRows.length > DIFF_PEEK_LINES;
+      more.style.display = longer ? "" : "none";
+      more.textContent = showAll ? t("views.seeLess") : t("views.seeChanges", { count: (proposal?.additions ?? 0) + (proposal?.deletions ?? 0) });
+      // Allow, Deny, and the session on the right — built once per kind of request. Rebuilding
+      // them between a mouse-down and a mouse-up would swallow the click. A request too long
+      // to show whole has no Allow or Deny: it is answered in Claude Code, which shows it all.
       const nextRow = `${approval?.tooLong ? "too-long" : "buttons"}:${currentLang()}`;
       if (rowKey !== nextRow) {
         rowKey = nextRow;
@@ -451,12 +502,14 @@ function buildApproval(actions: ViewActions, onResize: () => void): ViewHost {
           row.append(h("span", { class: "too-long", text: t("views.tooLong", { client: State.clientName }) }));
         } else {
           row.append(
-            btn(t("views.deny"), "secondary", () => decide("deny")),
             btn(t("views.allow"), "primary", () => decide("allow")),
+            btn(t("views.deny"), "secondary", () => decide("deny")),
+            h("button", { class: "btn ghost end", onclick: () => actions.openSession() }, h("span", { text: t("views.seeSession") })),
           );
         }
       }
       air.fit();
+      if (!showAll) peekHeight = air.height;
     },
   };
 }
@@ -475,7 +528,7 @@ const FOCUS_MS = 120;
  * session, wherever it runs, goes on as if they had been picked there.
  */
 function buildQuestion(actions: ViewActions, onResize: () => void): ViewHost {
-  const who = h("div");
+  const who = h("div", { class: "ask-who" });
   const title = h("div", { class: "title q-title" });
   const row = h("div", { class: "actions q-options" });
   const hint = h("span", { class: "q-hint" });
@@ -489,7 +542,7 @@ function buildQuestion(actions: ViewActions, onResize: () => void): ViewHost {
     class: "island-field", type: "text", maxlength: "2000", autocomplete: "off", spellcheck: "false",
     placeholder: () => t("views.q.placeholder"),
   }) as HTMLInputElement;
-  const lines = stack(116, 16, who, title, row, foot);
+  const lines = stack(CARD_TEXT_LEFT, 16, who, title, row, foot);
   // A question with more options than the window is tall for fills its card:
   // the list of options scrolls, and the card keeps its least air around it.
   lines.style.paddingTop = lines.style.paddingBottom = `${CARD_AIR_MIN}px`;
@@ -612,7 +665,7 @@ function buildQuestion(actions: ViewActions, onResize: () => void): ViewHost {
 
     const asking = askerWho(info, t("views.asking"), COLOR.cyan);
     if (q.header) asking.append(h("span", { class: "q-chip", text: q.header }));
-    if (info.questions.length > 1) asking.append(h("span", { class: "q-count", text: `${at + 1}/${info.questions.length}` }));
+    if (info.questions.length > 1) asking.append(h("span", { class: "q-count", text: t("views.q.count", { at: at + 1, total: info.questions.length }) }));
     who.append(asking);
     title.textContent = q.question;
     title.title = q.question;

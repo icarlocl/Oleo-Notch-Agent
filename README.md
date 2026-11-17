@@ -1,280 +1,276 @@
-<div align="center">
+<h1 align="center">
+  <img src="docs/assets/banner.webp" alt="Oleo Notch Agent: an island at the top of the screen that shows your AI coding agents, with Durazno, a peach-coloured plush, as its mascot" width="100%">
+</h1>
 
-<a href="https://nook.zubyr.dev">
-  <img src="site/assets/img/icon-512.png" alt="Nook, a Dynamic Island for Windows" width="128" height="128">
-</a>
+<p align="center">
+  <b>English</b> · <a href="README.es.md">Español</a>
+</p>
 
-# Nook
+<p align="center">
+  <img alt="Platform: Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4?style=flat-square&logo=windows11&logoColor=white&labelColor=0a1017">
+  <img alt="Built with Tauri 2" src="https://img.shields.io/badge/Tauri-2-ffc131?style=flat-square&logo=tauri&logoColor=white&labelColor=0a1017">
+  <img alt="Rust" src="https://img.shields.io/badge/Rust-stable-dea584?style=flat-square&logo=rust&logoColor=white&labelColor=0a1017">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white&labelColor=0a1017">
+  <img alt="No telemetry" src="https://img.shields.io/badge/telemetry-none-3ddc97?style=flat-square&labelColor=0a1017">
+  <a href="LICENSE"><img alt="Licence: see LICENSE" src="https://img.shields.io/badge/licence-see%20LICENSE-f2825c?style=flat-square&labelColor=0a1017"></a>
+  <a href="https://github.com/icarlocl/Oleo-Notch-Agent/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/icarlocl/Oleo-Notch-Agent?style=flat-square&color=ffb391&labelColor=0a1017"></a>
+  <a href="https://github.com/icarlocl/Oleo-Notch-Agent/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/icarlocl/Oleo-Notch-Agent?style=flat-square&color=ffb391&labelColor=0a1017"></a>
+</p>
 
-**A Dynamic Island for Windows.**<br>
-Every Claude Code, Codex and Cursor agent you run, at the top of your screen: status, usage limits, and approvals with one click.
+<p align="center">
+  <a href="#what-is-oleo">What it is</a> ·
+  <a href="#what-it-looks-like">Screenshots</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#install">Install</a> ·
+  <a href="#connect-your-agents">Connect</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#privacy-and-network">Privacy</a> ·
+  <a href="#build-from-source">Build</a> ·
+  <a href="#licence-and-credits">Licence</a>
+</p>
 
-<br>
+## What is Oleo?
 
-[![Download](https://img.shields.io/github/v/release/zubairbinshaukat/nook?style=for-the-badge&label=Download&color=3ddc97&labelColor=0b0d10)](https://github.com/zubairbinshaukat/nook/releases/latest)
-[![Website](https://img.shields.io/badge/Website-nook.zubyr.dev-5aa9ff?style=for-the-badge&labelColor=0b0d10)](https://nook.zubyr.dev)
-[![Guides](https://img.shields.io/badge/Guides-read-a98bfa?style=for-the-badge&labelColor=0b0d10)](https://nook.zubyr.dev/guides/)
+You start a few AI coding sessions in different projects, and soon you lose
+track of them: which one is working, which one has finished, which one has been
+waiting for you for ten minutes.
 
-[![License: proprietary](https://img.shields.io/badge/license-proprietary-555?style=flat-square)](LICENSE)
-[![Platform](https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4?style=flat-square&logo=windows11&logoColor=white)](#install)
-[![Tauri 2](https://img.shields.io/badge/Tauri-2-ffc131?style=flat-square&logo=tauri&logoColor=white)](https://tauri.app)
-[![Rust](https://img.shields.io/badge/Rust-stable-dea584?style=flat-square&logo=rust&logoColor=white)](https://www.rust-lang.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![No telemetry](https://img.shields.io/badge/telemetry-none-ffb547?style=flat-square)](#privacy)
-[![Stars](https://img.shields.io/github/stars/zubairbinshaukat/nook?style=flat-square&color=f5a524)](https://github.com/zubairbinshaukat/nook/stargazers)
+**Oleo Notch Agent** puts them all in a small island at the top of your screen.
+You see every session at a glance, with the project it runs in, its state and
+the last thing it said. When an agent asks for permission to run a command or
+edit a file, or asks you a question, you answer from the island with one click,
+without leaving what you are doing. A peach-coloured plush called **Durazno**
+lives in the island and shows how your sessions are doing.
 
-<br>
-
-<a href="https://nook.zubyr.dev">
-  <img src="site/assets/img/og.png" alt="Nook: sessions, usage limits and approvals in an island at the top of your screen" width="860">
-</a>
-
-</div>
-
-<br>
-
-## What is Nook?
-
-You start a few Claude Code sessions in different projects, then lose track of
-which one is working, which one finished, and which one has been waiting on you
-for ten minutes. Nook puts them all in a small island at the top of your screen.
-
-It folds to a thin pill, opens when you point at it, and opens by itself when a
-session needs you. It is local from end to end: no account, no telemetry,
-and no network use except an update check that stays off until you switch it on.
+Oleo works with **Claude Code**, **Codex** and **Cursor**. It runs on your
+machine and talks to nothing but your own agents: no account, no telemetry.
 
 > [!NOTE]
-> Nook is an independent project. It is not affiliated with or endorsed by
-> Anthropic, OpenAI or Cursor.
+> Oleo is an early release (version 0.2.2). Windows 10 and 11 are the main
+> target; the same code also builds for Linux, which is experimental. The
+> interface is currently mostly in Spanish. Oleo is an independent project and is not
+> affiliated with or endorsed by Anthropic, OpenAI or Cursor.
 
-## Screenshots
+## What it looks like
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: light)" srcset="site/assets/img/shots/hero-light.webp"><img src="site/assets/img/shots/hero-dark.webp" alt="Nook open on the Home view at 125% scaling: three agents, two from Claude Code and one from Cursor, with CPU, GPU, RAM and Claude usage beside them." width="860"></picture>
+<picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/hero-light.webp"><img src="docs/assets/screens/hero-dark.webp" alt="Oleo open on the Home view at 125% scaling: the card of the session that needs permission with Durazno, the three sessions as chips, and the CPU, GPU, RAM and Claude usage readings." width="860"></picture>
 
 </div>
+
+<br>
 
 <table>
 <tr>
-<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="site/assets/img/shots/over-browser-tabs-light.webp"><img src="site/assets/img/shots/over-browser-tabs-dark.webp" alt="The Nook island floating over the tab strip of a browser window, so it never takes space from the page." width="420"></picture><br><sub>Over a browser's tabs, never in the way.</sub></td>
-<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="site/assets/img/shots/over-editor-light.webp"><img src="site/assets/img/shots/over-editor-dark.webp" alt="A permission request for an edit in the Nook island, with the changed lines as a diff and Deny and Allow buttons, above a code editor." width="420"></picture><br><sub>An edit request with its diff, over an editor.</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/over-editor-light.webp"><img src="docs/assets/screens/over-editor-dark.webp" alt="A permission request for an edit in the Oleo island, with the changed lines as a diff and the Deny and Allow buttons, above a code editor." width="440"></picture><br><sub><b>Approve with a diff.</b> An edit request shows the changed lines before you click.</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/question-light.webp"><img src="docs/assets/screens/question-dark.webp" alt="Claude Code asks which search engine to use; the island shows three options and an Other answer button." width="440"></picture><br><sub><b>Answer questions.</b> Pick an option, type your own answer, or skip.</sub></td>
 </tr>
 <tr>
-<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="site/assets/img/shots/dock-bottom-light.webp"><img src="site/assets/img/shots/dock-bottom-dark.webp" alt="Nook docked to the bottom edge of the screen, standing on the taskbar." width="420"></picture><br><sub>Docked to the bottom edge.</sub></td>
-<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="site/assets/img/shots/session-agents-light.webp"><img src="site/assets/img/shots/session-agents-dark.webp" alt="A session page listing its subagents under the parent session, each with its own state." width="420"></picture><br><sub>A session and its subagents.</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/session-agents-light.webp"><img src="docs/assets/screens/session-agents-dark.webp" alt="A session page: the journal of what Claude Code did, with its subagents listed under the parent session, each with its own state." width="440"></picture><br><sub><b>Follow a session.</b> A journal of what it did, and its subagents.</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/shelf-light.webp"><img src="docs/assets/screens/shelf-dark.webp" alt="The Widgets tab: media controls, a to-do list, a timer and reminders." width="440"></picture><br><sub><b>Widgets.</b> Media, to-dos, a timer, reminders and more, one swipe away.</sub></td>
 </tr>
 <tr>
-<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="site/assets/img/shots/finished-reply-light.webp"><img src="site/assets/img/shots/finished-reply-dark.webp" alt="A finished session card in the island with a reply box under the message, reading Reply to Claude Code with a send arrow, above the Read reply and Open Claude buttons." width="420"></picture><br><sub>Reply to a finished session from its card.</sub></td>
-<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="site/assets/img/shots/session-reply-light.webp"><img src="site/assets/img/shots/session-reply-dark.webp" alt="A session page at rest: the journal of what Claude Code did, and the reply box under it." width="420"></picture><br><sub>Or under the journal of the session panel.</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/over-browser-tabs-light.webp"><img src="docs/assets/screens/over-browser-tabs-dark.webp" alt="The Oleo island floating over the tab strip of a browser window." width="440"></picture><br><sub><b>Out of the way.</b> It floats over the tab strip and takes no space from your page.</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/dock-bottom-light.webp"><img src="docs/assets/screens/dock-bottom-dark.webp" alt="The Oleo island docked to the bottom edge of the screen, standing on the taskbar." width="440"></picture><br><sub><b>Dock it anywhere.</b> Top, bottom, left or right edge of the screen.</sub></td>
 </tr>
 <tr>
-<td colspan="2" align="center"><picture><source media="(prefers-color-scheme: light)" srcset="site/assets/img/shots/settings-look-light.webp"><img src="site/assets/img/shots/settings-look-dark.webp" alt="Nook Settings, Look and colours page: theme, accent and the buddy." width="520"></picture><br><sub>Settings: colours, island, shortcuts and more.</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/settings-hooks-diff-light.webp"><img src="docs/assets/screens/settings-hooks-diff-dark.webp" alt="Oleo Settings, Connections page, showing the exact diff of the changes it would make to Claude Code's settings file, with a dated backup and an Apply button." width="440"></picture><br><sub><b>Nothing changes behind your back.</b> You see the diff of your config before Oleo writes it.</sub></td>
+<td width="50%"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/screens/settings-look-light.webp"><img src="docs/assets/screens/settings-look-dark.webp" alt="Oleo Settings, Appearance page: the mascot picker with Durazno, the interactive mascot switch and the window colours." width="440"></picture><br><sub><b>Meet Durazno.</b> It follows the pointer and reacts to clicks; you can switch that off.</sub></td>
 </tr>
 </table>
 
-<p align="center"><img src="site/assets/img/shots/real-approval-terminal.webp" alt="Claude Code asking for permission in a terminal while the real Nook island shows the same request at the top of the screen." width="900"><br><sub>The real thing: Claude Code waits in the terminal, the island shows the same request.</sub></p>
-<p align="center"><img src="site/assets/img/shots/agents-list-real.webp" alt="The Nook agents list: one row per project with its status, elapsed time and context size, and the number of agents running." width="430"><br><sub>The agents list: every project at a glance, always on top.</sub></p>
-
-Most images change with your GitHub theme and are made by `npm run shots` from a
-fake desktop and made-up sessions: see [docs/screenshots.md](docs/screenshots.md).
-The last two are plain screenshots of the real app.
+The screenshots are made by the project itself, from the real island driven by
+made-up sessions on a made-up desktop (see [Screenshots](#screenshots) below).
 
 ## Features
 
-| | |
+| Feature | What you get |
 |---|---|
-| **Every session at a glance** | One page for all running sessions: project, status, last message, subagents, and a button back to the window each one runs in. |
+| **Every session at a glance** | One page for all running sessions: the project, its state (working, needs you, done), the last message, its subagents, and a button back to the window it runs in. |
 | **Approve from the island** | Permission requests and questions are answered from the island, for Claude Code and Codex. Edits show a real diff. Nothing is approved without your click. |
-| **Reply from the island** | When a Claude Code or Codex session's turn is over, type a reply on its card. Nook types it into the session's own window (a terminal), or opens the session in VS Code or Cursor with the reply in its prompt box. Not offered for Cursor's own agent sessions. |
-| **Claude Code, Codex and Cursor** | Codex's and Cursor's agent sessions appear next to Claude Code's, each with its own mark. Codex gets Allow and Deny; Cursor is status only. |
-| **Usage limits** | Your 5-hour and 7-day Claude limits, from Claude Code's own status line, with no network call. Codex's limits are not shown. |
-| **Resources** | CPU, GPU and RAM in the header of every screen. |
-| **Durazno** | Oleo's peach plush wears the status of your sessions and reacts to the pointer. |
-| **The Shelf** | Small widgets: To-do, Timer, Reminders, Media, Mirror, Projects. Swipe between Home and Shelf. |
-| **Keyboard** | `Ctrl+Alt+Space` opens the large panel, `Ctrl+Shift+Space` opens it at normal size, `Ctrl+Alt+Enter` jumps to the session that needs you. All configurable. |
-| **Stays out of the way** | Hides in full-screen apps, folds on its own, uses almost no CPU while hidden. |
+| **Reply from the island** | On Windows, when a Claude Code or Codex turn is over, type a reply on its card. Oleo types it into the session's own terminal, or opens the session in VS Code or Cursor with the reply in its prompt box. |
+| **Claude Code, Codex and Cursor** | Each session carries the mark of its tool. Claude Code and Codex can be answered from the island; Cursor's agent sessions are shown for their status only. |
+| **Usage limits** | Your 5-hour and 7-day Claude limits, taken from Claude Code's own status line, with no network call. Each Claude Code session also shows how full its context is. |
+| **Resources** | CPU, GPU and RAM readings next to your sessions. |
+| **Durazno** | The mascot wears the status of your sessions and, if you leave it on, follows the pointer and reacts to clicks. |
+| **Widgets** | A second tab with Media, To-dos, Timer, Reminders, a camera Mirror and your recent Projects. Each can be switched off and reordered. |
+| **Agents list** | An optional small window that stays on top, with one row per project, its state, elapsed time and context size. |
+| **Weather** | Optional. Pick a city in Settings and the temperature shows in the island. It is the one feature, besides the update check, that uses the network (see [Privacy](#privacy-and-network)). |
+| **Folds and docks** | Folds to a thin thread or to a capsule with your metrics. Docks to any edge of the screen, hides in full-screen apps, and uses almost no CPU while hidden. |
+| **Keyboard and sounds** | Five global shortcuts, all configurable, and soft sounds you can mute. |
 
-## How it works
+### Keyboard shortcuts
 
-```
-Claude Code / Codex / Cursor  ──hook event──▶  nook-hook.exe  ──named pipe──▶  Nook
-   (your terminal or editor)             (tiny relay)     (only you)    (the island)
-```
+| Shortcut | What it does |
+|---|---|
+| `Ctrl` `Alt` `Space` | Open the session panel large, or shrink it back |
+| `Ctrl` `Shift` `Space` | Open the session panel at normal size, with the keyboard in it |
+| `Ctrl` `Alt` `Enter` | Go to the window of the session that needs you most, and fold the island |
+| `Ctrl` `Alt` `N` | Hide the island, or show it again |
+| `Ctrl` `Shift` `L` | Show or hide the agents list (while the list is on) |
 
-Hooks run a tiny relay, `nook-hook.exe`. It sends each event to Nook over a
-named pipe that only your Windows account can open, and answers back with your
-click. If Nook is closed or slow, the relay exits at once and the tool carries
-on as if Nook were not installed. Nook never blocks an agent.
+You can change or switch off every shortcut in Settings. The defaults avoid
+`Ctrl` `Alt` plus a letter, because on many keyboard layouts that is AltGr and
+would take a character away from every other program.
 
 ## Install
 
-1. Download `Nook-Windows-<version>-setup.exe` and `SHA256SUMS.txt` from the
-   [latest release](https://github.com/zubairbinshaukat/nook/releases/latest).
-2. Check the download:
+> [!IMPORTANT]
+> There is no prebuilt installer yet: the first one will be published on the
+> [Releases](https://github.com/icarlocl/Oleo-Notch-Agent/releases) page. Until
+> then, build it yourself in a few minutes (see
+> [Build from source](#build-from-source)).
 
-   ```powershell
-   Get-FileHash .\Nook-Windows-0.2.2-setup.exe -Algorithm SHA256
-   ```
+`npm run pack` produces `windows\release\Oleo-Windows-<version>-setup.exe` and
+a `SHA256SUMS.txt` with the SHA-256 of the installer and of the two programs
+inside it. The installer is per-user and needs no administrator rights. It is
+not code-signed, so Windows SmartScreen may say "Windows protected your PC":
+choose **More info**, then **Run anyway**, once you have checked the hash:
 
-   The hash must match the installer's line in `SHA256SUMS.txt`.
-3. Run the installer. It installs for your user, with no admin rights. The
-   installer is not code-signed yet, so SmartScreen may say "Windows protected
-   your PC": choose **More info**, then **Run anyway**.
-4. Open **Settings → Connect**, and under **Claude Code** press **Connect…**
-   in **Sessions and approvals**. Click through the preview. Start a new Claude Code session and it appears in the island.
+```powershell
+Get-FileHash .\Oleo-Windows-0.2.2-setup.exe -Algorithm SHA256
+```
 
-Step-by-step guides, with fixes for common problems, are on
-[nook.zubyr.dev/guides](https://nook.zubyr.dev/guides/).
+WebView2, which draws the island, ships with Windows 10 and 11.
 
-<details>
-<summary>My antivirus flags nook-hook.exe</summary>
+## Connect your agents
 
-Small unsigned programs are sometimes flagged by heuristics. The relay is open
-source in [`windows/hook`](windows/hook) and makes no network calls. You can
-report the false positive to Microsoft at
-<https://www.microsoft.com/wdsi/filesubmission>.
+Oleo learns about your sessions through the hooks that each tool offers. You
+turn them on from **Settings → Conexiones** (Connections), one tool at a time,
+with the **Conectar…** button under each:
 
-</details>
+| Tool | What Oleo can do | File it edits, after your click |
+|---|---|---|
+| **Claude Code** | Show sessions, answer permissions and questions, reply, show usage limits | `~/.claude/settings.json` |
+| **Codex** | Show sessions, answer permissions, reply. Codex runs new hooks only once you trust them: start Codex and review them once with `/hooks`. | `~/.codex/hooks.json` |
+| **Cursor** | Show agent sessions, status only. It follows only events that cannot change what Cursor does, so it can never allow, deny or delay anything there. Restart Cursor afterwards. | `~/.cursor/hooks.json` |
 
-## Codex
+Every time, Oleo shows you the **exact diff** of what will change, saves a
+**dated backup** first, and writes nothing until you click. It touches only its
+own entries and never the hooks of other tools. **Desconectar…** removes only
+Oleo's entries, the same way. Remove the hooks from Settings before you
+uninstall Oleo; uninstalling does not edit your config files.
 
-Settings → **Connect** → **Codex** → **Sessions and approvals** → **Connect…** writes Nook's entries to
-`~/.codex/hooks.json`, after a diff preview and a dated backup. Codex then asks
-for permission through Nook: a request waits for your Allow or Deny in the
-island, and with Nook closed Codex asks in its own window as it always does.
-Codex runs new hooks only once you have trusted them: start Codex and review
-them once with `/hooks`. Codex's usage limits are not shown. There is a
-**Show Codex sessions** switch in Settings.
+Then start a new session in your agent and it appears in the island. To see it
+without a real agent, run `npm run fake-session` from `windows/` while Oleo is
+open: it plays a pretend session through the relay and executes nothing.
 
-## Cursor
+## How it works
 
-Settings → **Connect** → **Cursor** → **Sessions** → **Connect…** writes Nook's entries to
-`~/.cursor/hooks.json`, after a diff preview and a dated backup. Nook follows
-only the events that cannot change what Cursor does, so it can never allow,
-deny or delay anything there. Restart Cursor afterwards. Details in
-[`docs/AGENTS.md`](docs/AGENTS.md).
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/how-it-works-en-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/assets/how-it-works-en-light.svg">
+    <img src="docs/assets/how-it-works-en-light.svg" alt="Your agent starts oleo-hook on every hook event; oleo-hook sends the event to Oleo over a local pipe, and your click in the island travels back the same way as the answer." width="1000">
+  </picture>
+</p>
 
-## Reply from the island
+Each hook runs a tiny relay, `oleo-hook`. It sends the event to Oleo over a
+named pipe, `\\.\pipe\oleo-<your user SID>`, which only your Windows account
+(and the system) can open. When the event is a question or a permission
+request, the relay waits for your click and hands the answer back to the agent.
 
-When a Claude Code or Codex session's turn is over, its finished card and its
-session panel show a box to reply in: Enter sends, Shift+Enter starts a new
-line. Nook delivers the reply in the window the session runs in, so the
-conversation carries on there. For a terminal session, Nook brings the terminal
-forward, types the reply and presses Enter. For the Claude Code panel of VS Code
-or Cursor (the extension), Nook brings the editor forward and opens that session
-with the reply already in its prompt box; you press Enter there yourself. Nook
-never touches the clipboard. A reply can also be sent while the session's
-subagents are still running; a warning says the new turn may cross with what
-they report.
+- **It never blocks your agent.** The relay gives Oleo 300 ms to pick up. If Oleo
+  is closed, slow or has crashed, the relay exits at once and the agent carries on
+  as if Oleo were not installed, asking in its own terminal as usual.
+- **It never approves anything without a click.** If nobody answers in time, Oleo
+  says nothing and the agent asks as it always does.
+- **It has no network code.** The relay makes no network calls at all.
 
-The box is only there while Nook can find that window. It is not offered for
-Cursor's own agent sessions, for Claude Code running in an editor's built-in
-terminal, for the Claude desktop app, or on Linux. In a terminal with tabs
-(Windows Terminal) the session's tab has to be the one showing: Nook cannot
-switch tabs. If another tab is showing, or the terminal runs as administrator,
-nothing is sent anywhere and what you typed stays in the box, with the reason.
-If you change windows while Nook is typing, it stops, does not press Enter, and
-says so.
+## Privacy and network
 
-## Updates
+- **No telemetry, no tracking, no account.**
+- **Two optional features use the internet, and both are off until you turn
+  them on:**
+  - *Update check* (Settings → About, off by default, or **Check now**). It asks
+    GitHub's API for the latest release of this repository and sends only a
+    `User-Agent: Oleo/<version>` header, nothing about you or your machine. Oleo
+    never downloads or installs anything by itself: it only opens the download
+    in your browser.
+  - *Weather* (Settings → Island, **Clima**). When you search for a city, the text
+    you type goes to Open-Meteo's geocoding API; when a city is selected, its
+    coordinates go to Open-Meteo's forecast API, at most every 15 minutes while
+    the island is open. Remove the city to turn it off.
+- The window's content security policy allows those two hosts and nothing else.
+- What the relay reads (the tail of a transcript, the file an edit targets,
+  command output) goes only to Oleo over the local pipe and stays in memory. The
+  log records event names and decisions, never their content.
+- Everything Oleo keeps is on your machine: preferences in `%APPDATA%\Oleo` and
+  the relay and log (`oleo.log`) in `%LOCALAPPDATA%\Oleo`.
+- WebView2, the Microsoft component that draws the window, is updated by
+  Microsoft outside Oleo's control.
 
-Nook never checks for a new version on its own. **Settings → About → Updates**
-has a switch, **Check for updates every day** (off by default), and a **Check
-now** button. When a newer version is out, Settings and the island's header say
-so, and **Get it…** starts the installer download in your browser (on Windows);
-Nook itself downloads and installs nothing. It is the only thing Nook uses the internet for: it asks GitHub's
-API for the latest release of this repository and sends only a `Nook/<version>`
-user-agent, nothing about you or your machine.
+Found a vulnerability? Please report it privately, as described in
+[`SECURITY.md`](SECURITY.md).
 
 ## Build from source
 
-You need Rust (stable, MSVC), Visual Studio Build Tools with the MSVC x64/x86
-tools and a Windows 11 SDK, and Node 20 or newer.
+You need Rust (stable, MSVC toolchain), Visual Studio Build Tools with the MSVC
+x64/x86 tools and a Windows 11 SDK, and Node 20 or newer.
 
 ```powershell
 cd windows
 npm ci
-npm run tauri dev       # development build
-npm run pack            # release build, installer and release\SHA256SUMS.txt
-npx tsc --noEmit
-cargo test --workspace
+npm run tauri dev       # development build with live reload
+npm run pack            # release build: the installer and SHA256SUMS.txt in windows\release\
+npx tsc --noEmit        # type-check the front end
+cargo test --workspace  # Rust tests
 ```
 
-[`windows/README.md`](windows/README.md) covers the hooks, where Nook keeps its
-files, and the layout of the code. Contributions are welcome: see
-[`CONTRIBUTING.md`](CONTRIBUTING.md).
+[`windows/README.md`](windows/README.md) covers the hooks, where Oleo keeps its
+files and the layout of the code. Contributions are welcome: see
+[`CONTRIBUTING.md`](CONTRIBUTING.md). Builds must pass with no warnings.
 
-## Privacy
+### Project layout
 
-- No telemetry and no tracking. No network use at all, except the update check
-  you switch on yourself in Settings → About (or run with **Check now**): it asks
-  GitHub for the latest release and sends nothing about you or your machine. The
-  relay makes no network calls.
-- It never blocks Claude Code: if Nook is closed or slow, the relay exits and
-  Claude Code asks in the terminal as usual.
-- It never approves anything without a click.
-- It never writes `~/.claude/settings.json`, `~/.cursor/hooks.json` or
-  `~/.codex/hooks.json` without a preview, a dated backup and a click. Hooks that belong to other tools are never
-  touched.
-- What the relay reads (transcript tail, the file an edit targets, command
-  output) goes only to the app over a local named pipe that only your account
-  can open, and stays in memory. The log records event names and decisions,
-  never content.
+```text
+windows/
+  src/          front end in TypeScript, no framework: island, views, settings, widgets, mascot
+  src-tauri/    the Rust app: window, relay server, hook installer, settings, platform code
+  hook/         oleo-hook, the relay each hook starts
+  scripts/      fake session, installer packaging, icon and screenshot generators
+  dev/          the screenshot stage: the real island on a made-up desktop
+docs/           notes and the images used by this README
+```
 
-**Privacy policy.** Nook makes no network connections of its own, with one
-exception you control: the optional update check (off by default; it runs when
-you switch it on or press **Check now**) asks GitHub's API for the latest release
-and sends only a `Nook/<version>` user-agent. It collects, stores and sends
-nothing about you. Everything it keeps is in `%APPDATA%\Nook` and
-`%LOCALAPPDATA%\Nook` on your own machine. (WebView2, the Microsoft component
-that draws the window, is updated by Microsoft outside Nook's control.)
+### Screenshots
 
-## Code signing policy
+The images in this README come from one command. From `windows/`, with Node 22
+or newer and Edge or Chrome installed:
 
-Releases are currently **unsigned**. Code signing is planned through the
-[SignPath Foundation](https://signpath.org)'s free programme once the project
-qualifies for it. When that happens:
+```powershell
+npm run shots -- --out ..\docs\assets\screens --only hero,over-editor,question
+```
 
-- **What is signed:** the installer (`Nook-Windows-<version>-setup.exe`) and the
-  two programs inside it, `nook.exe` and `nook-hook.exe`, built from a tagged
-  commit by the public workflow in
-  [`.github/workflows/release.yml`](.github/workflows/release.yml) and by nothing
-  else.
-- **Who approves:** the maintainer, Zubair Bin Shaukat, approves each signing
-  request by hand.
-- `SHA256SUMS.txt` is published with every release, signed or not.
+The details are in [`docs/screenshots.md`](docs/screenshots.md).
 
-## Security
+## Licence and credits
 
-Found a vulnerability? Please report it privately: see [`SECURITY.md`](SECURITY.md).
+Oleo's own code, artwork and documentation are © 2026 Franco Ruiz, all rights
+reserved: see [`LICENSE`](LICENSE). The source is public so that you can read
+it and check what it does. The parts that come from Nook and Coucou keep their
+MIT License, reproduced in [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 
-## License
-
-Oleo is proprietary software by Franco Ruiz: all rights reserved. It is derived
-from Nook; the portions that come from Nook and Coucou keep their MIT License.
-See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
-
-## Credits
-
-Oleo is derived from Nook. Nook is a fork of [Coucou](https://github.com/Louis-CFM/coucou) by Louis Raillé
-(MIT), built on the Windows multi-session work of PR #71 by
-[Edurique](https://github.com/Edurique/coucou_edu_windows_implementation).
-Interface icons are from [Lucide](https://lucide.dev) and
-[Simple Icons](https://simpleicons.org); see [`NOTICE`](NOTICE). Durazno and the icons are Oleo's own (the sounds come from Nook); see
+Durazno, the app icons and the artwork drawn from them are Oleo's own; see
 [`LICENSE-ASSETS.md`](LICENSE-ASSETS.md).
 
-"Claude" and "Claude Code" are trademarks of Anthropic. "Codex" is a trademark of OpenAI. "Cursor" is a trademark
-of Anysphere.
+Oleo is derived from [Nook](https://github.com/zubairbinshaukat/nook) by Zubair
+Bin Shaukat, which is a fork of [Coucou](https://github.com/Louis-CFM/coucou) by
+Louis Raillé, built on the Windows multi-session work of
+[Edurique](https://github.com/Edurique/coucou_edu_windows_implementation).
+Interface icons are from [Lucide](https://lucide.dev) and
+[Simple Icons](https://simpleicons.org). The banner is set in
+[Bricolage Grotesque](https://fonts.google.com/specimen/Bricolage+Grotesque)
+(SIL Open Font License).
+
+"Claude" and "Claude Code" are trademarks of Anthropic. "Codex" is a trademark
+of OpenAI. "Cursor" is a trademark of Anysphere. They are named here only to say
+which tools Oleo works with.
 
 <br>
 
-<div align="center">
-
-**Built by [Zubair Bin Shaukat](https://zubyr.dev)** in Lahore
-
-[Website](https://zubyr.dev) · [GitHub](https://github.com/zubairbinshaukat) · [LinkedIn](https://www.linkedin.com/in/zubairbinshaukat) · [X](https://x.com/zubyrdev)
-
-<sub>If Nook saves you a trip to the terminal, a ⭐ helps others find it.</sub>
-
-</div>
+<p align="center">
+  Made by <a href="https://github.com/icarlocl">Franco Ruiz</a><br>
+  <sub>If Oleo saves you a trip to the terminal, a ⭐ helps others find it.</sub>
+</p>

@@ -2397,8 +2397,20 @@ html.vt-back::view-transition-group(*) {
   inset: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  /* From the top: taller than the box (title, two lines, button) it grows downwards,
+     over the hidden age row, and never up over the card's heading. */
+  justify-content: flex-start;
   gap: 3px;
+}
+
+/* With no numbers, the notice is the card's content and sets its height: the
+   empty rows give way, so nothing overflows or is cut off, at any dock. */
+.res-usage:has(.res-none:not([hidden])) .res-row {
+  display: none;
+}
+
+.res-usage .res-none:not([hidden]) {
+  position: static;
 }
 
 .res-none b {
@@ -2412,6 +2424,7 @@ html.vt-back::view-transition-group(*) {
 }
 
 .res-age {
+  gap: 0.3em;
   flex: 0 0 12px;
   margin-top: auto;
   display: flex;

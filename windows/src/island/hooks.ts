@@ -9,12 +9,13 @@
 // what it said to end its turn (the session panel) — and the questions it asks
 // with its question tool, answered on the island.
 
+import { t, type Key } from "../core/i18n";
 import { Bridge, onEvent } from "../core/bridge";
 import { Reader } from "../core/reading";
 import { Reply } from "../core/reply";
 import { Sound } from "../core/sound";
 import {
-  CLAUDE_ID, QUESTION_TOOL, SESSION_UNNAMED, State, TURN_DONE, finishedNotice, isQuestion, newSession, newStep, nextRequest, readModel, readTarget, requestsOf, taskStart,
+  CLAUDE_ID, QUESTION_TOOL, sessionUnnamed, State, TURN_DONE, finishedNotice, isQuestion, newSession, newStep, nextRequest, readModel, readTarget, requestsOf, taskStart,
   type ChangedFile, type ClaudeSession, type Question, type SessionRequest, type SessionStep,
   type StepKind, type StepResult, type Subagent,
 } from "../core/state";
@@ -484,7 +485,7 @@ function sessionOf(island: Island, payload: HookPayload): ClaudeSession {
   if (typeof payload.context_tokens === "number" && payload.context_tokens > 0 && !payload.agent_id) session.contextTokens = payload.context_tokens;
   if (payload.cwd) {
     session.cwd = payload.cwd;
-    session.project = lastPathComponent(payload.cwd) || SESSION_UNNAMED;
+    session.project = lastPathComponent(payload.cwd) || sessionUnnamed();
     // The Shelf's Projects widget keeps the folders sessions have run in (said once per folder).
     rememberProject(payload.cwd);
   }
@@ -672,25 +673,25 @@ function lastPathComponent(p: string): string {
  * What a tool does, in a word — the macOS app's frenchStep(), in English like
  * the rest of the island here.
  */
-const TOOL_LABELS: Record<string, string> = {
-  Bash: "Runs",
-  Read: "Reads",
-  Write: "Writes",
-  Edit: "Edits",
-  Glob: "Finds",
-  Grep: "Searches",
-  WebSearch: "Searches the web",
-  WebFetch: "Fetches",
-  TodoWrite: "Todos",
-  Task: "Agent",
-  LS: "Lists",
-  MultiEdit: "Edits",
-  NotebookEdit: "Notebook",
-  PowerShell: "Runs",
+const TOOL_LABELS: Record<string, Key> = {
+  Bash: "hooks.runs",
+  Read: "hooks.reads",
+  Write: "hooks.writes",
+  Edit: "hooks.edits",
+  Glob: "hooks.finds",
+  Grep: "hooks.searches",
+  WebSearch: "hooks.searchesWeb",
+  WebFetch: "hooks.fetches",
+  TodoWrite: "step.todos",
+  Task: "hooks.agent",
+  LS: "hooks.lists",
+  MultiEdit: "hooks.edits",
+  NotebookEdit: "hooks.notebook",
+  PowerShell: "hooks.runs",
 };
 
 function stepLabel(tool: string, input: Record<string, unknown>): string {
-  const label = TOOL_LABELS[tool] ?? tool;
+  const label = TOOL_LABELS[tool] ? t(TOOL_LABELS[tool]) : tool;
   const str = (k: string) => (typeof input[k] === "string" ? (input[k] as string) : null);
   const cmd = str("command");
   if (cmd) return `${label} · ${cmd.slice(0, 40)}`;
@@ -797,7 +798,7 @@ function handleAgent(island: Island, payload: HookPayload, agent: string) {
 
     case "PostToolUseFailure":
       State.updateTask(agentId, "working");
-      State.appendStep(agentId, "⚠ failed");
+      State.appendStep(agentId, `⚠ ${t("sess.failed")}`);
       break;
 
     case "Notification": {
@@ -834,11 +835,11 @@ function handleAgent(island: Island, payload: HookPayload, agent: string) {
       break;
 
     case "SubagentStart":
-      State.appendStep(agentId, "+ subagent");
+      State.appendStep(agentId, `+ ${t("views.kindPlain")}`);
       break;
 
     case "SubagentStop":
-      State.appendStep(agentId, "• subagent done");
+      State.appendStep(agentId, t("hooks.subDone"));
       break;
 
     case "PermissionRequest":
@@ -1069,7 +1070,7 @@ export function handleHook(island: Island, payload: HookPayload) {
         session.launching = session.launching.filter((call) => call.step !== ended);
       }
       if (!failed) recordChange(session, payload);
-      else say(session, "⚠ failed");
+      else say(session, `⚠ ${t("sess.failed")}`);
       atWork(session);
       break;
     }
@@ -1107,7 +1108,7 @@ export function handleHook(island: Island, payload: HookPayload) {
         session.launching = [];
         session.parked = true;
         atWork(session);
-        say(session, "… waiting for its subagents");
+        say(session, t("hooks.waitingSubs"));
         // It said something to end its own turn: that is an answer, and the
         // user is told — once — though the session is not finished: the
         // finish sound, and the card or the mark a finished turn gets, worded
@@ -1190,7 +1191,7 @@ export function handleHook(island: Island, payload: HookPayload) {
       const last = session.steps[session.steps.length - 1];
       if (last?.tool === "Thinking") last.target = thought;
       else log(session.steps, newStep("Thinking", "note", thought));
-      say(session, "Thinking…");
+      say(session, t("hooks.thinking"));
       break;
     }
 
@@ -1199,14 +1200,14 @@ export function handleHook(island: Island, payload: HookPayload) {
       break;
 
     case "StopFailure":
-      log(session.steps, newStep("Error", "note", "The session stopped on an error.")).state = "failed";
+      log(session.steps, newStep("Error", "note", t("views.error.title"))).state = "failed";
       session.state = "error";
       Sound.play("error");
       tell("error");
       break;
 
     case "SubagentStart":
-      if (startSubagent(session, payload)) say(session, "+ subagent");
+      if (startSubagent(session, payload)) say(session, `+ ${t("views.kindPlain")}`);
       break;
 
     case "SubagentStop": {
@@ -1221,7 +1222,7 @@ export function handleHook(island: Island, payload: HookPayload) {
         // A second stop of one that has stopped changes nothing of how it ended.
         if (stopped.state === "running") {
           closeSubagent(island, session, stopped, "done", payload.last_message ?? null);
-          say(session, "• subagent done");
+          say(session, t("hooks.subDone"));
         } else if (payload.last_message) stopped.result = payload.last_message;
       }
       const tasks = backgroundAgents(payload);

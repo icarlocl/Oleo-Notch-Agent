@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager};
 
+use crate::i18n::{tr, Text};
 use crate::{platform, settings};
 
 const API_URL: &str = "https://api.github.com/repos/icarlocl/oleo/releases/latest";
@@ -201,9 +202,9 @@ fn curl_args(version: &str) -> Vec<String> {
 /// What the user is told when curl stops with this exit code.
 fn explain_curl(code: Option<i32>) -> String {
     match code {
-        Some(6 | 7 | 28 | 35 | 52 | 55 | 56) => "Couldn't reach GitHub. Check your connection and try again.".into(),
-        Some(22) => "GitHub didn't give an answer just now. Try again in a little while.".into(),
-        _ => "The update check failed. Try again later.".into(),
+        Some(6 | 7 | 28 | 35 | 52 | 55 | 56) => tr(Text::UpdateUnreachable).into(),
+        Some(22) => tr(Text::UpdateNoAnswer).into(),
+        _ => tr(Text::UpdateFailed).into(),
     }
 }
 
@@ -216,7 +217,7 @@ fn fetch() -> Result<Vec<u8>, String> {
         .output()
         .map_err(|err| {
             crate::log::line(format!("update: curl did not start: {err}"));
-            "Oleo needs curl to check for updates, and couldn't find it on this computer.".to_string()
+            tr(Text::UpdateNoCurl).to_string()
         })?;
     if !output.status.success() {
         crate::log::line(format!("update: curl exited with {:?}", output.status.code()));
@@ -234,7 +235,7 @@ fn run_check(app: &AppHandle) -> Result<UpdateInfo, String> {
         Err(TryLockError::Poisoned(e)) => e.into_inner(),
         Err(TryLockError::WouldBlock) => {
             drop(CHECKING.lock());
-            return last().ok_or_else(|| "The update check failed. Try again later.".to_string());
+            return last().ok_or_else(|| tr(Text::UpdateFailed).to_string());
         }
     };
     let release = parse_release(&fetch()?)?;
@@ -296,7 +297,7 @@ pub fn start(app: &AppHandle) {
 pub async fn update_check(app: AppHandle) -> Result<UpdateInfo, String> {
     tauri::async_runtime::spawn_blocking(move || run_check(&app))
         .await
-        .map_err(|_| "The update check failed. Try again later.".to_string())?
+        .map_err(|_| tr(Text::UpdateFailed).to_string())?
 }
 
 /// The last good result, from this run or the saved file. No network.

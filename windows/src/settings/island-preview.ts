@@ -13,6 +13,7 @@
 // it, `islandPreview` is the one place to swap it in: `update(kinds)` is all
 // the section calls.
 
+import { t } from "../core/i18n";
 import { Tracked } from "../core/anim";
 import {
   COMPACT_BOT_SLOT, COMPACT_CELL_H, COMPACT_COLUMN_W, COMPACT_DOT, COMPACT_DOT_GAP, COMPACT_METRIC_GAP, COMPACT_PAD,
@@ -29,12 +30,12 @@ import type { Bot } from "./bots";
  * in plain words and in short, its icon — with a sample of what it says.
  */
 export const COMPACT_CELLS: Record<CompactMetric, { width: number; name: string; short: string; icon: string; sample: string }> = {
-  cpu: { width: 52, name: "Processor (CPU)", short: "CPU", icon: LUCIDE.cpu, sample: "31%" },
-  gpu: { width: 52, name: "Graphics (GPU)", short: "GPU", icon: LUCIDE.gpu, sample: "18%" },
-  ram: { width: 52, name: "Memory (RAM)", short: "RAM", icon: LUCIDE.memoryStick, sample: "70%" },
-  usage5h: { width: 52, name: "5-hour usage limit", short: "5-hour", icon: LUCIDE.timer, sample: "38%" },
-  usage7d: { width: 52, name: "Weekly usage limit", short: "Weekly", icon: LUCIDE.calendarDays, sample: "12%" },
-  waiting: { width: 38, name: "Sessions waiting for you", short: "En espera", icon: LUCIDE.bell, sample: "1" },
+  cpu: { width: 52, name: t("s.cell.cpu"), short: "CPU", icon: LUCIDE.cpu, sample: "31%" },
+  gpu: { width: 52, name: t("s.cell.gpu"), short: "GPU", icon: LUCIDE.gpu, sample: "18%" },
+  ram: { width: 52, name: t("s.cell.ram"), short: "RAM", icon: LUCIDE.memoryStick, sample: "70%" },
+  usage5h: { width: 52, name: t("s.cell.usage5h"), short: t("s.cell.usage5hShort"), icon: LUCIDE.timer, sample: "38%" },
+  usage7d: { width: 52, name: t("s.cell.usage7d"), short: t("s.cell.usage7dShort"), icon: LUCIDE.calendarDays, sample: "12%" },
+  waiting: { width: 38, name: t("s.cell.waiting"), short: t("s.cell.waitingShort"), icon: LUCIDE.bell, sample: "1" },
 };
 /** The size the island draws a cell's icon at. */
 const COMPACT_ICON = 14;
@@ -157,10 +158,10 @@ export function islandPreview(bot: Bot): IslandPreview {
       }
       draw();
       const names = on.map((k) => COMPACT_CELLS[k].short);
-      words.textContent = names.length ? `Durazno · sessions · ${names.join(" · ")}` : "Durazno · sessions — no numbers, so the island is narrower";
+      words.textContent = names.length ? t("s.preview.with", { names: names.join(" · ") }) : t("s.preview.none");
       // Its length along the edge, ears included; on a side, the column's width beside it.
       width.textContent = side ? `${COMPACT_COLUMN_W} × ${wanted + 2 * EAR_COMPACT} px` : `${wanted + 2 * EAR_COMPACT} px`;
-      desk.setAttribute("aria-label", `Preview of the compact island, with sample values: ${on.map((k) => COMPACT_CELLS[k].name).join(", ") || "no numbers"}`);
+      desk.setAttribute("aria-label", t("s.preview.aria", { names: on.map((k) => COMPACT_CELLS[k].name).join(", ") || t("s.preview.noNumbers") }));
     },
     run() {
       let tick = 0;

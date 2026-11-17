@@ -1,6 +1,7 @@
 // Entry point: boot the bridge, wire the island, start the greeting.
 
 import "./style.css";
+import { onLangChange, setLanguage, systemLang } from "./core/i18n";
 import { invoke } from "@tauri-apps/api/core";
 import { Bridge, IS_TAURI, onEvent, type PanelSize } from "./core/bridge";
 import { Reply } from "./core/reply";
@@ -41,9 +42,14 @@ async function main() {
 
   const island = new Island(root);
 
+  // The words follow the language setting, live: everything on show is drawn again.
+  onLangChange(() => State.notify());
+  void Bridge.setSystemLanguage(systemLang());
+
   const boot = await Bridge.boot();
   if (boot) {
     State.settings = { ...State.settings, ...boot.settings };
+    setLanguage(State.settings.language);
     island.setRoom(boot.panel.width, boot.panel.height, boot.panel.dock);
     island.setScreenWidth(boot.screen.width, boot.screen.height);
   }
@@ -136,6 +142,7 @@ async function main() {
   const agentsFeed = startAgentsFeed();
   await onEvent<Settings>("settings-changed", (s) => {
     State.settings = { ...State.settings, ...s };
+    setLanguage(State.settings.language);
     island.applySettings();
     // The agents list may have just been turned on: it is sent the rows.
     agentsFeed.poke();

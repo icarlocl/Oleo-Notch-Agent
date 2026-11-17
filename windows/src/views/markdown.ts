@@ -13,6 +13,7 @@
 // `markdown` / `reply` draw them.
 
 import { h } from "./dom";
+import { t, type Key } from "../core/i18n";
 import { LUCIDE, lucide } from "./iconset";
 
 // ── Reading: an answer as blocks ──────────────────────────────────────────────
@@ -406,12 +407,12 @@ function inline(text: string, opener: PathOpener | null, lead = false): Node[] {
 }
 
 /** Each alert's name, as its title says it, and its icon. Its colour is the style sheet's. */
-const CALLOUTS: Record<CalloutKind, { title: string; icon: string }> = {
-  note: { title: "Nota", icon: LUCIDE.info },
-  tip: { title: "Consejo", icon: LUCIDE.lightbulb },
-  important: { title: "Importante", icon: LUCIDE.messageSquareWarning },
-  warning: { title: "Advertencia", icon: LUCIDE.triangleAlert },
-  caution: { title: "Precaución", icon: LUCIDE.octagonAlert },
+const CALLOUTS: Record<CalloutKind, { title: Key; icon: string }> = {
+  note: { title: "md.note", icon: LUCIDE.info },
+  tip: { title: "md.tip", icon: LUCIDE.lightbulb },
+  important: { title: "md.important", icon: LUCIDE.messageSquareWarning },
+  warning: { title: "md.warning", icon: LUCIDE.triangleAlert },
+  caution: { title: "md.caution", icon: LUCIDE.octagonAlert },
 };
 const CALLOUT_ICON = 13;
 
@@ -440,7 +441,7 @@ function draw(block: Block, opener: PathOpener | null): HTMLElement {
       const { title, icon } = CALLOUTS[block.callout];
       return h(
         "div", { class: `md-callout ${block.callout}`, role: "note" },
-        h("div", { class: "md-callout-h" }, lucide(icon, CALLOUT_ICON), h("b", { text: title })),
+        h("div", { class: "md-callout-h" }, lucide(icon, CALLOUT_ICON), h("b", { text: t(title) })),
         ...body,
       );
     }
@@ -476,11 +477,11 @@ export function reply(source: string, opener: PathOpener | null, fold: ReplyFold
   if (!plan) return h("div", { class: "md" }, ...all(blocks));
   const control = (label: string, note: string) =>
     h("button", { class: "md-more", type: "button", "aria-expanded": String(fold.open), onclick: () => fold.toggle(!fold.open) }, h("b", { text: label }), note ? h("span", { text: note }) : null);
-  if (fold.open) return h("div", { class: "md" }, ...all(blocks), control("Show less", ""));
+  if (fold.open) return h("div", { class: "md" }, ...all(blocks), control(t("md.less"), ""));
   return h(
     "div", { class: "md folded" },
     ...all(plan.lead),
-    plan.decisions > 0 ? h("div", { class: "md-skip", text: `${plan.decisions} ${plan.decisions === 1 ? "decision" : "decisions"} further down` }) : null,
-    control("Show full reply", `${plan.hidden} more ${plan.hidden === 1 ? "line" : "lines"}`),
+    plan.decisions > 0 ? h("div", { class: "md-skip", text: t("md.decisions", { count: plan.decisions }) }) : null,
+    control(t("md.full"), t("md.moreLines", { count: plan.hidden })),
   );
 }

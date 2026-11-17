@@ -2,6 +2,7 @@
 
 import type { BotEmoteName, BotStateName, Dock, IslandMode, IslandViewName } from "./layout";
 import type { EyeShape } from "../bot/engine";
+import { formatNumber, t, type LanguageSetting } from "./i18n";
 
 export type AgentSource = "claudeCode" | "agent";
 export type PillBadge = "approval" | "finished" | "error";
@@ -126,10 +127,10 @@ function tabName(session: Pick<ClaudeSession, "title" | "project">): string {
 export function targetTip(session: Pick<ClaudeSession, "target" | "title" | "project">): string | null {
   const { kind, label, tabbed } = session.target;
   switch (kind) {
-    case "claude": return "Open Claude";
+    case "claude": return t("target.openClaude");
     case "vscode":
-    case "cursor": return `Focus ${label}`;
-    case "terminal": return tabbed ? `Opens ${label}, tab: ${tabName(session)}` : `Focus ${label} window`;
+    case "cursor": return t("target.focus", { app: label });
+    case "terminal": return tabbed ? t("target.opensTab", { app: label, tab: tabName(session) }) : t("target.focusWindow", { app: label });
     default: return null;
   }
 }
@@ -137,10 +138,10 @@ export function targetTip(session: Pick<ClaudeSession, "target" | "title" | "pro
 /** The same, in the two words of a card's button. */
 export function targetWords(target: SessionTarget): string | null {
   switch (target.kind) {
-    case "claude": return "Open Claude";
+    case "claude": return t("target.openClaude");
     case "vscode":
-    case "cursor": return `Open ${target.label}`;
-    case "terminal": return "Open terminal";
+    case "cursor": return t("target.open", { app: target.label });
+    case "terminal": return t("target.openTerminal");
     default: return null;
   }
 }
@@ -198,7 +199,7 @@ export const subagentsGoing = (session: Pick<ClaudeSession, "subagents">) => ses
 export function repliedWords(session: Pick<ClaudeSession, "parked" | "toldReply" | "subagents">): string | null {
   const going = subagentsGoing(session);
   if (!session.parked || !session.toldReply || going === 0) return null;
-  return `Replied · ${going} ${going === 1 ? "subagent" : "subagents"} still running`;
+  return t("state.replied", { count: going });
 }
 
 /**
@@ -343,7 +344,7 @@ export function readModel(value: unknown): ModelInfo | null {
 }
 
 /** What a subagent is called when not even its kind is known. */
-export const SUBAGENT_UNTYPED = "Subagent";
+export const subagentUntyped = () => t("state.subagent");
 /** How much of an `Agent` call's prompt is kept to name a subagent by. */
 const TASK_CHARS = 60;
 
@@ -358,7 +359,7 @@ export function taskStart(prompt: unknown): string | null {
 type Named = Pick<Subagent, "type" | "description" | "task">;
 
 /** A subagent's kind: its type, or just that it is one. */
-export const subagentKind = (agent: Pick<Subagent, "type">) => agent.type || SUBAGENT_UNTYPED;
+export const subagentKind = (agent: Pick<Subagent, "type">) => agent.type || subagentUntyped();
 
 /** What a subagent is at, beside its kind: what it was launched to do, or the start of what it was asked. Null when neither is known. */
 export const subagentTask = (agent: Named) => agent.description ?? agent.task;
@@ -383,7 +384,7 @@ export function subagentTook(agent: Pick<Subagent, "startedAt" | "endedAt" | "ti
  * alone — the next event clears it.
  */
 export const QUIET_MS = 10 * 60_000;
-export const QUIET_WORDS = "No activity for 10 min";
+export const quietWords = () => t("state.quiet");
 const CAN_GO_QUIET: ReadonlySet<BotStateName> = new Set<BotStateName>(["working", "thinking", "searching"]);
 
 type Heard = Pick<ClaudeSession, "state" | "approval" | "question" | "heardAt">;
@@ -528,17 +529,17 @@ export interface ClaudeSession {
 }
 
 /** What the mark of a reply that waits on a decision says. */
-export const DECISION_WORDS = "Needs your decision";
+export const decisionWords = () => t("state.decision");
 
 /** What a session is called before its folder is known. */
-export const SESSION_UNNAMED = "Session";
+export const sessionUnnamed = () => t("state.session");
 
 /** The tool a session runs in: its id, for Cursor, is `cursor:<conversation>` (set by the relay). */
 export type SessionAgent = "claude" | "cursor" | "codex";
 
 export function newSession(id: string, agent: SessionAgent = "claude"): ClaudeSession {
   return {
-    id, agent, target: NO_TARGET, title: null, project: SESSION_UNNAMED, cwd: null, state: "idle",
+    id, agent, target: NO_TARGET, title: null, project: sessionUnnamed(), cwd: null, state: "idle",
     lines: [], steps: [], asked: null, answer: null, answeredAt: 0,
     approval: null, question: null, queued: [], subagents: [], launching: [], parked: false, toldReply: null, attributed: null,
     news: null, heardAt: 0, restedAt: 0, unseen: false, attention: false, nudges: 0, decision: false, model: null,
@@ -651,6 +652,8 @@ export interface Settings {
   /** Settings → About: once a day, ask GitHub whether a newer Oleo is out. Off unless the user switches it on. */
   checkUpdates: boolean;
   weatherLocation: WeatherLocation | null;
+  /** The interface's language: "system" follows the OS (core/i18n). */
+  language: LanguageSetting;
 }
 
 /** The choices of "Auto-hide the folded island after", in seconds; 0 is "never". 60 is what it always was. */
@@ -722,19 +725,18 @@ export interface Usage {
 export const USAGE_OLD_MS = 2 * 60 * 60_000;
 
 /** What a window says once its reset time has passed, until Claude Code reports again. */
-export const USAGE_RESET_WORDS = "reset, waiting for new data";
+export const usageResetWords = () => t("usage.reset");
 /** Why the numbers are as old as they are: the tooltip of the usage block, and of a usage cell. */
-export const USAGE_SOURCE_WORDS =
-  "Usage only updates while Claude Code runs. Usage from claude.ai and the desktop app counts toward the same limits but isn't visible to Oleo.";
+export const usageSourceWords = () => t("usage.source");
 
 /** "resets in 2h 14m", "resets in 3d 4h", "resets in 14m", "resets in <1m": how long until a window starts again. */
 export function resetCountdown(ms: number): string {
   const minutes = Math.floor(Math.max(0, ms) / 60_000);
-  if (minutes < 1) return "resets in <1m";
-  if (minutes < 60) return `resets in ${minutes}m`;
+  if (minutes < 1) return t("usage.resetsSoon");
+  if (minutes < 60) return t("usage.resetsM", { m: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `resets in ${hours}h ${minutes % 60}m`;
-  return `resets in ${Math.floor(hours / 24)}d ${hours % 24}h`;
+  if (hours < 24) return t("usage.resetsHM", { h: hours, m: minutes % 60 });
+  return t("usage.resetsDH", { d: Math.floor(hours / 24), h: hours % 24 });
 }
 
 /**
@@ -756,7 +758,7 @@ export interface UsageShown {
 /** What a window shows now: from what was last reported, and the time. Nothing here asks anybody anything. */
 export function usageShown(win: UsageWindow | null | undefined, updatedAt: number, now: number): UsageShown | null {
   if (!win) return null;
-  if (win.resetsAt > 0 && now >= win.resetsAt) return { percent: 0, state: "reset", countdown: USAGE_RESET_WORDS };
+  if (win.resetsAt > 0 && now >= win.resetsAt) return { percent: 0, state: "reset", countdown: usageResetWords() };
   return {
     percent: Math.round(win.usedPercent),
     state: now - updatedAt > USAGE_OLD_MS ? "old" : "fresh",
@@ -807,7 +809,7 @@ export function ramWords(m: Metrics | null): string {
   if (!m || m.ramTotal <= 0) return "";
   const GB = 1024 ** 3;
   const digits = m.ramTotal / GB >= 100 ? 0 : 1;
-  return `${(m.ramUsed / GB).toFixed(digits)} of ${(m.ramTotal / GB).toFixed(digits)} GB`;
+  return t("usage.ram", { used: formatNumber(m.ramUsed / GB, { minimumFractionDigits: digits, maximumFractionDigits: digits }), total: formatNumber(m.ramTotal / GB, { minimumFractionDigits: digits, maximumFractionDigits: digits }) });
 }
 
 /** How much of a usage window is gone, as it is coloured: calm under 60 %, warm to 85 %, hot past it. */
@@ -885,6 +887,7 @@ export const DEFAULT_SETTINGS: Settings = {
   finishedNotice: "mark",
   checkUpdates: false,
   weatherLocation: null,
+  language: "system",
 };
 
 type Listener = () => void;

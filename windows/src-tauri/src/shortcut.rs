@@ -35,6 +35,7 @@ use tauri::plugin::TauriPlugin;
 use tauri::{AppHandle, Emitter, Manager, Wry};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
+use crate::i18n::{tr, Text};
 use crate::island::WINDOW_LABEL;
 use crate::log;
 use crate::settings::Settings;
@@ -44,8 +45,8 @@ const EVENT: &str = "shortcut";
 /// A key held down repeats: presses closer than this are one.
 const REPEAT: Duration = Duration::from_millis(250);
 
-const TAKEN: &str = "Already used by another app — pick another";
-const TWICE: &str = "Already another Oleo shortcut — pick another";
+const TAKEN: Text = Text::ShortcutTaken;
+const TWICE: Text = Text::ShortcutTwice;
 
 /// Which of the five.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -195,33 +196,33 @@ pub fn plugin() -> TauriPlugin<Wry> {
 /// is one, and one that can be taken: at least Ctrl, Alt or Win with a key,
 /// and none of those Windows or every program already gives a meaning to.
 pub fn check(accelerator: &str) -> Result<Shortcut, String> {
-    let shortcut = Shortcut::from_str(accelerator.trim()).map_err(|_| "Press a key together with Ctrl, Alt or Win".to_string())?;
+    let shortcut = Shortcut::from_str(accelerator.trim()).map_err(|_| tr(Text::ShortcutNeedsMod).to_string())?;
     match reserved(shortcut.mods, shortcut.key) {
-        Some(why) => Err(why.to_string()),
+        Some(why) => Err(tr(why).to_string()),
         None => Ok(shortcut),
     }
 }
 
-fn reserved(mods: Modifiers, key: Code) -> Option<&'static str> {
+fn reserved(mods: Modifiers, key: Code) -> Option<Text> {
     let ctrl = mods.contains(Modifiers::CONTROL);
     let alt = mods.contains(Modifiers::ALT);
     let win = mods.contains(Modifiers::SUPER);
     let shift = mods.contains(Modifiers::SHIFT);
     if !(ctrl || alt || win) {
-        return Some("Press a key together with Ctrl, Alt or Win");
+        return Some(Text::ShortcutNeedsMod);
     }
     // Windows answers these itself, whatever asks for them.
     if win && !ctrl && !alt {
-        return Some("Windows keeps the Win key's shortcuts for itself — pick another");
+        return Some(Text::ShortcutWinKey);
     }
     if alt && !ctrl && !win && matches!(key, Code::F4 | Code::Tab | Code::Escape | Code::Space) {
-        return Some("Windows uses that one for its windows — pick another");
+        return Some(Text::ShortcutWindows);
     }
     if ctrl && alt && !win && matches!(key, Code::Delete) {
-        return Some("Windows keeps Ctrl+Alt+Del for itself — pick another");
+        return Some(Text::ShortcutCtrlAltDel);
     }
     if ctrl && !alt && !win && matches!(key, Code::Escape) {
-        return Some("Windows uses that one for the Start menu and the Task Manager — pick another");
+        return Some(Text::ShortcutStartMenu);
     }
     // Taken everywhere, these would stop copying, pasting, undoing, saving… in every program.
     let editing = matches!(
@@ -230,7 +231,7 @@ fn reserved(mods: Modifiers, key: Code) -> Option<&'static str> {
             | Code::KeyT | Code::KeyV | Code::KeyW | Code::KeyX | Code::KeyY | Code::KeyZ
     );
     if ctrl && !alt && !win && !shift && editing {
-        return Some("Every program uses that one (copy, paste, undo, save…) — pick another");
+        return Some(Text::ShortcutEditing);
     }
     None
 }
@@ -244,7 +245,7 @@ fn take(app: &AppHandle, which: Which, accelerator: &str, shortcut: Shortcut) ->
         }
         Err(err) => {
             log::line(format!("global shortcut {}: {accelerator} not registered: {err}", which.name()));
-            Err(TAKEN.to_string())
+            Err(tr(TAKEN).to_string())
         }
     }
 }
@@ -264,7 +265,7 @@ pub fn start(app: &AppHandle, settings: &Settings) {
         if enabled && (which != Which::Agents || held.agents_allowed) {
             let outcome = check(accelerator).and_then(|shortcut| {
                 if held.taken_by_another(which, shortcut) {
-                    return Err(TWICE.to_string());
+                    return Err(tr(TWICE).to_string());
                 }
                 take(app, which, accelerator, shortcut).map(|_| shortcut)
             });
@@ -293,7 +294,7 @@ pub fn change(app: &AppHandle, which: Which, accelerator: &str, enabled: bool) -
     let hotkeys = app.state::<Hotkeys>();
     let mut held = hotkeys.0.lock().unwrap();
     if held.taken_by_another(which, wanted) {
-        return Err(TWICE.to_string());
+        return Err(tr(TWICE).to_string());
     }
     let had = held.slot(which).registered;
     let mut now = had;
@@ -340,7 +341,7 @@ pub fn allow_agents(app: &AppHandle, allowed: bool) {
     if allowed && enabled && had.is_none() {
         let outcome = check(&accelerator).and_then(|shortcut| {
             if held.taken_by_another(Which::Agents, shortcut) {
-                return Err(TWICE.to_string());
+                return Err(tr(TWICE).to_string());
             }
             take(app, Which::Agents, &accelerator, shortcut).map(|_| shortcut)
         });

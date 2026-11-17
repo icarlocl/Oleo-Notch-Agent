@@ -10,6 +10,7 @@
 // never through a shell. The list is asked for once when the Shelf comes on
 // show, and again no more than every ten seconds while it stays.
 
+import { currentLang, t } from "../core/i18n";
 import { clear, h } from "../views/dom";
 import { ICONS } from "../views/icons";
 import type { ProjectInfo } from "../core/bridge";
@@ -72,13 +73,13 @@ const saying = (p: ProjectInfo, kind: "code" | "claude") =>
 /** "just now", "5 min ago", "yesterday", "3 d ago". */
 export function agoText(at: number, now = Date.now()): string {
   const mins = Math.max(0, Math.round((now - at) / 60_000));
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins} min ago`;
+  if (mins < 1) return t("time.justNow");
+  if (mins < 60) return t("w.ago.min", { n: mins });
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours} h ago`;
+  if (hours < 24) return t("w.ago.h", { n: hours });
   const days = Math.round(hours / 24);
-  if (days === 1) return "yesterday";
-  return days < 14 ? `${days} d ago` : `${Math.round(days / 7)} w ago`;
+  if (days === 1) return t("w.ago.yesterday");
+  return days < 14 ? t("w.ago.d", { n: days }) : t("w.ago.w", { n: Math.round(days / 7) });
 }
 
 export function buildProjects(ctx: WidgetContext): Widget {
@@ -91,7 +92,7 @@ export function buildProjects(ctx: WidgetContext): Widget {
     btn.classList.toggle("done", done && ok);
     btn.classList.toggle("failed", done && !ok);
     setIcon(markEl, done ? (ok ? ICONS.check : ICONS.xmark) : kind === "code" ? CODE : ICONS.terminal, 11, done ? 3 : 2.2);
-    const words = done && !ok ? (kind === "code" ? "No VS Code" : "No terminal") : label;
+    const words = done && !ok ? (kind === "code" ? t("w.proj.noCode") : t("w.proj.noTerminal")) : label;
     btn.append(markEl, h("span", { text: words }));
     return btn;
   };
@@ -101,20 +102,20 @@ export function buildProjects(ctx: WidgetContext): Widget {
   const small = mini("projects", h("div", { class: "wbody-projects" }, sList));
 
   // Expanded: every folder, and a new Claude session in each.
-  const note = h("div", { class: "fc-note", text: "Carpetas usadas por Claude Code. Se abre la que selecciones." });
-  const list = h("div", { class: "gh-list fc-list", "aria-label": "Carpetas de proyectos" });
+  const note = h("div", { class: "fc-note", text: () => t("w.proj.note") });
+  const list = h("div", { class: "gh-list fc-list", "aria-label": () => t("w.proj.list") });
   const count = h("span", { class: "fc-aside" });
   const body = h("div", { class: "fc-col" }, list, note);
 
   let shown: string | null = null;
   function paint() {
     const items = state.list;
-    count.textContent = `${items.length} folder${items.length === 1 ? "" : "s"}`;
+    count.textContent = t("w.proj.count", { count: items.length });
     const key = items.map((p) => `${p.path}${p.at}${saying(p, "code") ? "c" : ""}${saying(p, "claude") ? "n" : ""}`).join("|")
       + (state.said.ok ? "" : "!");
     // The words ("5 min ago") grow old by themselves: the lines are drawn again when a minute has gone, as the rest changes.
     const minute = Math.floor(Date.now() / 60_000);
-    const full = `${key}@${minute}`;
+    const full = `${key}@${minute}${currentLang()}`;
     if (full === shown) return;
     shown = full;
 
@@ -122,9 +123,9 @@ export function buildProjects(ctx: WidgetContext): Widget {
     items.slice(0, SMALL_PROJECTS).forEach((p, i) => {
       sList.append(h("div", { class: "wmini-proj" },
         shared(h("b", { text: p.name, title: p.path }), `proj-name-${i}`, "text"),
-        shared(launcher(p, "code", "Code", `Open ${p.name} in VS Code`), `proj-code-${i}`, "text")));
+        shared(launcher(p, "code", "Code", t("w.proj.openTip", { name: p.name })), `proj-code-${i}`, "text")));
     });
-    if (items.length === 0) sList.append(h("div", { class: "wmini-none", text: state.asked ? "No folders yet" : "Looking…" }));
+    if (items.length === 0) sList.append(h("div", { class: "wmini-none", text: state.asked ? t("w.proj.none") : t("w.proj.looking") }));
 
     clear(list);
     items.forEach((p, i) => {
@@ -134,10 +135,10 @@ export function buildProjects(ctx: WidgetContext): Widget {
             shared(h("b", { text: p.name }), `proj-name-${i}`, "text"),
             h("span", { class: "int-ago", text: agoText(p.at) })),
           h("div", { class: "gh-sub path", text: p.path, title: p.path })),
-        shared(launcher(p, "code", "Open in VS Code", `Open ${p.name} in VS Code`), `proj-code-${i}`, "text"),
-        launcher(p, "claude", "New Claude session", `New Claude Code session in ${p.name}`)));
+        shared(launcher(p, "code", t("w.proj.openCode"), t("w.proj.openTip", { name: p.name })), `proj-code-${i}`, "text"),
+        launcher(p, "claude", t("w.proj.newSession"), t("w.proj.newSessionTip", { name: p.name }))));
     });
-    if (items.length === 0) list.append(h("div", { class: "wmini-none", text: "Aún no hay carpetas. Aparecerán al usar Claude Code." }));
+    if (items.length === 0) list.append(h("div", { class: "wmini-none", text: t("w.proj.empty") }));
   }
 
   return {

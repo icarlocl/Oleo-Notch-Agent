@@ -16,6 +16,7 @@
 // it wants the island (`width`, `height`), and the island's own spring does it.
 
 import { Bridge } from "../core/bridge";
+import { onLangChange, t } from "../core/i18n";
 import { Spring, clamp } from "../core/anim";
 import { Room, SHELF_CARD_GAP, SHELF_CARD_H, SHELF_CARD_W, sideDock } from "../core/layout";
 import { State } from "../core/state";
@@ -149,7 +150,7 @@ export function settleRow(row: HTMLElement, still: boolean) {
 
 /** A widget that is not built yet has its place in the row, and nothing in it. */
 function placeholder(id: ShelfWidgetId): HTMLElement {
-  const el = mini(id, h("div", { class: "wmini-none", text: "Próximamente" }));
+  const el = mini(id, h("div", { class: "wmini-none", text: () => t("shelf.soon") }));
   el.querySelector(".wmini-expand")?.remove();
   return el;
 }
@@ -157,9 +158,9 @@ function placeholder(id: ShelfWidgetId): HTMLElement {
 export function buildShelf(actions: ViewActions): ShelfHost {
   const row = h("div", { class: "shelf-row" });
   const empty = h("div", { class: "shelf-empty" },
-    h("div", { class: "title", text: "Todos los widgets están ocultos." }),
-    h("div", { class: "sub", text: "Activa alguno en Ajustes → Widgets." }),
-    h("button", { class: "link-btn", text: "Abrir ajustes…", onclick: () => actions.openSettingsWindow() }));
+    h("div", { class: "title", text: () => t("shelf.allHidden") }),
+    h("div", { class: "sub", text: () => t("shelf.turnOn") }),
+    h("button", { class: "link-btn", text: () => t("shelf.openSettings"), onclick: () => actions.openSettingsWindow() }));
   const rowLayer = h("div", { class: "shelf-layer on" }, row, empty);
   const focusLayer = h("div", { class: "shelf-layer" });
   const el = h("div", { class: "view shelf-view" }, rowLayer, focusLayer);
@@ -292,6 +293,9 @@ export function buildShelf(actions: ViewActions): ShelfHost {
     if (!focus && !row.classList.contains("reordering") && !row.classList.contains("dragging")) drawRow(shelfWidgets());
     paintAll();
   });
+
+  // A new language: every widget says its words again (painted on the next show if the Shelf is hidden).
+  onLangChange(() => { for (const widget of widgets.values()) widget.paint(); });
 
   /** Once a second, while the Shelf is on show: what is on the row, or the one widget expanded. */
   function tick() {

@@ -7,7 +7,7 @@
 
 import { compactPlan, compactSlots, reading, type Gauges } from "../../src/island/compact";
 import {
-  FOLDED_AUTO_HIDE, State, USAGE_OLD_MS, USAGE_RESET_WORDS, USAGE_SOURCE_WORDS, foldedAutoHide, keepKnown, nextUsageReset, resetCountdown, usageShown,
+  FOLDED_AUTO_HIDE, State, USAGE_OLD_MS, usageResetWords, usageSourceWords, foldedAutoHide, keepKnown, nextUsageReset, resetCountdown, usageShown,
   type Metrics, type Usage,
 } from "../../src/core/state";
 import { IslandStateMachine, type FsmTimers } from "../../src/island/fsm";
@@ -55,7 +55,7 @@ export function checkSlots() {
   const known: Gauges = { metrics: sample, usage, waiting: 3, now: 0 };
   t.same("cpu", reading("cpu", known).text, "31%");
   t.same("ram", reading("ram", known), { text: "50%", more: "8.0 of 16.0 GB" });
-  t.same("5-hour usage, coloured", reading("usage5h", known), { text: "70%", more: USAGE_SOURCE_WORDS, level: "warm", dim: false });
+  t.same("5-hour usage, coloured", reading("usage5h", known), { text: "70%", more: usageSourceWords(), level: "warm", dim: false });
   t.same("7-day usage", reading("usage7d", known).text, "12%");
   t.same("waiting", reading("waiting", known).text, "3");
 
@@ -351,7 +351,7 @@ export function checkUsage() {
   // Around the reset.
   // (reported a minute before, so it is not hours old: the reset is what is being tested)
   t.same("a millisecond before: still the number", usageShown(win, win.resetsAt - MIN, win.resetsAt - 1), { percent: 83, state: "fresh", countdown: "resets in <1m" });
-  t.same("at the reset: 0 %, waiting", usageShown(win, at, win.resetsAt), { percent: 0, state: "reset", countdown: USAGE_RESET_WORDS });
+  t.same("at the reset: 0 %, waiting", usageShown(win, at, win.resetsAt), { percent: 0, state: "reset", countdown: usageResetWords() });
   t.same("after it, however fresh the report was", usageShown(win, win.resetsAt + MIN - 1, win.resetsAt + MIN)?.state, "reset");
   t.same("reset wins over old", usageShown(win, at - 9 * HOUR, win.resetsAt + HOUR)?.state, "reset");
   // A window that never said when it resets is never "reset", and has no countdown.
@@ -378,7 +378,7 @@ export function checkUsage() {
   const cell = (now: number, updatedAt = at) => reading("usage5h", { metrics: null, usage: { ...usage, updatedAt }, waiting: 0, now });
   t.same("cell, fresh", [cell(at).text, cell(at).level, cell(at).dim], ["83%", "warm", false]);
   t.same("cell, reset", [cell(win.resetsAt + 1).text, cell(win.resetsAt + 1).level, cell(win.resetsAt + 1).dim], ["0%", undefined, true]);
-  t.check("cell, reset: the tooltip says so", (cell(win.resetsAt + 1).more ?? "").startsWith(USAGE_RESET_WORDS));
+  t.check("cell, reset: the tooltip says so", (cell(win.resetsAt + 1).more ?? "").startsWith(usageResetWords()));
   t.check("cell, fresh: the tooltip has the countdown", (cell(at).more ?? "").startsWith("resets in 2h 14m"));
   t.same("cell, old but not reset: dimmed, its number kept", [cell(at + HOUR, at - 90 * MIN).text, cell(at + HOUR, at - 90 * MIN).dim], ["83%", true]);
   t.same("cell, ten minutes old: not dimmed", cell(at, at - 10 * MIN).dim, false);

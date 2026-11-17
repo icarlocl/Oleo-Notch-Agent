@@ -23,6 +23,7 @@
 // Claude app, VS Code, a terminal.
 
 import { h, svg, clear, dot, replay, timeAgo } from "./dom";
+import { currentLang, locale, t, type Key } from "../core/i18n";
 import { diffLine, extBadge, fileKind, plusMinus, readPatch, splitPath, type FileKind } from "./code";
 import { ICONS } from "./icons";
 import { COLOR } from "./palette";
@@ -30,7 +31,7 @@ import { LUCIDE, lucide } from "./iconset";
 import { collapses, reply as replyView, type PathOpener, type ReplyFold } from "./markdown";
 import { Bridge } from "../core/bridge";
 import {
-  DECISION_WORDS, QUIET_WORDS, State, isQuestion, isQuiet, isTool, repliedWords, requestsOf, stepsApart, subagentKind, subagentName, subagentStanding, subagentTask, subagentTook, targetTip,
+  decisionWords, quietWords, State, isQuestion, isQuiet, isTool, repliedWords, requestsOf, stepsApart, subagentKind, subagentName, subagentStanding, subagentTask, subagentTook, targetTip,
   type ChangedFile, type ClaudeSession, type ModelInfo, type SessionStep, type StepKind, type Subagent,
 } from "../core/state";
 import { targetButton, targetIcon } from "./target";
@@ -83,8 +84,8 @@ let stamp = 0;
 
 /** The kind of step the journal keeps; "all" keeps everything, what was said included. */
 type Filter = "all" | "edit" | "command" | "read" | "search";
-const FILTERS: readonly (readonly [Filter, string])[] = [
-  ["all", "Todas"], ["edit", "Edits"], ["command", "Commands"], ["read", "Reads"], ["search", "Searches"],
+const FILTERS: readonly (readonly [Filter, Key])[] = [
+  ["all", "sess.f.all"], ["edit", "sess.f.edit"], ["command", "sess.f.command"], ["read", "sess.f.read"], ["search", "sess.f.search"],
 ];
 let filter: Filter = "all";
 
@@ -140,7 +141,7 @@ function openerOf(session: ClaudeSession): PathOpener | null {
   const { kind, label } = session.target;
   if (!session.id || (kind !== "vscode" && kind !== "cursor")) return null;
   return {
-    tip: `Open in ${label}`,
+    tip: t("sess.openIn", { app: label }),
     open: (path, line) => Bridge.openSessionFile(session.id, path, line),
     exists: (path) => fileExists(session.id, path),
   };
@@ -204,7 +205,7 @@ export function leaveSubagent(): boolean {
   return true;
 }
 
-const counted = (n: number, one: string) => `${n} ${n === 1 ? one : `${one}s`}`;
+const counted = (count: number, what: "sess.n.session" | "sess.n.subagent" | "sess.n.file") => t(what, { count });
 
 // ── Several sessions ──────────────────────────────────────────────────────────
 
@@ -213,32 +214,32 @@ export const sessionName = (session: ClaudeSession) => session.title ?? session.
 
 /** Where a session is at, as a colour and in words: what its line of the sidebar shows and says. */
 function standing(session: ClaudeSession): { color: string; words: string; quiet?: boolean } {
-  if (session.question) return { color: COLOR.cyan, words: "is asking a question" };
-  if (session.approval) return { color: COLOR.amber, words: "needs permission" };
-  if (session.news === "error" || session.state === "error") return { color: COLOR.red, words: "stopped on an error" };
+  if (session.question) return { color: COLOR.cyan, words: t("views.asking") };
+  if (session.approval) return { color: COLOR.amber, words: t("views.needsPermission") };
+  if (session.news === "error" || session.state === "error") return { color: COLOR.red, words: t("sess.stoppedError") };
   // Its last reply waits on a decision: said after a request and an error, before "finished".
-  if (session.decision) return { color: COLOR.purple, words: DECISION_WORDS.toLowerCase() };
+  if (session.decision) return { color: COLOR.purple, words: decisionWords().toLowerCase() };
   // It replied while its subagents still run, and nobody has looked yet: said as that, not as finished.
   if (session.news === "finished" && repliedWords(session)) return { color: COLOR.green, words: repliedWords(session)!.toLowerCase() };
-  if (session.news === "finished" || session.state === "finished") return { color: COLOR.green, words: "finished" };
-  if (session.state === "question") return { color: COLOR.cyan, words: "is waiting for you" };
-  if (session.state === "idle" || session.state === "sleeping") return { color: COLOR.grey, words: "at rest" };
+  if (session.news === "finished" || session.state === "finished") return { color: COLOR.green, words: t("views.finished") };
+  if (session.state === "question") return { color: COLOR.cyan, words: t("sess.waitingForYou") };
+  if (session.state === "idle" || session.state === "sleeping") return { color: COLOR.grey, words: t("sess.atRest") };
   // At work, and nothing heard from it for a long while: it says so, quietly. Its state is not touched.
-  if (isQuiet(session)) return { color: botGlowColor(session.state), words: QUIET_WORDS, quiet: true };
-  return { color: botGlowColor(session.state), words: session.state === "thinking" ? "thinking" : "at work" };
+  if (isQuiet(session)) return { color: botGlowColor(session.state), words: quietWords(), quiet: true };
+  return { color: botGlowColor(session.state), words: session.state === "thinking" ? t("sess.thinking") : t("sess.atWork") };
 }
 
 /** What the quiet word means, for whoever hovers it. */
-const QUIET_TIP = "Nothing has come from this session for 10 minutes. It may be over: Claude Code does not always say when a turn ends.";
+const quietTip = () => t("sess.quietTip");
 
 /** What the mark of a reply that waits on a decision means, for whoever hovers it. */
-const DECISION_TIP = "Its last reply has something marked IMPORTANT. The mark goes once that reply has been read whole here, or when you answer it.";
+const decisionTip = () => t("sess.decisionTip");
 
 /** Something a session wants looked at: it is waiting for an answer, or has news nobody has seen. */
 const calls = (session: ClaudeSession) => session.news != null || session.question != null || session.approval != null || session.decision || session.attention;
 
 /** What the mark of a turn that ended while the panel was being read says. */
-const ATTENTION_WORDS = "New activity";
+const attentionWords = () => t("sess.attention");
 
 /**
  * The way to the sessions, where a session is shown: a chip that says how
@@ -253,11 +254,11 @@ export function sessionsChip(onOpen: () => void): { el: HTMLElement; sync(): voi
     sync() {
       const count = State.sessions.length;
       el.style.display = count > 1 ? "" : "none";
-      el.textContent = counted(count, "session");
+      el.textContent = counted(count, "sess.n.session");
       const calling = State.sessions.find((s) => s.id !== State.frontId && calls(s));
       el.classList.toggle("calls", calling != null);
       el.style.setProperty("--c", calling ? standing(calling).color : "currentColor");
-      el.title = calling ? `${sessionName(calling)} ${standing(calling).words}${calling.attention ? ` — ${ATTENTION_WORDS.toLowerCase()}` : ""}` :"Every session followed, Claude Code and Cursor";
+      el.title = calling ? `${sessionName(calling)} ${standing(calling).words}${calling.attention ? ` — ${attentionWords().toLowerCase()}` : ""}` : t("sess.everySession");
     },
   };
 }
@@ -283,7 +284,7 @@ function folderOf(session: ClaudeSession): string {
 
 /** What happened to the file: "edited" in grey, "new" in green. */
 function statusWord(file: ChangedFile): HTMLElement {
-  const word = h("span", { class: "gh-file-status", text: file.created ? "new" : "edited" });
+  const word = h("span", { class: "gh-file-status", text: file.created ? t("sess.file.new") : t("sess.file.edited") });
   if (file.created) word.style.color = COLOR.green;
   return word;
 }
@@ -314,14 +315,14 @@ function diffView(file: ChangedFile, kind: FileKind): HTMLElement {
     for (const line of readPatch(edit.patch)) {
       if ("hunk" in line) {
         // Between two edits, which one this is; inside one, where lines were skipped.
-        const label = first && several ? `Edit ${i + 1} of ${file.edits.length} · ${timeAgo(edit.at)}` : "";
+        const label = first && several ? t("sess.editOf", { i: i + 1, n: file.edits.length, ago: timeAgo(edit.at) }) : "";
         if (!first || label) diff.append(diffBreak(label));
         first = false;
         continue;
       }
       diff.append(diffLine(line.new ?? line.old, line.sign, line.text, kind));
     }
-    if (edit.truncated) diff.append(diffBreak("El resto de esta edición está en Claude Code"));
+    if (edit.truncated) diff.append(diffBreak(t("views.editRest")));
   });
   return h("div", { class: "gh-code" }, diff);
 }
@@ -363,23 +364,23 @@ function running(since: number): HTMLElement {
  */
 function endedWords(a: Subagent): string {
   const ms = subagentTook(a);
-  if (a.state === "failed") return ms == null ? "failed" : `failed after ${elapsed(ms)}`;
-  return ms == null ? "done" : `done in ${elapsed(ms)}`;
+  if (a.state === "failed") return ms == null ? t("sess.failed") : t("sess.failedAfter", { time: elapsed(ms) });
+  return ms == null ? t("sess.done") : t("sess.doneIn", { time: elapsed(ms) });
 }
 
 /** How a subagent stands, in words: "running 1m 23s" (the time ticks, when its start was seen), or how it ended. */
 function statusOf(session: ClaudeSession, a: Subagent): HTMLElement {
   const at = subagentStanding(session, a);
   const el = h("span", { class: `sess-status ${at}` });
-  if (at === "asking") el.append(...(a.timed ? ["needs you · ", running(a.startedAt)] : ["needs you"]));
-  else if (at === "running") el.append(...(a.timed ? ["running ", running(a.startedAt)] : ["running"]));
+  if (at === "asking") el.append(...(a.timed ? [`${t("sess.needsYou")} · `, running(a.startedAt)] : [t("sess.needsYou")]));
+  else if (at === "running") el.append(...(a.timed ? [`${t("sess.running")} `, running(a.startedAt)] : [t("sess.running")]));
   else el.append(endedWords(a));
   return el;
 }
 
 function statusWords(session: ClaudeSession, a: Subagent): string {
   const at = subagentStanding(session, a);
-  return at === "asking" ? "waiting for your answer" : at === "running" ? "running" : endedWords(a);
+  return at === "asking" ? t("sess.waitingAnswer") : at === "running" ? t("sess.running") : endedWords(a);
 }
 
 /** A subagent's kind and what it is at, as a tooltip says them. */
@@ -388,16 +389,16 @@ const fullName = (a: Subagent) => (subagentTask(a) ? `${subagentKind(a)} · ${su
 // ── The journal ───────────────────────────────────────────────────────────────
 
 /** When a line of the journal happened, as a clock shows it. */
-const clock = (at: number) => new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const clock = (at: number) => new Date(at).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" });
 
 /** Several options picked for one question come back as one answer, joined like this. */
 const ANSWER_JOIN = ", ";
 
 /** Where a tool's permission request stands, in a word and a colour. */
 const PERMISSIONS = {
-  asked: { words: "needs permission", color: COLOR.amber },
-  allowed: { words: "allowed", color: COLOR.green },
-  denied: { words: "denied", color: COLOR.red },
+  asked: { words: "views.needsPermission", color: COLOR.amber },
+  allowed: { words: "sess.allowed", color: COLOR.green },
+  denied: { words: "sess.denied", color: COLOR.red },
 } as const;
 
 function chip(text: string, color: string): HTMLElement {
@@ -424,7 +425,7 @@ function askedView(step: SessionStep): HTMLElement {
     el.append(h("div", { class: "jr-q" }, h("div", { class: "jr-q-title", text: q.question }), options));
   }
   if (!step.answers) {
-    el.append(h("div", { class: "jr-waiting", text: step.state === "running" ? "Waiting for an answer…" : step.state === "failed" ? "Left unanswered." : "Answered in Claude Code." }));
+    el.append(h("div", { class: "jr-waiting", text: step.state === "running" ? t("sess.q.waiting") : step.state === "failed" ? t("sess.q.unanswered") : t("sess.q.answered") }));
   }
   return el;
 }
@@ -447,7 +448,7 @@ function journalEntry(step: SessionStep, large: boolean, said: Said, typed?: ToT
       "div",
       { class: "jr jr-reply" },
       h("div", { class: "sess-said" }, dot(COLOR.green, 6), h("b", { text: "Claude" }), h("span", { text: clock(step.at) })),
-      step.target ? replyView(step.target, said.opener, said.fold(step)) : h("div", { class: "jr-waiting", text: "El turno terminó sin respuesta." }),
+      step.target ? replyView(step.target, said.opener, said.fold(step)) : h("div", { class: "jr-waiting", text: t("sess.noReply") }),
     );
   }
   if (step.kind === "note") {
@@ -464,10 +465,10 @@ function journalEntry(step: SessionStep, large: boolean, said: Said, typed?: ToT
     h("span", { class: "at", text: large && command ? whole : whole.split("\n")[0], title: whole }),
     h("div", { class: "grow" }),
   );
-  if (step.permission) head.append(chip(PERMISSIONS[step.permission].words, PERMISSIONS[step.permission].color));
-  else if (step.questions && step.state === "running") head.append(chip("waiting for an answer", COLOR.cyan));
+  if (step.permission) head.append(chip(t(PERMISSIONS[step.permission].words), PERMISSIONS[step.permission].color));
+  else if (step.questions && step.state === "running") head.append(chip(t("sess.waitingAnswer"), COLOR.cyan));
   if (step.state === "running") head.append(MARKS.running());
-  else if (step.state === "failed" && !step.questions && !step.permission) head.append(chip("failed", COLOR.red));
+  else if (step.state === "failed" && !step.questions && !step.permission) head.append(chip(t("sess.failed"), COLOR.red));
   head.append(h("span", { class: "jr-time", text: clock(step.at) }));
 
   const el = h("div", { class: `jr jr-step ${step.state} ${step.kind}` }, head);
@@ -518,10 +519,10 @@ export function buildSession(actions: ViewActions): ViewHost {
   // The model the session runs on, beside its name — in the panel at its
   // normal size, where the line above the journal has no room for it.
   const nameModel = h("span", { class: "sess-name-model" });
-  const tree =h("div", { class: "sess-tree", role: "tree", "aria-label": "Sesiones y sus subagentes" });
+  const tree =h("div", { class: "sess-tree", role: "tree", "aria-label": () => t("sess.treeLabel") });
   // All · Claude Code · Cursor · Codex: there only while sessions of more than one tool are followed.
   let toolFilter: "all" | SessionAgent = "all";
-  const toolChips = h("div", { class: "sess-tools", role: "group", "aria-label": "Mostrar sesiones de" });
+  const toolChips = h("div", { class: "sess-tools", role: "group", "aria-label": () => t("sess.showFrom") });
   toolChips.hidden = true;
   const rail = h(
     "div",
@@ -536,14 +537,14 @@ export function buildSession(actions: ViewActions): ViewHost {
     const kinds = (["claude", "cursor", "codex"] as const).filter((kind) => State.sessions.some((s) => s.agent === kind));
     const both = kinds.length > 1;
     if (!both || (toolFilter !== "all" && !kinds.includes(toolFilter))) toolFilter = "all";
-    const key = `${kinds.join()}|${toolFilter}`;
+    const key = `${kinds.join()}|${toolFilter}|${currentLang()}`;
     toolChips.hidden = !both;
     if (key === chipsKey) return;
     chipsKey = key;
     clear(toolChips);
     if (!both) return;
     for (const which of ["all", ...kinds] as const) {
-      const label = which === "all" ? "Todas" : TOOL_NAME[which];
+      const label = which === "all" ? t("sess.f.all") : TOOL_NAME[which];
       const chip = h("button", { class: `sess-tool${toolFilter === which ? " on" : ""}`, type: "button", "aria-pressed": String(toolFilter === which) },
         which === "all" ? null : toolMark(which, 10), label);
       chip.addEventListener("click", () => {
@@ -575,7 +576,7 @@ export function buildSession(actions: ViewActions): ViewHost {
   const badge = h("span", { class: "gh-head-badge" });
   const aside = h("span", { class: "gh-head-aside" });
   // One step back: from a file to the changes, from the changes to the journal.
-  const backBtn = h("button", { class: "gh-icon sess-back", title: "Volver" }, svg(ICONS.chevronLeft, 10, { stroke: 2.4 }));
+  const backBtn = h("button", { class: "gh-icon sess-back", title: () => t("views.q.return") }, svg(ICONS.chevronLeft, 10, { stroke: 2.4 }));
   const tab = h("div", { class: "gh-tab" }, badge, who);
   const head = h("div", { class: "gh-head" }, backBtn, tab, aside, h("div", { class: "grow" }), sub, headTarget.el);
   // The journal, and behind it the changes: one of the two is on screen.
@@ -585,7 +586,7 @@ export function buildSession(actions: ViewActions): ViewHost {
   // The way back to the journal's end, from further up. A sibling of the
   // scroller, not a child: the journal is redrawn and fades out at its edge.
   const jumpDot = h("i", { class: "sess-jump-dot" });
-  const jump = h("button", { class: "sess-jump", type: "button", "aria-label": "Ir a lo más reciente", title: "Ir a lo más reciente", hidden: true }, svg(ICONS.chevronDown, 12, { stroke: 2.4 }), jumpDot);
+  const jump = h("button", { class: "sess-jump", type: "button", "aria-label": () => t("sess.jump"), title: () => t("sess.jump"), hidden: true }, svg(ICONS.chevronDown, 12, { stroke: 2.4 }), jumpDot);
   // Under the journal: a line to answer a session at rest with (views/reply-box.ts).
   // Its height is told to the panel, so the way back to the journal's end stays above it.
   const replyBox = buildReplyBox(actions, "panel", () => {
@@ -769,7 +770,7 @@ export function buildSession(actions: ViewActions): ViewHost {
           contextUse(session.contextTokens, session.contextWindow, session.model?.id)?.percent,
           ...subs.map((a) => [a.id, a.type, subagentTask(a), subagentStanding(session, a), a.model?.label].join(":")),
         ].join("~"))
-      .concat(front.id, onAgent ?? "", owed?.id ?? "")
+      .concat(front.id, onAgent ?? "", owed?.id ?? "", currentLang())
       .join("|");
     if (next === railKey) return;
     railKey = next;
@@ -794,7 +795,7 @@ export function buildSession(actions: ViewActions): ViewHost {
         role: "treeitem",
         "aria-level": 1,
         "aria-selected": String(inFront && !onAgent),
-        title: `${TOOL_NAME[session.agent]} — ${folder} — ${session.title ?? TOOL_NAME[session.agent]}${session.model ? ` — ${session.model.label}` : ""} — ${at.words}${subs.length ? ` — ${counted(subs.length, "subagent")}, ${going} running` : ""}`,
+        title: `${TOOL_NAME[session.agent]} — ${folder} — ${session.title ?? TOOL_NAME[session.agent]}${session.model ? ` — ${session.model.label}` : ""} — ${at.words}${subs.length ? ` — ${counted(subs.length, "sess.n.subagent")}, ${t("sess.nRunning", { n: going })}` : ""}`,
       });
       row.dataset.key = key;
       row.dataset.session = session.id;
@@ -802,7 +803,7 @@ export function buildSession(actions: ViewActions): ViewHost {
       if (subs.length > 0) {
         row.setAttribute("aria-expanded", String(open));
         row.setAttribute("aria-owns", groupId);
-        const twisty = h("i", { class: "sess-twisty", title: open ? "Hide its subagents" : "Show its subagents" }, svg(ICONS.chevronRight, 9, { stroke: 2.8 }));
+        const twisty = h("i", { class: "sess-twisty", title: open ? t("sess.hideSubs") : t("sess.showSubs") }, svg(ICONS.chevronRight, 9, { stroke: 2.8 }));
         twisty.addEventListener("click", (e) => {
           e.stopPropagation();
           toggle(session, !open);
@@ -816,7 +817,7 @@ export function buildSession(actions: ViewActions): ViewHost {
         row.append(h("span", {
           class: asking > 0 ? "sess-count asking" : going > 0 ? "sess-count going" : "sess-count",
           text: String(subs.length),
-          title: `${counted(subs.length, "subagent")}: ${going} running${asking ? `, ${asking} waiting for you` : ""}`,
+          title: `${counted(subs.length, "sess.n.subagent")}: ${t("sess.nRunning", { n: going })}${asking ? `, ${t("sess.nWaiting", { n: asking })}` : ""}`,
         }));
       }
       // The way to where it runs, from its own line: no need to put it in
@@ -844,27 +845,27 @@ export function buildSession(actions: ViewActions): ViewHost {
       // Said in words as well as colour; none before an answer has been counted.
       const use = contextUse(session.contextTokens, session.contextWindow, session.model?.id);
       if (use) {
-        const words = `Context ${use.percent}%`;
+        const words = t("sess.context", { n: use.percent });
         row.append(h("i", { class: `sess-ctx ${use.level}`, title: words }, h("u", { style: `width:${use.percent}%` }), h("span", { class: "sess-ctx-words", text: words })));
         row.title += ` — ${words}`;
       }
       // A turn of its ended while the panel was being read: not said by sound or card, but here, until it is opened.
       if ((session.attention && !inFront) || session === owed) {
         row.classList.add("attn");
-        row.append(h("i", { class: "sess-new", role: "img", "aria-label": ATTENTION_WORDS, title: ATTENTION_WORDS }));
-        row.title += ` — ${ATTENTION_WORDS.toLowerCase()}`;
+        row.append(h("i", { class: "sess-new", role: "img", "aria-label": attentionWords(), title: attentionWords() }));
+        row.title += ` — ${attentionWords().toLowerCase()}`;
       }
       row.append(mark);
       row.addEventListener("click", () => pickSession(session.id));
       tree.append(row);
       // Nothing heard from it for a long while: a quiet word under its line.
-      if (at.quiet) tree.append(h("div", { class: "sess-quiet", text: at.words, title: QUIET_TIP }));
+      if (at.quiet) tree.append(h("div", { class: "sess-quiet", text: at.words, title: quietTip() }));
       // Its last reply waits on a decision: a mark under its line, whatever its dot says — a request
       // or an error keeps the dot. A click reads the reply, as a click on the line does.
       if (session.decision) {
         tree.append(h(
-          "div", { class: "sess-decide", title: DECISION_TIP, onclick: () => pickSession(session.id) },
-          lucide(LUCIDE.messageSquareWarning, 10, 2.2), h("span", { text: DECISION_WORDS }),
+          "div", { class: "sess-decide", title: decisionTip(), onclick: () => pickSession(session.id) },
+          lucide(LUCIDE.messageSquareWarning, 10, 2.2), h("span", { text: decisionWords() }),
         ));
       }
 
@@ -891,7 +892,7 @@ export function buildSession(actions: ViewActions): ViewHost {
             h("span", { class: "sess-sub-task", text: subagentTask(a) ?? subagentKind(a) }),
             h("span", { class: "sess-sub-meta", text: subagentMeta(a) })),
         );
-        if (stands === "asking") line.append(h("span", { class: "sess-sub-needs", text: "necesita mi atención" }));
+        if (stands === "asking") line.append(h("span", { class: "sess-sub-needs", text: t("sess.needsAttention") }));
         line.dataset.key = akey;
         line.dataset.session = session.id;
         line.dataset.agent = a.id;
@@ -1098,11 +1099,11 @@ export function buildSession(actions: ViewActions): ViewHost {
       "button",
       {
         class: `jr sess-launch ${stands}`,
-        title: `${fullName(a)} — ${statusWords(session, a)}. Open its steps.`,
+        title: `${fullName(a)} — ${statusWords(session, a)}. ${t("sess.openSteps")}`,
         onclick: () => openAgent(session.id, a.id),
       },
       MARKS[stands](),
-      h("b", { text: "Iniciado" }),
+      h("b", { text: t("sess.launched") }),
       // Its kind, then what it is at; with nothing said of that, its kind alone.
       h("span", { class: "sess-launch-type", text: task ? `${subagentKind(a)}:` : subagentKind(a) }),
       task ? h("span", { class: "sess-launch-task", text: task }) : null,
@@ -1170,18 +1171,18 @@ export function buildSession(actions: ViewActions): ViewHost {
         "div",
         { class: "jr sess-end asking" },
         MARKS.asking(),
-        h("span", { class: "sess-end-words" }, h("b", { text: question ? "Waiting for your answer" : "Waiting for your permission" }), h("span", { class: "sess-end-what", text: what, title: what })),
-        h("button", { class: "sess-end-btn", text: question ? "Show question" : "Show request", onclick: () => actions.showRequest() }),
+        h("span", { class: "sess-end-words" }, h("b", { text: question ? t("sess.end.answer") : t("sess.end.permission") }), h("span", { class: "sess-end-what", text: what, title: what })),
+        h("button", { class: "sess-end-btn", text: question ? t("sess.end.showQuestion") : t("sess.end.showRequest"), onclick: () => actions.showRequest() }),
       );
     } else if (a.state === "running") {
-      el = h("div", { class: "jr sess-end running" }, MARKS.running(), h("span", { class: "sess-end-words" }, h("b", {}, ...(a.timed ? ["En ejecución · ", running(a.startedAt)] : ["En ejecución"])), h("span", { text: "El resultado aparecerá cuando termine." })));
+      el = h("div", { class: "jr sess-end running" }, MARKS.running(), h("span", { class: "sess-end-words" }, h("b", {}, ...(a.timed ? [`${t("sess.end.running")} · `, running(a.startedAt)] : [t("sess.end.running")])), h("span", { text: t("sess.end.later") })));
     } else {
       const failed = a.state === "failed";
       el = h(
         "div",
         { class: `jr sess-result ${a.state}` },
-        h("div", { class: "sess-result-h" }, MARKS[a.state](), h("b", { text: failed ? "Stopped without finishing" : "Result" }), h("span", { text: endedWords(a) })),
-        replyView(a.result ?? (failed ? "It said nothing before it stopped." : "It finished without a last message."), opener, foldOf(a)),
+        h("div", { class: "sess-result-h" }, MARKS[a.state](), h("b", { text: failed ? t("sess.end.stopped") : t("sess.end.result") }), h("span", { text: endedWords(a) })),
+        replyView(a.result ?? (failed ? t("sess.end.saidNothing") : t("sess.end.noMessage")), opener, foldOf(a)),
       );
     }
     ended = { key, el, of: a };
@@ -1196,9 +1197,9 @@ export function buildSession(actions: ViewActions): ViewHost {
     h(
       "div",
       {},
-      h("b", { text: "Esta versión de Claude Code no permite distinguir los pasos de este subagente." }),
-      h("span", { text: "Sus eventos aparecen en el registro principal en orden cronológico." }),
-      h("button", { class: "sess-end-btn", text: "Abrir el registro principal", onclick: () => go({ kind: "live" }) }),
+      h("b", { text: () => t("sess.apart.title") }),
+      h("span", { text: () => t("sess.apart.sub") }),
+      h("button", { class: "sess-end-btn", text: () => t("sess.apart.open"), onclick: () => go({ kind: "live" }) }),
     ),
   );
 
@@ -1232,8 +1233,8 @@ export function buildSession(actions: ViewActions): ViewHost {
       const launched = step.kind === "launch" ? session.subagents.find((a) => a.id === step.agentId) : null;
       if (step.kind === "launch" && !launched) continue;
       const key = launched
-        ? [launched.type, subagentTask(launched), subagentStanding(session, launched), launched.endedAt, launched.timed, launched.model?.label].join("~")
-        : entryKey(step, large, said.opener);
+        ? [launched.type, subagentTask(launched), subagentStanding(session, launched), launched.endedAt, launched.timed, launched.model?.label].join("~") + currentLang()
+        : entryKey(step, large, said.opener) + currentLang();
       let entry = entries.get(step);
       if (!entry || entry.key !== key) {
         const known = entry != null;
@@ -1255,9 +1256,9 @@ export function buildSession(actions: ViewActions): ViewHost {
     if (!told) nodes.push(apart);
     else if (nodes.length === 0) {
       empty.textContent =
-        filter !== "all" ? `No step of this kind in this ${agent ? "subagent" : "session"}${steps.length > 0 ? "" : " yet"}.`
-        : agent ? "No step yet."
-        : session.id ? "Nothing has happened in this session yet." : "No Claude Code session yet.";
+        filter !== "all" ? t(agent ? (steps.length > 0 ? "sess.empty.kindSub" : "sess.empty.kindSubYet") : (steps.length > 0 ? "sess.empty.kind" : "sess.empty.kindYet"))
+        : agent ? t("sess.empty.noStep")
+        : session.id ? t("sess.empty.nothing") : t("sess.empty.noSession");
       nodes.push(empty);
     }
     if (agent) nodes.push(ending(session, agent));
@@ -1317,7 +1318,7 @@ export function buildSession(actions: ViewActions): ViewHost {
             State.notify();
           },
         },
-        label, h("b", { text: String(count) }),
+        t(label), h("b", { text: String(count) }),
       );
     });
   }
@@ -1331,7 +1332,7 @@ export function buildSession(actions: ViewActions): ViewHost {
       session.id, agent?.id, filter, FILTERS.map(([id]) => steps.filter((s) => isTool(s) && (id === "all" || s.kind === id)).length).join(","),
       agent
         ? [agent.type, subagentTask(agent), subagentStanding(session, agent), agent.endedAt, agent.timed, stepsApart(session, agent), folderOf(session), agent.model?.label].join(":")
-        : [at.words, at.color, files, waits, session.target.kind, targetTip(session), session.model?.label].join(":"),
+        : [at.words, at.color, files, waits, session.target.kind, targetTip(session), session.model?.label, currentLang()].join(":"),
     ].join("~");
     if (next === topKey) return;
     topKey = next;
@@ -1340,16 +1341,16 @@ export function buildSession(actions: ViewActions): ViewHost {
     if (!agent) {
       // Where the session is at; while it waits for an answer, the way to its card.
       const state = chip(at.words, at.quiet ? COLOR.grey : at.color);
-      if (at.quiet) state.title = QUIET_TIP;
+      if (at.quiet) state.title = quietTip();
       if (waits) {
         state.classList.add("opens");
-        state.title = "Ver la solicitud";
+        state.title = t("sess.seeRequest");
         state.addEventListener("click", () => actions.showRequest());
       }
       filters.append(...chips(steps), h("div", { class: "grow" }), ...modelChip(session.model), state);
       if (files > 0) {
         filters.append(h("button", {
-          class: "sess-files", title: "Archivos que cambió esta sesión", text: counted(files, "file"),
+          class: "sess-files", title: t("sess.filesTip"), text: counted(files, "sess.n.file"),
           onclick: () => {
             actions.blip();
             go({ kind: "list" });
@@ -1367,8 +1368,8 @@ export function buildSession(actions: ViewActions): ViewHost {
       go({ kind: "live" });
     };
     crumb.append(
-      h("button", { class: "sess-crumb-back", title: `Back to ${folder} (the main session)`, "aria-label": "Volver a la sesión principal", onclick: back }, svg(ICONS.chevronLeft, 11, { stroke: 2.8 })),
-      h("button", { class: "sess-crumb-session", text: folder, title: `Back to ${folder} (the main session)`, onclick: back }),
+      h("button", { class: "sess-crumb-back", title: t("sess.backTo", { folder }), "aria-label": t("sess.backMain"), onclick: back }, svg(ICONS.chevronLeft, 11, { stroke: 2.8 })),
+      h("button", { class: "sess-crumb-session", text: folder, title: t("sess.backTo", { folder }), onclick: back }),
       h("span", { class: "sess-crumb-sep", text: "›" }),
       h("span", { class: "sess-crumb-type", text: subagentKind(agent) }),
       ...(subagentTask(agent)
@@ -1516,7 +1517,7 @@ export function buildSession(actions: ViewActions): ViewHost {
 
       // The head: a file opened from the changes has its name on the tab, as in an editor.
       const path = picked?.path ?? null;
-      const nextHead = [session.id, screen.kind, path, files.length, picked?.edits.length].join("~");
+      const nextHead = [session.id, screen.kind, path, files.length, picked?.edits.length, currentLang()].join("~");
       if (nextHead !== headKey) {
         headKey = nextHead;
         clear(badge);
@@ -1528,8 +1529,8 @@ export function buildSession(actions: ViewActions): ViewHost {
           sub.textContent = path;
           badge.append(extBadge(path));
         } else {
-          who.textContent = "Cambios";
-          sub.textContent = files.length > 0 ? counted(files.length, "file") : "";
+          who.textContent = t("sess.changes");
+          sub.textContent = files.length > 0 ? counted(files.length, "sess.n.file") : "";
           badge.append(dot(standing(session).color, 7));
         }
         if (picked) aside.append(statusWord(picked), plusMinus(picked.additions, picked.deletions));
@@ -1552,7 +1553,7 @@ export function buildSession(actions: ViewActions): ViewHost {
       clear(list);
       list.classList.toggle("gh-edge", picked != null);
       if (picked) list.append(diffView(picked, fileKind(picked.path)));
-      else if (files.length === 0) list.append(h("div", { class: "int-empty", text: "Todavía no se han escrito archivos en esta sesión." }));
+      else if (files.length === 0) list.append(h("div", { class: "int-empty", text: t("sess.noFiles") }));
       else for (const f of files) list.append(fileRow(f));
       list.scrollTop = scroll;
     },

@@ -731,7 +731,7 @@ fn unified_diff(before: &str, after: &str) -> String {
         .map(|(i, _)| i)
         .collect();
     if changed.is_empty() {
-        return "No change.".into();
+        return crate::i18n::tr(crate::i18n::Text::NoChange).into();
     }
     let mut keep = vec![false; out.len()];
     for idx in changed {

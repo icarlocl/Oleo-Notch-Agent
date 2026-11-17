@@ -14,6 +14,7 @@
 // — with the fingerprint of the diff on show, so a file that changed in
 // between is refused by Rust rather than written over.
 
+import { LANGUAGE_NAMES, LANGUAGE_SETTINGS, locale, setLanguage, systemLang, t, type LanguageSetting } from "../core/i18n";
 import "./settings.css";
 import type { AboutLink, CodexStatus, CursorStatus, DataPaths, HookPreview, HookStatus, ReplyFormatAction, ReplyFormatStatus, ShortcutName, ShortcutStatus, UpdateInfo, UsageStatus } from "../core/bridge";
 import { COMPACT_METRICS, DEFAULT_SETTINGS, FADE_MAX, FADE_MIN, FOLDED_AUTO_HIDE, MAX_COMPACT_METRICS, compactMetrics, finishedNotice, foldedAutoHide, type CompactMetric, type FinishedNotice, type SessionAgent, type Settings } from "../core/state";
@@ -62,36 +63,36 @@ const reason = (err: unknown) => (err instanceof Error ? err.message : String(er
 /** Each category: its name, its mark, the group of the sidebar it stands in, and what it is for, in a sentence. */
 const INFO: Record<Section, { name: string; icon: string; group: string; lede: string }> = {
   connect: {
-    name: "Conexiones", icon: LUCIDE.plug, group: "Configuración",
-    lede: "Conecta Oleo con Claude Code, Cursor y Codex. Revisa y confirma los cambios antes de aplicarlos.",
+    name: t("s.info.connect"), icon: LUCIDE.plug, group: t("s.info.config"),
+    lede: t("s.info.connectLede"),
   },
   island: {
-    name: "Isla", icon: LUCIDE.panelTop, group: "La isla",
-    lede: "Ajusta la posición, la visibilidad y el contenido de la isla.",
+    name: t("s.info.island"), icon: LUCIDE.panelTop, group: t("s.info.theIsland"),
+    lede: t("s.info.islandLede"),
   },
   look: {
-    name: "Apariencia y colores", icon: LUCIDE.palette, group: "La isla",
-    lede: "Elige la mascota, los colores de la ventana y las animaciones.",
+    name: t("s.info.look"), icon: LUCIDE.palette, group: t("s.info.theIsland"),
+    lede: t("s.info.lookLede"),
   },
   sounds: {
-    name: "Sonidos", icon: LUCIDE.volume2, group: "La isla",
-    lede: "Escucha un aviso cuando Claude necesite tu atención.",
+    name: t("s.info.sounds"), icon: LUCIDE.volume2, group: t("s.info.theIsland"),
+    lede: t("s.info.soundsLede"),
   },
   agents: {
-    name: "Lista de agentes", icon: LUCIDE.list, group: "Extras",
-    lede: "Una ventana flotante con una fila por proyecto activo.",
+    name: t("s.info.agents"), icon: LUCIDE.list, group: "Extras",
+    lede: t("s.info.agentsLede"),
   },
   shortcuts: {
-    name: "Atajos", icon: LUCIDE.keyboard, group: "Extras",
-    lede: "Combinaciones globales. Selecciona un atajo y pulsa las nuevas teclas.",
+    name: t("s.info.shortcuts"), icon: LUCIDE.keyboard, group: "Extras",
+    lede: t("s.info.shortcutsLede"),
   },
   shelf: {
     name: "Widgets", icon: LUCIDE.layoutGrid, group: "Extras",
-    lede: "Elige qué herramientas aparecen en la pestaña Widgets y en qué orden.",
+    lede: t("s.info.shelfLede"),
   },
   about: {
-    name: "Acerca de Oleo y privacidad", icon: LUCIDE.info, group: "",
-    lede: "Consulta dónde se guardan los datos y quién creó Oleo.",
+    name: t("s.info.about"), icon: LUCIDE.info, group: "",
+    lede: t("s.info.aboutLede"),
   },
 };
 
@@ -146,6 +147,8 @@ function settingsChanged(next: Settings) {
     else touched.delete(key);
   }
   settings = { ...settings, ...next, ...(mine as Partial<Settings>) };
+  // Another language: every word of this window was written when it opened, so it opens again, on the same page.
+  if (setLanguage(settings.language)) return reopen();
   applyAppearance();
   follow();
   paintResets();
@@ -189,7 +192,7 @@ const tile = (id: Section, size: number, extra = "") =>
 
 const app = h("div", { class: "sp-app" });
 const navMark = h("i", { class: "sp-nav-mark", "aria-hidden": "true" });
-const nav = h("div", { class: "sp-nav", role: "tablist", "aria-orientation": "vertical", "aria-label": "Settings categories" }, navMark);
+const nav = h("div", { class: "sp-nav", role: "tablist", "aria-orientation": "vertical", "aria-label": t("s.nav.aria") }, navMark);
 const tabs = new Map<Section, HTMLButtonElement>();
 {
   let lastGroup: string | null = null;
@@ -320,21 +323,21 @@ function findable<T extends HTMLElement>(el: T, label: string, help: string | nu
 }
 
 const searchInput = h("input", {
-  class: "sp-search-input", type: "search", id: "sp-search", placeholder: "Buscar ajustes",
+  class: "sp-search-input", type: "search", id: "sp-search", placeholder: t("s.search.ph"),
   autocomplete: "off", spellcheck: "false", "aria-controls": "sp-results",
 });
-const searchClear = h("button", { class: "sp-search-clear", type: "button", "aria-label": "Borrar búsqueda", title: "Borrar (Esc)", hidden: true },
+const searchClear = h("button", { class: "sp-search-clear", type: "button", "aria-label": t("s.search.clear"), title: t("s.search.clearTip"), hidden: true },
   icon(LUCIDE.x, 14, 2.2));
 const searchBox = h("div", { class: "sp-search", role: "search" },
-  h("label", { class: "sp-sr", for: "sp-search", text: "Buscar ajustes" }),
+  h("label", { class: "sp-sr", for: "sp-search", text: t("s.search.ph") }),
   icon(LUCIDE.search, 15, 2.1),
   searchInput, searchClear,
   h("kbd", { class: "sp-search-key", "aria-hidden": "true", text: "/" }));
 /** In a narrow window the field folds to this; pressed, the field comes out over the window's top. */
-const searchOpen = h("button", { class: "sp-search-open", type: "button", "aria-label": "Buscar ajustes", title: "Buscar ajustes (/)" },
+const searchOpen = h("button", { class: "sp-search-open", type: "button", "aria-label": t("s.search.ph"), title: t("s.search.openTip") },
   icon(LUCIDE.search, 17, 2));
 
-const resultsTitle = h("h1", { class: "sp-title", id: "sp-results-title", text: "Buscar" });
+const resultsTitle = h("h1", { class: "sp-title", id: "sp-results-title", text: t("s.search.title") });
 const resultsCount = h("p", { class: "sp-lede", role: "status", "aria-live": "polite" });
 const resultsList = h("div", { class: "sp-results-list" });
 const results = h("div", { class: "sp-pane sp-results", id: "sp-results", role: "region", "aria-labelledby": "sp-results-title", hidden: true },
@@ -405,18 +408,18 @@ function runSearch(text: string) {
   const words = plain(query).split(/\s+/).filter(Boolean);
   const hits = index.filter((e) => words.every((w) => e.words.includes(w)));
   resultsTitle.textContent = `“${query}”`;
-  resultsCount.textContent = hits.length === 0 ? "Nothing found." : hits.length === 1 ? "1 setting found." : `${hits.length} settings found.`;
+  resultsCount.textContent = hits.length === 0 ? t("s.search.none") : t("s.search.found", { count: hits.length });
   if (!hits.length) {
     resultsList.append(h("div", { class: "sp-empty" },
       icon(LUCIDE.search, 26, 1.8),
-      h("p", { class: "sp-empty-title", text: `Nothing matches “${query}”. Try a simpler word.` }),
-      h("p", { class: "sp-help", text: "Por ejemplo: sonido, oscuro, posición, inicio o atajo." })));
+      h("p", { class: "sp-empty-title", text: t("s.search.noMatch", { query }) }),
+      h("p", { class: "sp-help", text: t("s.search.example") })));
     return;
   }
   for (const id of SECTIONS) {
     const mine = hits.filter((e) => e.section === id);
     if (!mine.length) continue;
-    const crumb = h("button", { class: "sp-crumb", type: "button", title: `Open ${INFO[id].name}`, "aria-label": `In ${INFO[id].name}. Open it.` },
+    const crumb = h("button", { class: "sp-crumb", type: "button", title: t("s.search.open", { name: INFO[id].name }), "aria-label": t("s.search.in", { name: INFO[id].name }) },
       tile(id, 12), h("span", { text: INFO[id].name }), icon(LUCIDE.arrowRight, 13, 2.2));
     crumb.addEventListener("click", () => goTo(id, mine[0].el));
     const hit = h("section", { class: "sp-hit", "aria-label": INFO[id].name }, crumb);
@@ -505,12 +508,12 @@ const RESET_FIELDS: Partial<Record<Section, readonly (keyof Settings)[]>> = {
 };
 /** What the reset of each says it does. */
 const RESET_WORDS: Partial<Record<Section, string>> = {
-  island: "Puts everything on this page back as it was when Oleo was installed, including starting with your computer (off).",
-  look: "Puts the mascot, the window's colours and the motion back as they came.",
-  sounds: "Turns sounds back on, at the volume they came with.",
-  agents: "Turns the agents list off and puts its fading back as it came. Where you put the list, and its size, are kept.",
-  shortcuts: "Puts all five shortcuts back to Oleo's keys, and turns them on.",
-  shelf: "Shows every widget again, in the order they came in.",
+  island: t("s.reset.island"),
+  look: t("s.reset.look"),
+  sounds: t("s.reset.sounds"),
+  agents: t("s.reset.agents"),
+  shortcuts: t("s.reset.shortcuts"),
+  shelf: t("s.reset.shelf"),
 };
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -551,12 +554,12 @@ const paintResets = () => {
 const resetArmers = new Map<Section, () => void>();
 
 /**
- * "Reset this section", at the foot of a category: a quiet button that asks
+ * t("s.reset.idle"), at the foot of a category: a quiet button that asks
  * twice. The first click arms it — its words change, and a screen reader is
  * told — and it disarms by itself after a few seconds; the second resets.
  */
 function resetFoot(id: Section): HTMLElement {
-  const IDLE = "Reset this section";
+  const IDLE = t("s.reset.idle");
   const words = h("span", { text: IDLE });
   const b = h("button", { class: "sp-reset", type: "button" }, icon(LUCIDE.rotateCcw, 14, 2.1), words);
   const note = h("p", { class: "sp-help", id: `reset-note-${id}` });
@@ -570,8 +573,8 @@ function resetFoot(id: Section): HTMLElement {
     b.setAttribute("aria-disabled", String(spent));
     b.classList.toggle("spent", spent);
     b.classList.toggle("armed", armed !== 0);
-    words.textContent = busy ? "Resetting…" : armed ? "Click again to reset" : IDLE;
-    note.textContent = done && !armed ? "Everything here is as it came." : RESET_WORDS[id] ?? "";
+    words.textContent = busy ? t("s.reset.busy") : armed ? t("s.reset.armed") : IDLE;
+    note.textContent = done && !armed ? t("s.reset.atDefaults") : RESET_WORDS[id] ?? "";
   };
   const disarm = () => {
     window.clearTimeout(armed);
@@ -581,7 +584,7 @@ function resetFoot(id: Section): HTMLElement {
   const arm = () => {
     armed = window.setTimeout(disarm, 4000);
     paint();
-    say(`Click again to reset ${INFO[id].name}.`);
+    say(t("s.reset.again", { name: INFO[id].name }));
   };
   b.addEventListener("click", async () => {
     if (busy || (!armed && atDefaults(id))) return;
@@ -593,7 +596,7 @@ function resetFoot(id: Section): HTMLElement {
     await resetSection(id);
     busy = false;
     paint();
-    say(`${INFO[id].name} is reset.`);
+    say(t("s.reset.done", { name: INFO[id].name }));
   });
   b.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && armed) {
@@ -629,33 +632,33 @@ const flows: Record<Change, Flow> = { hooks: { at: "status" }, usage: { at: "sta
 const detailsOpen: Record<Change, boolean> = { hooks: false, usage: false, reply: false, cursor: false, codex: false };
 
 /** Codex runs a new hook only once it is trusted: said after connecting, and in the details. */
-const CODEX_TRUST = "Codex runs new hooks only once you trust them: start Codex and review them once with /hooks.";
+const CODEX_TRUST = t("s.codex.trust");
 
 /** What the preview panel says of each change, before and after it is written. */
 const CHANGE_WORDS: Record<Change, { install: string; remove: string; done: string }> = {
   hooks: {
-    install: "This is exactly what Oleo will change in Claude Code's settings file. Your own hooks and settings stay as they are.",
-    remove: "This removes Oleo's entries only. Your own hooks and settings stay as they are.",
-    done: "Open a new Claude Code session for the change to take effect.",
+    install: t("s.cw.hooksInstall"),
+    remove: t("s.cw.hooksRemove"),
+    done: t("s.cw.hooksDone"),
   },
   usage: {
-    install: "This is exactly what will change in Claude Code's settings file: its status line (the statusLine key), and nothing else. A status line you already have keeps working: Oleo runs it for you — it is the long word after --previous — and turning this off puts it back as it was.",
-    remove: "This takes Oleo out of the status line only. The status line you had before comes back exactly as it was; with none, the key is removed.",
-    done: "Claude Code picks the change up when it reloads its settings; a new session always does.",
+    install: t("s.cw.usageInstall"),
+    remove: t("s.cw.usageRemove"),
+    done: t("s.cw.usageDone"),
   },
   reply: {
-    install: "This is exactly what will change in your CLAUDE.md, Claude Code's instructions file: the block between Oleo's two marker lines, and nothing outside them.",
-    remove: "This removes Oleo's two marker lines, what is between them, and the blank line Oleo added before them. Everything else in your CLAUDE.md stays as it is.",
-    done: "New sessions use it.",
+    install: t("s.cw.replyInstall"),
+    remove: t("s.cw.replyRemove"),
+    done: t("s.cw.replyDone"),
   },
   cursor: {
-    install: "This is exactly what will change in Cursor's hooks.json: Oleo's entries, and nothing else. Your own hooks and any other key stay as they are.",
-    remove: "This removes Oleo's entries only. Your own hooks stay as they are.",
-    done: "Cursor reloads hooks.json when it is saved. If its sessions do not show up, restart Cursor.",
+    install: t("s.cw.cursorInstall"),
+    remove: t("s.cw.ownRemove"),
+    done: t("s.cw.cursorDone"),
   },
   codex: {
-    install: "This is exactly what will change in Codex's hooks.json: Oleo's entries, and nothing else. Your own hooks and any other key stay as they are.",
-    remove: "This removes Oleo's entries only. Your own hooks stay as they are.",
+    install: t("s.cw.codexInstall"),
+    remove: t("s.cw.ownRemove"),
     done: CODEX_TRUST,
   },
 };
@@ -683,234 +686,234 @@ interface Spec {
   remove?: string;
 }
 
-const RELAY_MISSING = "Restart Oleo first: a part of it is missing.";
+const RELAY_MISSING = t("s.relayMissing");
 const UNREACHABLE: Omit<Spec, "name"> = {
-  tone: "off", title: "No disponible",
-  text: "Oleo no respondió. Cierra esta ventana y vuelve a abrirla desde la isla o el área de notificación.",
+  tone: "off", title: t("s.unreachable"),
+  text: t("s.unreachableText"),
   facts: [],
 };
 
 function hooksSpec(): Spec {
   const s = hooks;
-  const name = "Connect Claude Code to Oleo";
+  const name = t("s.hooks.name");
   if (!s) return { name, ...UNREACHABLE };
   const file: [string, string] = ["settings.json", s.settingsPath];
-  const relay: [string, string] = ["Relay", s.hookPath];
-  const relayName = s.hookPath.split(/[\\/]/).pop() || "The relay";
-  const how = "Oleo adds a few hooks to Claude Code's settings file (settings.json): each runs Oleo's small relay program, which passes what a session does to Oleo. Your own hooks are left as they are.";
+  const relay: [string, string] = [t("s.fact.relay"), s.hookPath];
+  const relayName = s.hookPath.split(/[\\/]/).pop() || t("s.hooks.theRelay");
+  const how = t("s.hooks.how");
   if (!s.hookReady) {
     // Writing hook commands that point at a relay which isn't there would give
     // every Claude Code session a broken hook: installing is not on offer.
     return {
-      name, tone: "error", title: "Requiere reinicio",
+      name, tone: "error", title: t("s.st.restart"),
       text: s.installed
-        ? "A part of Oleo that Claude Code talks to is missing, so your sessions can't reach Oleo. Restarting Oleo puts it back."
-        : "A part of Oleo that Claude Code talks to is missing, so connecting now would not work. Restarting Oleo puts it back.",
+        ? t("s.hooks.missingOn")
+        : t("s.hooks.missingOff"),
       details: [
-        `${relayName} is not where ${s.installed ? "the hooks point" : "the hooks would point"}.`,
-        "Still missing after a restart? Installing Oleo again puts it back; from the source, cargo build -p oleo-hook builds it.",
+        s.installed ? t("s.hooks.relayGone", { name: relayName }) : t("s.hooks.relayGoneWould", { name: relayName }),
+        t("s.hooks.stillMissing"),
       ],
       facts: [file, relay],
-      primary: { label: "Reiniciar Oleo", act: "restart" },
-      remove: s.installed ? "Desconectar…" : s.legacy ? "Remove the old connection…" : undefined,
+      primary: { label: t("s.act.restart"), act: "restart" },
+      remove: s.installed ? t("s.act.disconnect") : s.legacy ? t("s.act.removeOld") : undefined,
     };
   }
   if (s.legacy) {
     return {
-      name, tone: "warn", title: "Requiere actualización",
+      name, tone: "warn", title: t("s.st.update"),
       text: s.installed
-        ? "Oleo is connected, but parts of an older version are still there. Updating takes them out."
-        : "An older version of Oleo's connection is still there. Oleo can't hear your sessions until it is updated.",
-      details: [how, "Hooks from an older version were found beside Oleo's: updating replaces them."],
+        ? t("s.hooks.legacyOn")
+        : t("s.hooks.legacyOff"),
+      details: [how, t("s.hooks.legacyFound")],
       facts: [file, relay],
-      primary: { label: "Actualizar…", act: "install" },
-      remove: s.installed ? "Desconectar…" : "Remove them…",
+      primary: { label: t("s.act.update"), act: "install" },
+      remove: s.installed ? t("s.act.disconnect") : t("s.act.removeThem"),
     };
   }
   if (s.installed) {
     return {
-      name, tone: "ok", title: "Conectado",
-      text: "La isla muestra tus sesiones de Claude Code y te permite responder preguntas y solicitudes de permiso.",
+      name, tone: "ok", title: t("s.st.connected"),
+      text: t("s.hooks.onText"),
       details: [how],
-      facts: [file, relay], again: "Connect again…", remove: "Desconectar…",
+      facts: [file, relay], again: t("s.act.again"), remove: t("s.act.disconnect"),
     };
   }
   return {
-    name, tone: "off", title: "Sin conexión",
-    text: "Conecta Claude Code para ver sus sesiones y responder solicitudes de permiso desde la isla.",
+    name, tone: "off", title: t("s.st.disconnected"),
+    text: t("s.hooks.offText"),
     details: [how],
-    facts: [file], primary: { label: "Conectar…", act: "install" },
+    facts: [file], primary: { label: t("s.act.connect"), act: "install" },
   };
 }
 
 function usageSpec(): Spec {
   const u = usage;
-  const name = "Límites de uso";
+  const name = t("s.usage.name");
   if (!u) return { name, ...UNREACHABLE };
-  const how = "Reads the usage numbers Claude Code already passes to its status line (the statusLine key of settings.json). Nothing leaves this computer. Numbers appear on subscription plans, and update only while a session runs.";
-  const hints = "Claude Code hides its keyboard hints (\"? for shortcuts\") while any status line is set.";
+  const how = t("s.usage.how");
+  const hints = t("s.usage.hints");
   if (u.installed) {
     return {
       name, tone: "ok",
-      title: u.chained ? "On, next to your own status line" : "Activado",
-      text: "La isla puede mostrar el uso de los límites de 5 horas y semanal de Claude.",
+      title: u.chained ? t("s.usage.chained") : t("s.st.on"),
+      text: t("s.usage.onText"),
       details: [
         how,
         u.chained
-          ? "Claude Code hands the numbers to Oleo, which then runs the status line you already had, so it keeps showing. Turning this off puts it back exactly as it was."
-          : `Oleo prints no status line of its own. ${hints}`,
+          ? t("s.usage.chainedHow")
+          : t("s.usage.noOwn", { hints }),
       ],
-      facts: [["Key", "statusLine"]],
-      remove: "Desactivar…",
+      facts: [[t("s.fact.key"), "statusLine"]],
+      remove: t("s.act.turnOff"),
     };
   }
   return {
-    name, tone: "off", title: "Desactivado",
-    text: "Muestra el uso de los límites de 5 horas y semanal de Claude en la isla.",
+    name, tone: "off", title: t("s.st.off"),
+    text: t("s.usage.offText"),
     details: [
       how,
       u.otherStatusLine
-        ? "You have a status line: Oleo runs it after reading the numbers, so it keeps showing, and turning this off puts it back exactly."
-        : `You have no status line: Oleo prints none. ${hints}`,
+        ? t("s.usage.haveLine")
+        : t("s.usage.noLine", { hints }),
     ],
     facts: [],
     // The same relay as the hooks': a status line pointing at one that isn't there shows nothing.
-    primary: { label: "Activar…", act: "install", blocked: hooks && !hooks.hookReady ? RELAY_MISSING : undefined },
+    primary: { label: t("s.act.turnOn"), act: "install", blocked: hooks && !hooks.hookReady ? RELAY_MISSING : undefined },
   };
 }
 
-const CURSOR_DOES = "Shows your Cursor agent sessions in the island too. Oleo can only show them: it can't answer anything in Cursor.";
-const CURSOR_HOW = "Oleo adds its entries to Cursor's hooks.json, for events that can only report what Cursor does and never change it.";
+const CURSOR_DOES = t("s.cursor.does");
+const CURSOR_HOW = t("s.cursor.how");
 
 function cursorSpec(): Spec {
   const c = cursor;
   const name = "Cursor";
   if (!c) return { name, ...UNREACHABLE };
   const file: [string, string] = ["hooks.json", c.hooksPath];
-  const relay: [string, string] = ["Relay", c.hookPath];
-  if (c.unreadable) return { name, tone: "error", title: "No se puede cambiar", text: "Oleo no puede cambiar el archivo de ajustes de Cursor de forma segura.", details: [c.unreadable], facts: [file] };
-  if (c.refused) return { name, tone: "error", title: "No se puede cambiar", text: "Oleo no puede cambiar el archivo de ajustes de Cursor de forma segura.", details: [c.refused], facts: [file, relay] };
+  const relay: [string, string] = [t("s.fact.relay"), c.hookPath];
+  if (c.unreadable) return { name, tone: "error", title: t("s.st.cantChange"), text: t("s.cursor.unsafe"), details: [c.unreadable], facts: [file] };
+  if (c.refused) return { name, tone: "error", title: t("s.st.cantChange"), text: t("s.cursor.unsafe"), details: [c.refused], facts: [file, relay] };
   if (!c.hookReady) {
     return {
-      name, tone: "error", title: "Requiere reinicio",
-      text: "A part of Oleo that Cursor talks to is missing, so connecting now would not work. Restarting Oleo puts it back.",
-      details: ["The relay is not in place yet, and hooks written now would point at nothing."],
-      facts: [file, relay], primary: { label: "Reiniciar Oleo", act: "restart" }, remove: c.installed ? "Desconectar…" : undefined,
+      name, tone: "error", title: t("s.st.restart"),
+      text: t("s.cursor.missing"),
+      details: [t("s.relayNotYet")],
+      facts: [file, relay], primary: { label: t("s.act.restart"), act: "restart" }, remove: c.installed ? t("s.act.disconnect") : undefined,
     };
   }
   if (c.installed && !c.current) {
     return {
-      name, tone: "warn", title: "Requiere actualización",
-      text: "Oleo's connection to Cursor points at an old place. Updating fixes it.",
-      details: ["Oleo's entries in hooks.json point at a relay that has moved. Updating rewrites them, and nothing else."],
-      facts: [file, relay], primary: { label: "Actualizar…", act: "install" }, remove: "Desconectar…",
+      name, tone: "warn", title: t("s.st.update"),
+      text: t("s.cursor.old"),
+      details: [t("s.relayMoved")],
+      facts: [file, relay], primary: { label: t("s.act.update"), act: "install" }, remove: t("s.act.disconnect"),
     };
   }
   if (c.installed) {
     return {
-      name, tone: "ok", title: "Conectado", text: CURSOR_DOES,
-      details: [CURSOR_HOW, "Cursor reloads hooks.json when it is saved; if a session does not show up, restart Cursor."],
-      facts: [file, relay], again: "Connect again…", remove: "Desconectar…",
+      name, tone: "ok", title: t("s.st.connected"), text: CURSOR_DOES,
+      details: [CURSOR_HOW, t("s.cursor.reloads")],
+      facts: [file, relay], again: t("s.act.again"), remove: t("s.act.disconnect"),
     };
   }
   return {
-    name, tone: "off", title: "Sin conexión", text: CURSOR_DOES,
+    name, tone: "off", title: t("s.st.disconnected"), text: CURSOR_DOES,
     details: [
       CURSOR_HOW,
       c.cursorFound
-        ? c.fileExists ? "Your hooks.json is kept: Oleo adds its own entries beside yours." : "You have no hooks.json yet: the file is created."
-        : "There is no .cursor folder here, so Cursor may not be installed. Oleo can still create hooks.json, and it works once Cursor is.",
-      "After connecting, restart Cursor if its sessions do not show up.",
+        ? c.fileExists ? t("s.hooksKept") : t("s.hooksNew")
+        : t("s.cursor.noFolder"),
+      t("s.cursor.after"),
     ],
-    facts: [file], primary: { label: "Conectar…", act: "install" },
+    facts: [file], primary: { label: t("s.act.connect"), act: "install" },
   };
 }
 
-const CODEX_DOES = "Muestra tus sesiones de Codex en la isla y te permite responder solicitudes de permiso.";
-const CODEX_HOW = "Oleo añade sus entradas a hooks.json de Codex. Si no respondes en la isla, la solicitud de permiso aparecerá en Codex.";
+const CODEX_DOES = t("s.codex.does");
+const CODEX_HOW = t("s.codex.how");
 
 function codexSpec(): Spec {
   const c = codex;
   const name = "Codex";
   if (!c) return { name, ...UNREACHABLE };
   const file: [string, string] = ["hooks.json", c.hooksPath];
-  const relay: [string, string] = ["Relay", c.hookPath];
-  if (c.unreadable) return { name, tone: "error", title: "No se puede cambiar", text: "Oleo no puede cambiar el archivo de hooks de Codex de forma segura.", details: [c.unreadable], facts: [file] };
-  if (c.refused) return { name, tone: "error", title: "No se puede cambiar", text: "Oleo no puede cambiar el archivo de hooks de Codex de forma segura.", details: [c.refused], facts: [file, relay] };
+  const relay: [string, string] = [t("s.fact.relay"), c.hookPath];
+  if (c.unreadable) return { name, tone: "error", title: t("s.st.cantChange"), text: t("s.codex.unsafe"), details: [c.unreadable], facts: [file] };
+  if (c.refused) return { name, tone: "error", title: t("s.st.cantChange"), text: t("s.codex.unsafe"), details: [c.refused], facts: [file, relay] };
   if (!c.hookReady) {
     return {
-      name, tone: "error", title: "Requiere reinicio",
-      text: "A part of Oleo that Codex talks to is missing, so connecting now would not work. Restarting Oleo puts it back.",
-      details: ["The relay is not in place yet, and hooks written now would point at nothing."],
-      facts: [file, relay], primary: { label: "Reiniciar Oleo", act: "restart" }, remove: c.installed ? "Desconectar…" : undefined,
+      name, tone: "error", title: t("s.st.restart"),
+      text: t("s.codex.missing"),
+      details: [t("s.relayNotYet")],
+      facts: [file, relay], primary: { label: t("s.act.restart"), act: "restart" }, remove: c.installed ? t("s.act.disconnect") : undefined,
     };
   }
   if (c.installed && !c.current) {
     return {
-      name, tone: "warn", title: "Requiere actualización",
-      text: "Oleo's connection to Codex points at an old place. Updating fixes it.",
-      details: ["Oleo's entries in hooks.json point at a relay that has moved. Updating rewrites them, and nothing else.", CODEX_TRUST],
-      facts: [file, relay], primary: { label: "Actualizar…", act: "install" }, remove: "Desconectar…",
+      name, tone: "warn", title: t("s.st.update"),
+      text: t("s.codex.old"),
+      details: [t("s.relayMoved"), CODEX_TRUST],
+      facts: [file, relay], primary: { label: t("s.act.update"), act: "install" }, remove: t("s.act.disconnect"),
     };
   }
   if (c.installed) {
     return {
-      name, tone: "ok", title: "Conectado", text: CODEX_DOES,
+      name, tone: "ok", title: t("s.st.connected"), text: CODEX_DOES,
       details: [CODEX_HOW, CODEX_TRUST],
-      facts: [file, relay], again: "Connect again…", remove: "Desconectar…",
+      facts: [file, relay], again: t("s.act.again"), remove: t("s.act.disconnect"),
     };
   }
   return {
-    name, tone: "off", title: "Sin conexión", text: CODEX_DOES,
+    name, tone: "off", title: t("s.st.disconnected"), text: CODEX_DOES,
     details: [
       CODEX_HOW,
       c.codexFound
-        ? c.fileExists ? "Your hooks.json is kept: Oleo adds its own entries beside yours." : "You have no hooks.json yet: the file is created."
-        : "There is no .codex folder here, so Codex may not be installed. Oleo can still create hooks.json, and it works once Codex is.",
+        ? c.fileExists ? t("s.hooksKept") : t("s.hooksNew")
+        : t("s.codex.noFolder"),
       CODEX_TRUST,
     ],
-    facts: [file], primary: { label: "Conectar…", act: "install" },
+    facts: [file], primary: { label: t("s.act.connect"), act: "install" },
   };
 }
 
 /** The reply format's one sentence, said the same whatever its state. */
-const REPLY_DOES = "Asks Claude Code to lay out its answers the same way each time — a summary first, then what it needs you to decide, its warnings and its tips — so Oleo can point them out.";
-const REPLY_HOW = "Oleo adds a short block, between two marker lines, to your CLAUDE.md (the instructions Claude Code reads in every session). Nothing outside the block is touched. Applies to new sessions.";
+const REPLY_DOES = t("s.reply.does");
+const REPLY_HOW = t("s.reply.how");
 
 function replySpec(): Spec {
   const r = reply;
-  const name = "Formato de respuesta";
+  const name = t("s.reply.name");
   if (!r) return { name, ...UNREACHABLE };
   const file: [string, string] = ["CLAUDE.md", r.path];
   switch (r.state) {
     case "installed":
-      return { name, tone: "ok", title: "Activado", text: REPLY_DOES, details: [REPLY_HOW], facts: [file], remove: "Desactivar…" };
+      return { name, tone: "ok", title: t("s.st.on"), text: REPLY_DOES, details: [REPLY_HOW], facts: [file], remove: t("s.act.turnOff") };
     case "outdated":
       return {
-        name, tone: "warn", title: "Requiere actualización",
-        text: "Oleo's instructions for Claude Code have changed since you turned this on. Updating brings them up to date.",
-        details: [REPLY_DOES, "Updating replaces what is between the two marker lines in your CLAUDE.md, and nothing else. Applies to new sessions."],
+        name, tone: "warn", title: t("s.st.update"),
+        text: t("s.reply.outdated"),
+        details: [REPLY_DOES, t("s.reply.updating")],
         facts: [file],
-        primary: { label: "Actualizar…", act: "install" }, remove: "Desactivar…",
+        primary: { label: t("s.act.update"), act: "install" }, remove: t("s.act.turnOff"),
       };
     case "unmarked":
       return {
-        name, tone: "warn", title: "You have your own",
-        text: "Your Claude Code instructions already ask for a reply layout of their own, so Oleo leaves them alone.",
+        name, tone: "warn", title: t("s.reply.ownTitle"),
+        text: t("s.reply.ownText"),
         found: r.found,
         details: [
-          "Your CLAUDE.md has a reply format without Oleo's markers: these are the lines Oleo found. It won't add a second one, and won't change yours.",
-          "To let Oleo manage it, remove those lines yourself and come back: turning it on is then on offer.",
+          t("s.reply.ownFound"),
+          t("s.reply.ownHow"),
         ],
         facts: [file],
       };
     case "error":
-      return { name, tone: "error", title: "No se puede cambiar", text: "Oleo can't safely change your Claude Code instructions file.", details: [r.error ?? "CLAUDE.md can't be read."], facts: [file] };
+      return { name, tone: "error", title: t("s.st.cantChange"), text: t("s.reply.unsafe"), details: [r.error ?? t("s.reply.unreadable")], facts: [file] };
     default:
       return {
-        name, tone: "off", title: "Desactivado", text: REPLY_DOES,
-        details: [REPLY_HOW, r.exists ? "The block is added at the end of the file, after one blank line." : "You have no CLAUDE.md yet: the file is created, with the block and nothing else."],
-        facts: [file], primary: { label: "Activar…", act: "install" },
+        name, tone: "off", title: t("s.st.off"), text: REPLY_DOES,
+        details: [REPLY_HOW, r.exists ? t("s.reply.atEnd") : t("s.reply.noFile")],
+        facts: [file], primary: { label: t("s.act.turnOn"), act: "install" },
       };
   }
 }
@@ -980,10 +983,10 @@ async function writeChange(kind: Change) {
     flows[kind] = { at: "status", done: { install: flow.install, backup } };
     await readClaude();
     paintClaude();
-    say(flow.install ? "Done." : "Removed.");
+    say(flow.install ? t("s.done") : t("s.removed"));
   } catch (err) {
     flow.busy = false;
-    flow.error = `Could not write: ${reason(err)}`;
+    flow.error = t("s.diff.couldNot", { why: reason(err) });
     painters[kind]?.(false, "panel");
   }
 }
@@ -996,26 +999,26 @@ function diffPanel(kind: Change, flow: Extract<Flow, { at: "confirm" }>, close: 
   const lines = flow.preview.diff.split("\n");
   const added = lines.filter((l) => l.startsWith("+")).length;
   const removed = lines.filter((l) => l.startsWith("-")).length;
-  const box = h("div", { class: "sp-diff", tabindex: "0", role: "region", "aria-label": `Changes to ${fileName}` });
+  const box = h("div", { class: "sp-diff", tabindex: "0", role: "region", "aria-label": t("s.diff.changesTo", { file: fileName }) });
   for (const line of lines) {
     const sign = line[0] === "+" || line[0] === "-" ? line[0] : " ";
     // Rust writes "+ ", "- " or two spaces before each line.
     box.append(h("div", { class: sign === "+" ? "add" : sign === "-" ? "del" : "", "data-sign": sign, text: line.slice(line[1] === " " ? 2 : 1) }));
   }
-  const confirm = button(created ? "Create the file" : flow.install ? "Save a backup and apply" : "Save a backup and remove", flow.install ? "primary" : "danger solid", () => void writeChange(kind));
-  const cancel = button("Cancelar", "quiet", close);
+  const confirm = button(created ? t("s.diff.create") : flow.install ? t("s.diff.apply") : t("s.diff.remove"), flow.install ? "primary" : "danger solid", () => void writeChange(kind));
+  const cancel = button(t("s.cancel"), "quiet", close);
   confirm.disabled = cancel.disabled = Boolean(flow.busy);
   const panel = h("div", { class: "sp-panel" },
     h("div", { class: "sp-panel-head" },
-      h("span", { text: `Changes to ${fileName}` }),
+      h("span", { text: t("s.diff.changesTo", { file: fileName }) }),
       h("span", { class: "counts" },
         h("span", { class: "plus", text: `+${added}` }), h("span", { class: "minus", text: `−${removed}` }))),
-    h("p", { class: "sp-help", text: `${flow.install ? words.install : words.remove} Nothing is changed until you click below.` }),
+    h("p", { class: "sp-help", text: `${flow.install ? words.install : words.remove} ${t("s.diff.untilClick")}` }),
     box,
-    added + removed === 0 ? h("p", { class: "sp-help", text: `Nothing would change: ${fileName} already says this.` }) : null,
+    added + removed === 0 ? h("p", { class: "sp-help", text: t("s.diff.nothing", { file: fileName }) }) : null,
     created
-      ? h("p", { class: "sp-help", text: "There is no file to back up: it is created." })
-      : h("p", { class: "sp-help" }, "A dated backup is saved first: ", h("code", {}, ...breakable(flow.preview.backup))),
+      ? h("p", { class: "sp-help", text: t("s.diff.noBackup") })
+      : h("p", { class: "sp-help" }, t("s.diff.backupFirst"), h("code", {}, ...breakable(flow.preview.backup))),
     flow.error ? h("div", { class: "sp-flash error", role: "alert" }, icon(LUCIDE.circleX, 15), h("span", { text: flow.error })) : null,
     h("div", { class: "sp-panel-actions" }, confirm, cancel));
   panel.addEventListener("keydown", (e) => {
@@ -1048,9 +1051,9 @@ function integration(kind: Change): HTMLElement {
 
     if (flow.at === "status" && flow.done) {
       // A file Oleo created had no previous one to save.
-      const saved = (kind === "reply" || kind === "cursor" || kind === "codex") && wasCreated ? [] : ["Your previous file is saved as ", ...breakable(flow.done.backup), ". "];
+      const saved = (kind === "reply" || kind === "cursor" || kind === "codex") && wasCreated ? [] : [t("s.savedAs"), ...breakable(flow.done.backup), ". "];
       block.append(h("div", { class: "sp-flash", role: "status" }, icon(LUCIDE.check, 15, 2.4),
-        h("span", {}, flow.done.install ? "Done. " : "Removed. ", ...saved, CHANGE_WORDS[kind].done)));
+        h("span", {}, flow.done.install ? t("s.doneSp") : t("s.removedSp"), ...saved, CHANGE_WORDS[kind].done)));
     }
     if (flow.at === "status" && flow.error) {
       block.append(h("div", { class: "sp-flash error", role: "alert" }, icon(LUCIDE.circleX, 15), h("span", { text: flow.error })));
@@ -1066,7 +1069,7 @@ function integration(kind: Change): HTMLElement {
       const { act, blocked, label } = spec.primary;
       const b = button(label, "primary", () => {
         if (act === "install") return go(true);
-        flows[kind] = { at: "status", note: "Reiniciando Oleo…" };
+        flows[kind] = { at: "status", note: t("s.restarting") };
         paint();
         void oleo.restart().then(() => window.setTimeout(async () => {
           // Only reached where the window outlives the restart: a browser, or a restart that did not happen.
@@ -1093,7 +1096,7 @@ function integration(kind: Change): HTMLElement {
       const body = h("div", { class: "sp-details", id });
       if (spec.found?.length) {
         // Somebody's own lines: shown as they are, and nothing here acts on them.
-        body.append(h("div", { class: "sp-diff sp-found", tabindex: "0", role: "region", "aria-label": `Lines found in ${CHANGED_FILE[kind]}` },
+        body.append(h("div", { class: "sp-diff sp-found", tabindex: "0", role: "region", "aria-label": t("s.found.in", { file: CHANGED_FILE[kind] }) },
           ...spec.found.map((line) => h("div", { "data-sign": " ", text: line || " " }))));
       }
       for (const text of spec.details ?? []) body.append(h("p", { text }));
@@ -1104,7 +1107,7 @@ function integration(kind: Change): HTMLElement {
       }
       const fold = h("div", { class: `sp-fold${detailsOpen[kind] ? " open" : ""}` }, h("div", {}, body));
       const more = h("button", { class: "sp-more", type: "button", "aria-expanded": String(detailsOpen[kind]), "aria-controls": id },
-        h("span", { text: "Detalles" }), icon(LUCIDE.chevronDown, 14, 2.2));
+        h("span", { text: t("s.details") }), icon(LUCIDE.chevronDown, 14, 2.2));
       more.addEventListener("click", () => {
         detailsOpen[kind] = !detailsOpen[kind];
         fold.classList.toggle("open", detailsOpen[kind]);
@@ -1163,12 +1166,12 @@ const toolPart = (key: SessionAgent, what: string, ...kids: Kid[]) =>
 function connectSection(): Kid[] {
   return [
     head("connect"),
-    toolPart("claude", "Your sessions and what they ask, your usage limits, and how replies are laid out.",
-      connectGroup("hooks", "Sesiones y permisos", "Connect Claude Code to Oleo: see your sessions in the island and answer them there.",
+    toolPart("claude", t("s.claude.what"),
+      connectGroup("hooks", t("s.sessPerms"), t("s.hooks.find"),
         "hooks hook claude code connect connection install setup set up link sessions permissions approve relay settings.json uninstall disconnect"),
-      connectGroup("usage", "Límites de uso", "Show how much of your 5-hour and weekly Claude limits you have used.",
+      connectGroup("usage", t("s.usage.name"), t("s.usage.find"),
         "usage limits limit quota plan subscription status line statusline weekly 5-hour five hour"),
-      connectGroup("reply", "Formato de respuesta", REPLY_DOES,
+      connectGroup("reply", t("s.reply.name"), REPLY_DOES,
         "reply replies format answers layout claude.md instructions summary decisions warnings tips markdown")),
     cursorGroup(),
     codexGroup(),
@@ -1177,23 +1180,23 @@ function connectSection(): Kid[] {
 
 /** Codex beside Claude Code: its hooks (sessions and permission requests), and whether its sessions are shown. */
 function codexGroup(): HTMLElement {
-  const show = toggle(settings.showCodexSessions, "Mostrar sesiones de Codex", (on) => change({ showCodexSessions: on }));
+  const show = toggle(settings.showCodexSessions, t("s.codex.show"), (on) => change({ showCodexSessions: on }));
   followers.push(() => show.set(settings.showCodexSessions));
-  return toolPart("codex", "Its sessions, and Allow or Deny for what it asks permission for.",
-    connectGroup("codex", "Sesiones y permisos", CODEX_DOES, "codex openai cli hooks.json agent sessions permissions approve allow deny connect"),
+  return toolPart("codex", t("s.codex.what"),
+    connectGroup("codex", t("s.sessPerms"), CODEX_DOES, "codex openai cli hooks.json agent sessions permissions approve allow deny connect"),
     group(null,
-      row("Mostrar sesiones de Codex", "Muestra las sesiones con el icono de Codex. Si lo desactivas, los permisos se solicitan en la ventana de Codex.", show.el,
+      row(t("s.codex.show"), t("s.codex.showHelp"), show.el,
         "codex show hide sessions openai")));
 }
 
 /** Cursor beside Claude Code: its hooks (status only), and whether its sessions are shown. */
 function cursorGroup(): HTMLElement {
-  const show = toggle(settings.showCursorSessions, "Mostrar sesiones de Cursor", (on) => change({ showCursorSessions: on }));
+  const show = toggle(settings.showCursorSessions, t("s.cursor.show"), (on) => change({ showCursorSessions: on }));
   followers.push(() => show.set(settings.showCursorSessions));
-  return toolPart("cursor", "Its agent sessions, to watch only: Oleo answers nothing in Cursor.",
-    connectGroup("cursor", "Sesiones", CURSOR_DOES, "cursor editor ide hooks.json agent sessions connect"),
+  return toolPart("cursor", t("s.cursor.what"),
+    connectGroup("cursor", t("s.sessions"), CURSOR_DOES, "cursor editor ide hooks.json agent sessions connect"),
     group(null,
-      row("Mostrar sesiones de Cursor", "Muestra las sesiones con el icono de Cursor.", show.el,
+      row(t("s.cursor.show"), t("s.cursor.showHelp"), show.el,
         "cursor show hide sessions editor")));
 }
 
@@ -1210,7 +1213,7 @@ async function refreshClaude() {
 
 /** A key of a shortcut as it is shown: "KeyK" is K, "Digit1" is 1, "Super" is the Windows key. */
 const KEY_WORDS: Record<string, string> = {
-  Super: "Win", ArrowUp: "Up", ArrowDown: "Down", ArrowLeft: "Izquierda", ArrowRight: "Derecha", Escape: "Esc", Delete: "Del",
+  Super: "Win", ArrowUp: t("s.key.up"), ArrowDown: t("s.key.down"), ArrowLeft: t("s.key.left"), ArrowRight: t("s.key.right"), Escape: "Esc", Delete: t("s.key.del"),
 };
 const keyWord = (key: string) => KEY_WORDS[key] ?? key.replace(/^(Key|Digit)(?=.$)/, "");
 /** "Ctrl+Alt+Space" as its keys: Ctrl, Alt, Space. */
@@ -1235,11 +1238,11 @@ const SHORTCUT_FIELDS = {
 
 /** The five global shortcuts: what each is called, what it does, and the words a search finds it by. */
 const SHORTCUTS: readonly { which: ShortcutName; label: string; does: string; keys: string }[] = [
-  { which: "expand", label: "Ampliar o reducir la isla", does: "Alterna el panel de sesiones entre tamaño normal y ampliado.", keys: "expand large big full size shrink panel" },
-  { which: "panel", label: "Abrir el panel de sesiones", does: "Abre el panel en tamaño normal. Pulsa Espacio para ampliarlo.", keys: "open panel sessions list" },
-  { which: "goto", label: "Ir a la sesión que necesita atención", does: "Trae al frente la sesión que espera una respuesta o que se detuvo por un error.", keys: "go to jump switch window focus needs you asking error" },
-  { which: "hide", label: "Ocultar o mostrar la isla", does: "Alterna la visibilidad de la isla. Las solicitudes pendientes la muestran temporalmente.", keys: "hide show island invisible away" },
-  { which: "agents", label: "Mostrar u ocultar la lista de agentes", does: "Funciona mientras la lista de agentes está activada.", keys: "agents list window projects" },
+  { which: "expand", label: t("s.sc.expand"), does: t("s.sc.expandDoes"), keys: "expand large big full size shrink panel" },
+  { which: "panel", label: t("s.sc.panel"), does: t("s.sc.panelDoes"), keys: "open panel sessions list" },
+  { which: "goto", label: t("s.sc.goto"), does: t("s.sc.gotoDoes"), keys: "go to jump switch window focus needs you asking error" },
+  { which: "hide", label: t("s.sc.hide"), does: t("s.sc.hideDoes"), keys: "hide show island invisible away" },
+  { which: "agents", label: t("s.sc.agents"), does: t("s.sc.agentsDoes"), keys: "agents list window projects" },
 ];
 
 /** What a reset does to each shortcut row: Rust's own path, as a change made by hand. */
@@ -1286,19 +1289,19 @@ function shortcutRow({ which, label, does, keys }: (typeof SHORTCUTS)[number]): 
     clear(field);
     const shown = recording ? partial.map(keyWord) : refused ? refused.keys : shortcutKeys(status.accelerator);
     for (const key of shown) field.append(h("kbd", { text: key }));
-    if (recording) field.append(h("span", { class: "wait", text: partial.length ? "+ a key…" : "Press the new keys…" }));
-    else field.append(h("span", { class: "hint", text: "Haz clic para cambiar" }));
-    field.setAttribute("aria-label", recording ? `${label}: recording` : `${label}: ${shortcutKeys(status.accelerator).join(" + ")}. Change`);
+    if (recording) field.append(h("span", { class: "wait", text: partial.length ? t("s.sc.aKey") : t("s.sc.press") }));
+    else field.append(h("span", { class: "hint", text: t("s.sc.clickToChange") }));
+    field.setAttribute("aria-label", recording ? t("s.sc.recordingAria", { label }) : t("s.sc.changeAria", { label, keys: shortcutKeys(status.accelerator).join(" + ") }));
     power.set(status.enabled);
     const using = shortcutKeys(status.accelerator).join(" + ");
     clear(line);
     line.append(h("i"), h("span", { text:
-      state === "recording" ? "Grabando. Cancela con Esc."
-      : refused ? (status.enabled && status.registered ? `${refused.why}. Still using ${using}.` : `${refused.why}.`)
+      state === "recording" ? t("s.sc.recording")
+      : refused ? (status.enabled && status.registered ? t("s.sc.stillUsing", { why: refused.why, keys: using }) : `${refused.why}.`)
       : state === "error" ? `${problem}.`
-      : state === "off" ? (dormant && status.enabled ? "A la espera de que se active la lista de agentes." : "Desactivado. No hay un atajo registrado.")
-      : state === "ok" ? "Works from any app"
-      : known ? "Not registered" : "" }));
+      : state === "off" ? (dormant && status.enabled ? t("s.sc.dormant") : t("s.sc.off"))
+      : state === "ok" ? t("s.sc.works")
+      : known ? t("s.sc.notRegistered") : "" }));
   };
 
   async function set(accelerator: string, enabled: boolean, keys: string[]) {
@@ -1356,7 +1359,7 @@ function shortcutRow({ which, label, does, keys }: (typeof SHORTCUTS)[number]): 
     paint();
   });
 
-  power = toggle(status.enabled, `${label}: on`, (on) => void set(status.accelerator, on, shortcutKeys(status.accelerator)));
+  power = toggle(status.enabled, t("s.sc.onAria", { label }), (on) => void set(status.accelerator, on, shortcutKeys(status.accelerator)));
   el.append(
     h("div", { class: "sp-shortcut-top" },
       h("div", { class: "sp-row-text" }, h("div", { class: "sp-row-label", text: label }), h("p", { class: "sp-help", text: does })),
@@ -1401,8 +1404,8 @@ function shortcutsSection(): Kid[] {
   const of = (...names: ShortcutName[]) => SHORTCUTS.filter((s) => names.includes(s.which)).map(shortcutRow);
   return [
     head("shortcuts"),
-    group("La isla", ...of("expand", "panel", "goto", "hide")),
-    group("Lista de agentes", ...of("agents")),
+    group(t("s.info.theIsland"), ...of("expand", "panel", "goto", "hide")),
+    group(t("s.info.agents"), ...of("agents")),
     resetFoot("shortcuts"),
   ];
 }
@@ -1415,12 +1418,12 @@ const volumePercent = () => Math.round((Math.max(0, Math.min(VOLUME_MAX, setting
 
 function soundsSection(): Kid[] {
   const volumeNeeds = needs();
-  const volume = slider("Volumen", volumePercent(), (v) => `${v}%`, (v) => change({ soundVolume: Number(((v / 100) * VOLUME_MAX).toFixed(4)) }, true));
+  const volume = slider(t("s.volume"), volumePercent(), (v) => `${v}%`, (v) => change({ soundVolume: Number(((v / 100) * VOLUME_MAX).toFixed(4)) }, true));
   const paintVolume = () => {
     volume.setDisabled(!settings.soundEnabled);
-    sayNeeds(volumeNeeds, settings.soundEnabled ? null : "Turn on sounds first.");
+    sayNeeds(volumeNeeds, settings.soundEnabled ? null : t("s.sound.needs"));
   };
-  const sound = toggle(settings.soundEnabled, "Reproducir sonidos", (on) => {
+  const sound = toggle(settings.soundEnabled, t("s.sound.play"), (on) => {
     change({ soundEnabled: on });
     paintVolume();
   });
@@ -1433,10 +1436,10 @@ function soundsSection(): Kid[] {
   });
   return [
     head("sounds"),
-    group("Sonido",
-      row("Reproducir sonidos", "Reproduce un aviso breve cuando una sesión acaba o necesita atención.", sound.el,
+    group(t("s.sound.group"),
+      row(t("s.sound.play"), t("s.sound.help"), sound.el,
         "sound sounds audio mute unmute noise beep chime alert notification quiet silent"),
-      row("Volumen", "Ajusta el volumen de los avisos.", volume.el, "volume loud quiet louder softer level audio sound", volumeNeeds)),
+      row(t("s.volume"), t("s.volume.help"), volume.el, "volume loud quiet louder softer level audio sound", volumeNeeds)),
     resetFoot("sounds"),
   ];
 }
@@ -1446,13 +1449,13 @@ function soundsSection(): Kid[] {
 function agentsSection(): Kid[] {
   const fadeNeeds = needs();
   const opacityNeeds = needs();
-  const agentsFade = toggle(settings.agentsListFade, "Atenuar cuando no se usa", (on) => {
+  const agentsFade = toggle(settings.agentsListFade, t("s.ag.fade"), (on) => {
     change({ agentsListFade: on });
     paintAgentsFade();
   });
   const fadePercent = () => Math.max(FADE_MIN, Math.min(FADE_MAX, Math.round(settings.agentsListFadeOpacity) || 50));
-  const agentsFadeTo = slider("Visibilidad al atenuar", fadePercent(), (v) => `${v}%`, (v) => change({ agentsListFadeOpacity: v }, true), FADE_MIN, FADE_MAX);
-  const agentsList = toggle(settings.showAgentsList, "Mostrar la lista de agentes", (on) => {
+  const agentsFadeTo = slider(t("s.ag.fadeTo"), fadePercent(), (v) => `${v}%`, (v) => change({ agentsListFadeOpacity: v }, true), FADE_MIN, FADE_MAX);
+  const agentsList = toggle(settings.showAgentsList, t("s.ag.show"), (on) => {
     change({ showAgentsList: on });
     paintAgentsFade();
   });
@@ -1460,9 +1463,9 @@ function agentsSection(): Kid[] {
   const paintAgentsFade = () => {
     agentsFade.el.disabled = !settings.showAgentsList;
     agentsFadeTo.setDisabled(!settings.agentsListFade || !settings.showAgentsList);
-    const off = settings.showAgentsList ? null : "Turn on the agents list first.";
+    const off = settings.showAgentsList ? null : t("s.ag.needsList");
     sayNeeds(fadeNeeds, off);
-    sayNeeds(opacityNeeds, off ?? (settings.agentsListFade ? null : "Turn on fading first."));
+    sayNeeds(opacityNeeds, off ?? (settings.agentsListFade ? null : t("s.ag.needsFade")));
   };
   paintAgentsFade();
   followers.push(() => {
@@ -1473,7 +1476,7 @@ function agentsSection(): Kid[] {
   });
 
   const toShortcut = h("button", { class: "sp-link", type: "button" },
-    icon(LUCIDE.keyboard, 16), h("span", { class: "sp-link-text", text: "Configurar un atajo para la lista" }), icon(LUCIDE.arrowRight, 14));
+    icon(LUCIDE.keyboard, 16), h("span", { class: "sp-link-text", text: t("s.ag.shortcut") }), icon(LUCIDE.arrowRight, 14));
   toShortcut.addEventListener("click", () => {
     goTo("shortcuts", shortcutFields.get("agents")?.closest<HTMLElement>(".sp-shortcut") ?? undefined);
     window.requestAnimationFrame(() => shortcutFields.get("agents")?.focus({ preventScroll: true }));
@@ -1481,21 +1484,21 @@ function agentsSection(): Kid[] {
 
   return [
     head("agents"),
-    group("La lista",
-      row("Mostrar la lista de agentes",
-        "Each project's state, how much of Claude's memory it has used, and its last message. Click a row to go to its window. It never takes the keyboard.",
+    group(t("s.ag.group"),
+      row(t("s.ag.show"),
+        t("s.ag.showHelp"),
         agentsList.el, "agents list window projects overlay sessions always on top floating"),
-      row("Atenuar cuando no se usa", "Se atenúa al retirar el cursor, salvo si hay algo pendiente.", agentsFade.el,
+      row(t("s.ag.fade"), t("s.ag.fadeHelp"), agentsFade.el,
         "fade dim idle transparent", fadeNeeds),
-      row("Visibilidad al atenuar", "Ajusta la opacidad de la lista atenuada.", agentsFadeTo.el,
+      row(t("s.ag.fadeTo"), t("s.ag.fadeToHelp"), agentsFadeTo.el,
         "opacity transparency fade dim see-through visible", opacityNeeds)),
-    group("Mover la lista",
+    group(t("s.ag.move"),
       findable(h("div", { class: "sp-row" },
-        rowText("Mover y cambiar el tamaño con el mouse",
-          "Drag its header to move it. Drag its sides to change its width, and its bottom edge to set how tall it may grow. Double-click its header to put the size back.")),
-      "Mover y cambiar el tamaño con el mouse", "Drag its header to move it, its edges to size it; double-click the header to reset.",
+        rowText(t("s.ag.moveRow"),
+          t("s.ag.moveHelp"))),
+      t("s.ag.moveRow"), t("s.ag.moveFind"),
       "move drag resize size width height position place reset double-click"),
-      findable(h("div", { class: "sp-row" }, toShortcut), "Configurar un atajo para la lista", null, "shortcut hotkey keyboard keys agents")),
+      findable(h("div", { class: "sp-row" }, toShortcut), t("s.ag.shortcut"), null, "shortcut hotkey keyboard keys agents")),
     resetFoot("agents"),
   ];
 }
@@ -1545,7 +1548,7 @@ const metricPicker = (() => {
         list.append(r.el);
       }
     }, !animate || still());
-    count.textContent = `${on.length} of ${MAX_COMPACT_METRICS} chosen`;
+    count.textContent = t("s.metrics.count", { n: on.length, max: MAX_COMPACT_METRICS });
     paintPreview(animate);
   };
 
@@ -1553,7 +1556,7 @@ const metricPicker = (() => {
     for (const r of rows.values()) r.el.classList.remove("refused");
     refusal.hidden = id == null;
     if (id == null) return;
-    const text = `Three at most. Untick one to show ${metricName(id)}.`;
+    const text = t("s.metrics.max", { name: metricName(id) });
     refusal.querySelector("span")!.textContent = text;
     say(text);
     const el = rows.get(id)!.el;
@@ -1569,7 +1572,7 @@ const metricPicker = (() => {
       h("span", { class: "name", text: name }),
       h("span", { class: "sample", text: COMPACT_CELLS[id].sample }));
     // A machine that reports no GPU use shows "—" in its cell: it can still be picked.
-    if (id === "gpu") check.title = "Shows — on a computer that does not report its graphics use.";
+    if (id === "gpu") check.title = t("s.metrics.gpuTip");
     check.addEventListener("click", () => {
       const on = chosen();
       if (on.includes(id)) {
@@ -1585,7 +1588,7 @@ const metricPicker = (() => {
       }
       paint();
     });
-    const grip = h("button", { class: "sp-grip", type: "button", "aria-label": `Move ${name}. Use the up and down arrows.`, title: "Arrastra para reordenar" },
+    const grip = h("button", { class: "sp-grip", type: "button", "aria-label": t("s.metrics.moveAria", { name }), title: t("s.drag") },
       icon(LUCIDE.gripVertical, 16));
     grip.addEventListener("keydown", (e) => {
       const step = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0;
@@ -1600,7 +1603,7 @@ const metricPicker = (() => {
       change({ compactMetrics: on });
       paint();
       grip.focus();
-      say(`${name}, position ${to + 1} of ${on.length}`);
+      say(t("s.position", { name, n: to + 1, of: on.length }));
     });
     const el = h("li", { class: "sp-metric", "data-id": id }, grip, check);
     rows.set(id, { el, check, grip });
@@ -1622,39 +1625,66 @@ const metricPicker = (() => {
   return { list, count, refusal, refuse, paint };
 })();
 
-/** "Hide the compact island after": the choices as the control names them, by their seconds ("0" is never). */
+/** t("s.isl.hideAfter"): the choices as the control names them, by their seconds ("0" is never). */
 type HideAfter = `${(typeof FOLDED_AUTO_HIDE)[number]}`;
-const HIDE_AFTER_WORDS: Record<HideAfter, string> = { 5: "5 s", 10: "10 s", 30: "30 s", 60: "1 min", 0: "Nunca" };
+const HIDE_AFTER_WORDS: Record<HideAfter, string> = { 5: "5 s", 10: "10 s", 30: "30 s", 60: "1 min", 0: t("s.never") };
 /**
  * What keeping the island on show costs, said as what it is: one measurement,
  * on one machine (the app at rest with the folded island up, across Oleo and
  * its WebView2 processes, 3 October 2026) — not a promise for another.
  */
 const ALWAYS_SHOWN_NOTE =
-  "While the island is on show, Oleo checks your computer's numbers every 2.5 seconds; hidden, it checks nothing. On the PC it was measured on, Oleo at rest with the compact island showing took about 7.7 % of one processor core (0.5 % of that 16-core machine) and about 290 MB of memory, WebView2 included. Yours will differ.";
+  t("s.alwaysNote");
+
+/** The page again, in the language now set, on the category that was on show. */
+const REOPEN_AT = "oleo.settings.section";
+function reopen() {
+  try {
+    sessionStorage.setItem(REOPEN_AT, section);
+  } catch {
+    // Without storage it opens on the first category.
+  }
+  location.reload();
+}
+
+/** The language picker: following the system (named in its own language), or one of the three. */
+function languagePicker(): HTMLSelectElement {
+  const el = h("select", { class: "sp-select", id: "sp-language", "aria-label": t("s.lang.title") });
+  for (const value of LANGUAGE_SETTINGS) {
+    const own = value === "system" ? systemLang() : value;
+    el.append(h("option", { value, lang: own, text: value === "system" ? t("s.lang.system", { name: LANGUAGE_NAMES[own] }) : LANGUAGE_NAMES[value] }));
+  }
+  el.value = settings.language ?? "system";
+  el.addEventListener("change", () => change({ language: el.value as LanguageSetting }));
+  followers.push(() => {
+    if (document.activeElement !== el) el.value = settings.language ?? "system";
+  });
+  return el;
+}
 
 function islandSection(): Kid[] {
+  const language = languagePicker();
   // Where it sits.
-  const screen = segmented<Settings["screen"]>("Pantalla de la isla", [["primary", "Main screen"], ["cursor", "Screen with the pointer"]], settings.screen, (v) => change({ screen: v }));
-  const dock = segmented<Settings["dock"]>("Borde de la pantalla", [["top", "Arriba"], ["bottom", "Abajo"], ["left", "Izquierda"], ["right", "Derecha"]], settings.dock, (v) => {
+  const screen = segmented<Settings["screen"]>(t("s.isl.screen"), [["primary", t("s.isl.main")], ["cursor", t("s.isl.pointer")]], settings.screen, (v) => change({ screen: v }));
+  const dock = segmented<Settings["dock"]>(t("s.isl.edge"), [["top", t("s.isl.top")], ["bottom", t("s.isl.bottom")], ["left", t("s.isl.left")], ["right", t("s.isl.right")]], settings.dock, (v) => {
     change({ dock: v });
     paintPreview(false);
   });
-  const foldedStyle = segmented<Settings["foldedStyle"]>("Isla plegada", [["thread", "Hilo"], ["capsule", "Cápsula"]], settings.foldedStyle, (v) => change({ foldedStyle: v }));
+  const foldedStyle = segmented<Settings["foldedStyle"]>(t("s.isl.folded"), [["thread", t("s.isl.line")], ["capsule", t("s.isl.capsule")]], settings.foldedStyle, (v) => change({ foldedStyle: v }));
   // The thread's colour: each session's own, or one of the user's.
   const ownThread = () => /^#[0-9a-f]{6}$/i.test(settings.threadColor);
-  const threadInput = h("input", { type: "color", value: ownThread() ? settings.threadColor : "#f4aa86", "aria-label": "Color del hilo" });
+  const threadInput = h("input", { type: "color", value: ownThread() ? settings.threadColor : "#f4aa86", "aria-label": t("s.isl.lineColor") });
   const threadFold = h("div", { class: `sp-fold${ownThread() ? " open" : ""}` }, h("div", {}, threadInput));
-  const threadColor = segmented<"session" | "own">("Color del hilo", [["session", "Por sesión"], ["own", "Elegir"]], ownThread() ? "own" : "session", (v) => {
+  const threadColor = segmented<"session" | "own">(t("s.isl.lineColor"), [["session", t("s.isl.neutral")], ["own", t("s.isl.pick")]], ownThread() ? "own" : "session", (v) => {
     threadFold.classList.toggle("open", v === "own");
     change({ threadColor: v === "own" ? threadInput.value : "" });
   });
   threadInput.addEventListener("input", () => change({ threadColor: threadInput.value }));
-  const autostart = toggle(settings.autostart, "Iniciar Oleo con Windows", (on) => change({ autostart: on }));
+  const autostart = toggle(settings.autostart, t("s.isl.autostart"), (on) => change({ autostart: on }));
 
   // When it closes and hides.
   const clamp = (v: number) => Math.max(2, Math.min(120, Math.round(v) || 15));
-  const custom = h("input", { type: "number", min: "2", max: "120", step: "1", value: String(clamp(settings.autoCloseInterval)), "aria-label": "Close after, in seconds" });
+  const custom = h("input", { type: "number", min: "2", max: "120", step: "1", value: String(clamp(settings.autoCloseInterval)), "aria-label": t("s.isl.closeAria") });
   custom.addEventListener("change", () => {
     const seconds = clamp(Number(custom.value));
     custom.value = String(seconds);
@@ -1663,8 +1693,8 @@ function islandSection(): Kid[] {
   const picked = (): AutoClose => (autoCloseCustom ? "custom" : autoClosePreset());
   autoCloseCustom = autoClosePreset() === "custom";
   const customFold = h("div", { class: `sp-fold${picked() === "custom" ? " open" : ""}` },
-    h("div", {}, h("label", { class: "sp-number" }, custom, h("span", { text: "segundos, de 2 a 120" }))));
-  const autoClose = segmented<AutoClose>("Cerrar la isla después de", AUTO_CLOSE.map((v) => [v, v === "custom" ? "Other" : `${v} s`] as const), picked(), (v) => {
+    h("div", {}, h("label", { class: "sp-number" }, custom, h("span", { text: t("s.isl.seconds") }))));
+  const autoClose = segmented<AutoClose>(t("s.isl.closeAfter"), AUTO_CLOSE.map((v) => [v, v === "custom" ? t("s.isl.other") : `${v} s`] as const), picked(), (v) => {
     autoCloseCustom = v === "custom";
     customFold.classList.toggle("open", autoCloseCustom);
     // Other starts from the time in use: nothing changes until another number is typed.
@@ -1674,13 +1704,13 @@ function islandSection(): Kid[] {
 
   const hideAfterOf = (): HideAfter => String(foldedAutoHide(settings)) as HideAfter;
   const neverFold = h("div", { class: `sp-fold${hideAfterOf() === "0" ? " open" : ""}` }, h("div", {}, h("p", { class: "sp-note", text: ALWAYS_SHOWN_NOTE })));
-  const hideAfter = segmented<HideAfter>("Ocultar la isla compacta después de", FOLDED_AUTO_HIDE.map((v) => [String(v) as HideAfter, HIDE_AFTER_WORDS[String(v) as HideAfter]] as const), hideAfterOf(), (v) => {
+  const hideAfter = segmented<HideAfter>(t("s.isl.hideAfter"), FOLDED_AUTO_HIDE.map((v) => [String(v) as HideAfter, HIDE_AFTER_WORDS[String(v) as HideAfter]] as const), hideAfterOf(), (v) => {
     neverFold.classList.toggle("open", v === "0");
     change({ foldedAutoHide: Number(v) });
   });
-  const whenIdle = toggle(settings.hideOnlyWhenIdle, "Mostrar mientras haya sesiones activas", (on) => change({ hideOnlyWhenIdle: on }));
-  const fullscreen = toggle(settings.hideInFullscreen, "Ocultar en pantalla completa", (on) => change({ hideInFullscreen: on }));
-  const finished = segmented<FinishedNotice>("Cómo avisar al terminar", [["mark", "Solo marca"], ["card", "Tarjeta"]], finishedNotice(settings), (v) => change({ finishedNotice: v }));
+  const whenIdle = toggle(settings.hideOnlyWhenIdle, t("s.isl.whenIdle"), (on) => change({ hideOnlyWhenIdle: on }));
+  const fullscreen = toggle(settings.hideInFullscreen, t("s.isl.fullscreen"), (on) => change({ hideInFullscreen: on }));
+  const finished = segmented<FinishedNotice>(t("s.isl.finished"), [["mark", t("s.isl.markOnly")], ["card", t("s.isl.card")]], finishedNotice(settings), (v) => change({ finishedNotice: v }));
   const weather = weatherPicker((location) => change({ weatherLocation: location }));
   weather.paint(settings.weatherLocation);
 
@@ -1712,37 +1742,39 @@ function islandSection(): Kid[] {
 
   return [
     head("island"),
-    group("Posición",
-      stackRow("Pantalla de la isla", "Elige en qué pantalla se muestra la isla.",
+    group(null,
+      row(t("s.lang.title"), t("s.lang.help"), h("label", { class: "sp-select-wrap" }, language), "language idioma lingua english spanish portuguese español português")),
+    group(t("s.isl.position"),
+      stackRow(t("s.isl.screen"), t("s.isl.screenHelp"),
         "screen display monitor second screen multiple main primary pointer mouse", screen.el),
-      stackRow("Borde de la pantalla", "La isla se sitúa en este borde, fuera de la barra de tareas. En los laterales se muestra en vertical.",
+      stackRow(t("s.isl.edge"), t("s.isl.edgeHelp"),
         "position edge top bottom left right side move place taskbar dock where", dock.el),
-      stackRow("Isla plegada", "Hilo: una línea en el borde que deja pasar todos los clics; la mascota se asoma unos segundos cuando una sesión cambia o te necesita. Cápsula: la isla de siempre.",
+      stackRow(t("s.isl.folded"), t("s.isl.foldedHelp"),
         "folded compact thread line capsule peek tabs click through cover style look", foldedStyle.el),
-      stackRow("Color del hilo", "Por sesión: cada tramo toma el color de su sesión. Elegir: todo el hilo en un solo color.",
+      stackRow(t("s.isl.lineColor"), t("s.isl.lineColorHelp"),
         "thread line colour color bar stripe accent custom", threadColor.el, threadFold),
-      row("Iniciar Oleo con Windows", "Oleo se abre al iniciar sesión.", autostart.el,
+      row(t("s.isl.autostart"), t("s.isl.autostartHelp"), autostart.el,
         "startup start up launch login log in sign in boot automatically autostart open")),
-    group("Cuándo se muestra y se oculta",
-      stackRow("Cerrar la isla después de", "Tiempo que permanece abierta tras retirar el cursor.",
+    group(t("s.isl.when"),
+      stackRow(t("s.isl.closeAfter"), t("s.isl.closeHelp"),
         "close auto-close timer seconds stay open delay", autoClose.el, customFold),
-      stackRow("Ocultar la isla compacta después de", "Tiempo que la cápsula permanece visible. Reaparece al señalar el borde o cuando hay actividad. El hilo no se oculta.",
+      stackRow(t("s.isl.hideAfter"), t("s.isl.hideHelp"),
         "hide auto-hide autohide compact folded small closed disappear timer never always visible", hideAfter.el, neverFold),
-      row("Mostrar mientras haya sesiones activas", "La cuenta regresiva para ocultar la isla empieza cuando todas las sesiones están inactivas.", whenIdle.el,
+      row(t("s.isl.whenIdle"), t("s.isl.whenIdleHelp"), whenIdle.el,
         "busy working active idle keep visible hide thinking"),
-      row("Ocultar en pantalla completa", "Oculta la isla durante videos, juegos y presentaciones. Las solicitudes pendientes siguen apareciendo.", fullscreen.el,
+      row(t("s.isl.fullscreen"), t("s.isl.fullscreenHelp"), fullscreen.el,
         "full screen fullscreen video game presentation movie hide")),
-    group("Avisos",
-      stackRow("Cómo avisar al terminar", "«Solo marca» pone una marca en la mascota y una ficha por sesión terminada, y no abre nada: la abres tú. «Tarjeta» abre la tarjeta de «terminado» sola. Los permisos y las preguntas siempre se abren.",
+    group(t("s.isl.notices"),
+      stackRow(t("s.isl.finished"), t("s.isl.finishedHelp"),
         "notify notification finished done end turn card mark badge chip popup open alert tarjeta marca aviso terminar", finished.el)),
-    group("Clima", stackRow("Ubicación", "Busca una ciudad y selecciona un resultado. La búsqueda y el pronóstico usan Open-Meteo.",
+    group(t("s.isl.weather"), stackRow(t("s.isl.location"), t("s.isl.locationHelp"),
       "clima weather temperatura ubicación ciudad pronóstico", weather.el)),
-    findable(bare(h("span", { class: "sp-label-row" }, "Contenido de la isla compacta", metricPicker.count),
+    findable(bare(h("span", { class: "sp-label-row" }, t("s.isl.content"), metricPicker.count),
       h("div", { class: "sp-box" },
         metricPicker.list,
         metricPicker.refusal,
-        h("p", { class: "sp-note", text: "Elige hasta tres indicadores y arrástralos para ordenarlos. Los valores de la vista previa son ejemplos." }))),
-    "Contenido de la isla compacta", "Elige hasta tres indicadores para mostrar junto a la mascota.",
+        h("p", { class: "sp-note", text: t("s.isl.contentNote") }))),
+    t("s.isl.content"), t("s.isl.contentFind"),
     "metrics numbers stats cpu processor gpu graphics ram memory usage limits weekly waiting sessions show", true),
     resetFoot("island"),
   ];
@@ -1753,7 +1785,7 @@ function islandSection(): Kid[] {
 /** The mascot: a card per one Oleo has, each one alive in its card. */
 function mascotPicker(): HTMLElement {
   const ids = Object.keys(MASCOTS).filter(isMascot);
-  const cards = h("div", { class: "sp-mascots", role: "radiogroup", "aria-label": "Mascota" });
+  const cards = h("div", { class: "sp-mascots", role: "radiogroup", "aria-label": t("s.look.mascot") });
   const worn = () => (isMascot(settings.botMascot) ? settings.botMascot : DEFAULT_MASCOT);
   const buttons = ids.map((id) => {
     const bot = mountBot(56, id);
@@ -1784,7 +1816,7 @@ function mascotPicker(): HTMLElement {
   cards.append(...buttons);
   paint();
   followers.push(paint);
-  return stackRow("Mascota", "El personaje de la isla. Cambia sus emociones con lo que hacen tus sesiones.",
+  return stackRow(t("s.look.mascot"), t("s.look.mascotHelp"),
     "mascota mascot character bot durazno pet buddy", cards);
 }
 
@@ -1793,15 +1825,15 @@ function lookSection(): Kid[] {
   const writeHelp = () => {
     // Asked of the system only while following it: a picked theme answers for itself.
     themeHelp.textContent = settings.theme === "system"
-      ? `Follows your computer, which is set to ${systemDark.matches ? "dark" : "light"} right now. The island itself is always dark.`
-      : "The island itself is always dark.";
+      ? (systemDark.matches ? t("s.theme.followsDark") : t("s.theme.followsLight"))
+      : t("s.look.alwaysDark");
   };
-  const theme = segmented<Theme>("Colores de esta ventana", [["light", "Claro"], ["dark", "Oscuro"], ["system", "Usar ajustes del sistema"]], settings.theme, (v) => {
+  const theme = segmented<Theme>(t("s.look.colors"), [["light", t("s.look.light")], ["dark", t("s.look.dark")], ["system", t("s.look.system")]], settings.theme, (v) => {
     change({ theme: v });
     writeHelp();
   });
-  const motion = segmented<Motion>("Reducir movimiento", [["system", "Usar ajustes del sistema"], ["on", "Activado"], ["off", "Desactivado"]], settings.reduceMotion, (v) => change({ reduceMotion: v }));
-  const playful = toggle(settings.playfulReactions !== false, "Mascota interactiva", (on) => change({ playfulReactions: on }));
+  const motion = segmented<Motion>(t("s.look.reduce"), [["system", t("s.look.system")], ["on", t("s.st.on")], ["off", t("s.st.off")]], settings.reduceMotion, (v) => change({ reduceMotion: v }));
+  const playful = toggle(settings.playfulReactions !== false, t("s.look.playful"), (on) => change({ playfulReactions: on }));
   writeHelp();
   followers.push(() => {
     theme.set(settings.theme);
@@ -1811,18 +1843,18 @@ function lookSection(): Kid[] {
   });
   return [
     head("look"),
-    group("Mascota",
+    group(t("s.look.mascot"),
       mascotPicker(),
-      row("Mascota interactiva", "La mascota sigue el cursor y reacciona a los clics. Si lo desactivas, solo refleja el estado de las sesiones.", playful.el,
+      row(t("s.look.playful"), t("s.look.playfulHelp"), playful.el,
         "playful reactions animation mouse fun mascot character bot")),
-    group("Esta ventana",
+    group(t("s.look.window"),
       findable(h("div", { class: "sp-row stack" },
-        h("div", { class: "sp-row-text" }, h("div", { class: "sp-row-label", text: "Colores de esta ventana" }), themeHelp),
+        h("div", { class: "sp-row-text" }, h("div", { class: "sp-row-label", text: t("s.look.colors") }), themeHelp),
         theme.el),
-      "Colores de esta ventana", "Light, dark, or as your computer is set.",
+      t("s.look.colors"), t("s.look.colorsFind"),
       "dark mode light mode theme colours colors night appearance window black white")),
-    group("Animación",
-      stackRow("Reducir movimiento", "Things in Oleo change at once, without sliding or fading.",
+    group(t("s.look.motion"),
+      stackRow(t("s.look.reduce"), t("s.look.reduceHelp"),
         "animation animations motion reduce accessibility movement still effects calm", motion.el)),
     resetFoot("look"),
   ];
@@ -1832,19 +1864,19 @@ function lookSection(): Kid[] {
 
 /** The Shelf's six widgets: what each is called, its colour, its mark, and what it will be. The ids are Rust's (settings.rs `SHELF_WIDGETS`). */
 const WIDGETS = {
-  media: { name: "Multimedia", accent: "#34D399", about: "Reproducción actual y controles de pista.",
+  media: { name: t("w.media"), accent: "#34D399", about: t("s.shelf.media"),
     icon: LUCIDE.music },
-  todo: { name: "Tareas", accent: "#FACC15", about: "Tus últimas tareas y un campo para añadir otra.",
+  todo: { name: t("w.todo"), accent: "#FACC15", about: t("s.shelf.todo"),
     icon: LUCIDE.listTodo },
-  timer: { name: "Temporizador", accent: "#F5A524", about: "Una cuenta regresiva que puedes iniciar y pausar.",
+  timer: { name: t("w.timer"), accent: "#F5A524", about: t("s.shelf.timer"),
     icon: LUCIDE.timer },
-  reminders: { name: "Recordatorios", accent: "#F472B6", about: "El próximo recordatorio y un acceso para añadir otro.",
+  reminders: { name: t("w.reminders"), accent: "#F472B6", about: t("s.shelf.reminders"),
     icon: LUCIDE.bell },
-  mirror: { name: "Espejo", accent: "#22D3EE", about: "Un botón para abrir la cámara.",
+  mirror: { name: t("w.mirror"), accent: "#22D3EE", about: t("s.shelf.mirror"),
     icon: LUCIDE.camera },
-  projects: { name: "Proyectos", accent: "#3B9EFF", about: "Carpetas recientes para abrir en el editor.",
+  projects: { name: t("w.projects"), accent: "#3B9EFF", about: t("s.shelf.projects"),
     icon: LUCIDE.folder },
-} as const;
+};
 type WidgetId = keyof typeof WIDGETS;
 const WIDGET_IDS = Object.keys(WIDGETS) as WidgetId[];
 const isWidget = (id: string): id is WidgetId => id in WIDGETS;
@@ -1859,7 +1891,7 @@ const shelfHidden = (): Set<WidgetId> => new Set(Array.isArray(settings.shelfHid
 /** The shelf's cards in their order: made once, repainted in place. */
 const shelfPicker = (() => {
   // The island's black, and the dark tokens with it, whatever the window's theme.
-  const tray = h("div", { class: "sp-tray sp-dark", role: "list", "aria-label": "Shelf widgets, in their order" });
+  const tray = h("div", { class: "sp-tray sp-dark", role: "list", "aria-label": t("s.shelf.trayAria") });
   const count = h("span", { class: "count" });
   const cards = new Map<WidgetId, { el: HTMLElement; shown: Toggle }>();
 
@@ -1882,23 +1914,23 @@ const shelfPicker = (() => {
         else delete card.el.dataset.fixed;
         card.shown.set(!off);
         card.el.setAttribute("aria-label", off
-          ? `${WIDGETS[id].name}, hidden`
-          : `${WIDGETS[id].name}, position ${i + 1} of ${shown}. Arrow keys move it.`);
+          ? t("s.shelf.hiddenAria", { name: WIDGETS[id].name })
+          : t("s.shelf.posAria", { name: WIDGETS[id].name, n: i + 1, of: shown }));
         tray.append(card.el);
       });
     }, !animate || still());
-    count.textContent = `${shown} of ${ids.length} on`;
+    count.textContent = t("s.shelf.count", { n: shown, of: ids.length });
   };
 
   for (const id of WIDGET_IDS) {
     const def = WIDGETS[id];
-    const shown = toggle(true, `Show ${def.name}`, (on) => {
+    const shown = toggle(true, t("s.shelf.show", { name: def.name }), (on) => {
       const hidden = shelfHidden();
       if (on) hidden.delete(id);
       else hidden.add(id);
       change({ shelfHidden: WIDGET_IDS.filter((x) => hidden.has(x)) });
       paint();
-      say(`${def.name} ${on ? "shown" : "hidden"}`);
+      say(on ? t("s.shelf.shown", { name: def.name }) : t("s.shelf.hidden", { name: def.name }));
     });
     const el = h("div", { class: "sp-card", role: "listitem", tabindex: "0", "data-id": id, style: `--c:${def.accent}` },
       h("div", { class: "sp-card-head" },
@@ -1921,7 +1953,7 @@ const shelfPicker = (() => {
       change({ shelfOrder: [...on, ...order().filter((x) => hidden.has(x))] });
       paint();
       el.focus();
-      say(`${def.name}, position ${to + 1} of ${on.length}`);
+      say(t("s.position", { name: def.name, n: to + 1, of: on.length }));
     });
     cards.set(id, { el, shown });
   }
@@ -1946,11 +1978,11 @@ function shelfSection(): Kid[] {
   return [
     head("shelf"),
     h("div", { class: "sp-flash note sp-intro", role: "note" }, icon(LUCIDE.info, 15),
-      h("span", { text: "La pestaña Widgets muestra las tarjetas en este orden. También puedes arrastrarlas allí. Los widgets desactivados quedan en pausa." })),
+      h("span", { text: t("s.shelf.intro") })),
     findable(bare(h("span", { class: "sp-label-row" }, "Widgets", shelfPicker.count),
       shelfPicker.tray,
-      h("p", { class: "sp-note", text: "Arrastra una tarjeta o selecciónala y usa las flechas para moverla. Desactívala para ocultarla." })),
-    "Widgets", "Which widgets the Shelf shows, and their order.",
+      h("p", { class: "sp-note", text: t("s.shelf.note") })),
+    "Widgets", t("s.shelf.find"),
     "shelf widgets widget media music player to-do todo tasks timer countdown reminders mirror camera projects folders order hide", true),
     resetFoot("shelf"),
   ];
@@ -1972,11 +2004,11 @@ const LINKS: readonly { which: AboutLink; name: string; where: string; mark: () 
  * found is said here; the island says it too while the switch is on.
  */
 function updatesGroup(): HTMLElement {
-  const auto = toggle(settings.checkUpdates, "Buscar actualizaciones a diario", (on) => change({ checkUpdates: on }));
+  const auto = toggle(settings.checkUpdates, t("s.upd.daily"), (on) => change({ checkUpdates: on }));
   followers.push(() => auto.set(settings.checkUpdates));
   const status = h("p", { class: "sp-help", role: "status" });
-  const check = button("Buscar ahora", "quiet", () => void run());
-  const get = button("Get it…", "primary", () => void oleo.updateOpen());
+  const check = button(t("s.upd.now"), "quiet", () => void run());
+  const get = button(t("s.upd.get"), "primary", () => void oleo.updateOpen());
   let found: UpdateInfo | null = null;
   let busy = false;
   let failed: string | null = null;
@@ -1984,13 +2016,13 @@ function updatesGroup(): HTMLElement {
   const paint = () => {
     get.style.display = found?.available && !busy ? "" : "none";
     check.disabled = busy;
-    check.textContent = busy ? "Checking…" : "Buscar ahora";
+    check.textContent = busy ? t("s.upd.checking") : t("s.upd.now");
     status.classList.toggle("sp-danger-text", failed != null);
     status.textContent = failed
-      ?? (busy ? "Asking GitHub…"
-        : !found ? "Not checked yet."
-          : found.available ? `Oleo ${found.latest} is out. Get it opens its download page in your browser.`
-            : `You have the latest version.${found.checkedAt ? ` Checked ${new Date(found.checkedAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}.` : ""}`);
+      ?? (busy ? t("s.upd.asking")
+        : !found ? t("s.upd.never")
+          : found.available ? t("s.upd.out", { v: found.latest })
+            : `${t("s.upd.latest")}${found.checkedAt ? ` ${t("s.upd.checked", { when: new Date(found.checkedAt).toLocaleString(locale(), { dateStyle: "medium", timeStyle: "short" }) })}` : ""}`);
   };
   async function run() {
     if (busy) return;
@@ -2000,7 +2032,7 @@ function updatesGroup(): HTMLElement {
     try {
       found = await oleo.updateCheck();
     } catch (err) {
-      failed = reason(err) || "No se pudo buscar actualizaciones.";
+      failed = reason(err) || t("s.upd.failed");
     }
     busy = false;
     paint();
@@ -2011,14 +2043,14 @@ function updatesGroup(): HTMLElement {
   });
   paint();
 
-  return group("Actualizaciones",
-    row("Buscar actualizaciones a diario",
-      "Once a day, Oleo asks GitHub whether a newer version is out, and tells you here and in the island. It sends nothing about you. Off, Oleo never connects to the internet by itself.",
+  return group(t("s.upd.group"),
+    row(t("s.upd.daily"),
+      t("s.upd.dailyHelp"),
       auto.el, "update updates upgrade new version automatic auto check daily github release internet network"),
     findable(h("div", { class: "sp-row" },
-      rowText(version ? `You have version ${version}` : "Esta versión", null, status),
+      rowText(version ? t("s.upd.have", { v: version }) : t("s.upd.this"), null, status),
       h("div", { class: "sp-update-actions" }, get, check)),
-    "Buscar ahora", "Ask GitHub now whether a newer version of Oleo is out.", "update updates check now latest version download upgrade"));
+    t("s.upd.now"), t("s.upd.nowFind"), "update updates check now latest version download upgrade"));
 }
 
 function aboutSection(): Kid[] {
@@ -2029,7 +2061,7 @@ function aboutSection(): Kid[] {
   const link = ({ which, name, where, mark }: (typeof LINKS)[number]) =>
     h("button", {
       class: "sp-social", type: "button", title: where,
-      "aria-label": `${name}: ${where}. Opens in your browser.`, onclick: () => void oleo.openLink(which),
+      "aria-label": t("s.about.linkAria", { name, where }), onclick: () => void oleo.openLink(which),
     }, h("i", {}, mark()), h("span", { text: name }));
   return [
     head("about"),
@@ -2037,29 +2069,29 @@ function aboutSection(): Kid[] {
       h("div", { class: "sp-oleo", "aria-hidden": "true" }, aboutBot.el),
       h("div", {},
         h("p", { class: "sp-about-name", text: "Oleo" }),
-        h("p", { class: "sp-about-version", text: version ? `Version ${version}` : "" }),
-        h("p", { class: "sp-about-version", text: "Con Durazno, la mascota de Oleo" }))),
+        h("p", { class: "sp-about-version", text: version ? t("s.version", { v: version }) : "" }),
+        h("p", { class: "sp-about-version", text: t("s.about.with") }))),
     updatesGroup(),
-    findable(bare("Privacidad",
+    findable(bare(t("s.about.privacy"),
       h("div", { class: "sp-box sp-privacy" },
         icon(LUCIDE.circleCheck, 18, 2),
-        h("p", { text: "Oleo no envía telemetría. Si eliges una ubicación, Open-Meteo recibe la búsqueda y las coordenadas de la ciudad seleccionada. Oleo puede buscar actualizaciones si lo habilitas." }))),
-    "Privacidad", "El clima es opcional. Las sesiones se procesan en este equipo.",
+        h("p", { text: t("s.about.privacyText") }))),
+    t("s.about.privacy"), t("s.about.privacyFind"),
     "privacy private telemetry tracking data network internet offline online send", true),
-    group("Dónde se guardan tus datos",
-      place("Ajustes", "Your choices in this window", paths?.settings, "files folder location data settings where stored path"),
-      place("Logs", "Oleo's log file, and the small helper program Claude Code runs", paths?.local, "logs log folder files helper relay location"),
-      ...(paths?.relayError ? [h("p", { class: "sp-help sp-danger-text", text: `Not receiving Claude Code events: ${paths.relayError}` })] : []),
+    group(t("s.about.where"),
+      place(t("s.about.settings"), t("s.about.settingsHelp"), paths?.settings, "files folder location data settings where stored path"),
+      place("Logs", t("s.about.logsHelp"), paths?.local, "logs log folder files helper relay location"),
+      ...(paths?.relayError ? [h("p", { class: "sp-help sp-danger-text", text: t("s.about.relayError", { why: paths.relayError }) })] : []),
       findable(h("div", { class: "sp-row" },
         h("button", { class: "sp-link", type: "button", onclick: () => void oleo.openLogFolder() },
-          icon(LUCIDE.folderOpen, 16), h("span", { class: "sp-link-text", text: "Abrir la carpeta de registros" }), icon(LUCIDE.arrowUpRight, 14))),
-      "Abrir la carpeta de registros", null, "logs log folder open explorer files")),
-    findable(bare("Made by",
+          icon(LUCIDE.folderOpen, 16), h("span", { class: "sp-link-text", text: t("s.about.openLogs") }), icon(LUCIDE.arrowUpRight, 14))),
+      t("s.about.openLogs"), null, "logs log folder open explorer files")),
+    findable(bare(t("s.about.madeBy"),
       h("div", { class: "sp-credit" },
         h("p", { class: "sp-made", text: "Franco Ruiz" }),
-        h("div", { class: "sp-links", role: "group", "aria-label": "Enlaces de Franco Ruiz" }, ...LINKS.map(link))),
-      h("p", { class: "sp-credits", text: "Código abierto bajo licencia MIT. Basado en Nook y Coucou." })),
-    "Made by", "Franco Ruiz. Open source (MIT), based on Nook and Coucou.",
+        h("div", { class: "sp-links", role: "group", "aria-label": t("s.about.links") }, ...LINKS.map(link))),
+      h("p", { class: "sp-credits", text: t("s.about.license") })),
+    t("s.about.madeBy"), t("s.about.madeFind"),
     "author made by credits github linkedin website portfolio contact licence license open source", true),
   ];
 }
@@ -2147,10 +2179,20 @@ async function start() {
     settings = { ...settings, ...boot.settings };
     version = boot.version;
   }
+  // The words were written in the language this window last had: another one now, and it opens again in it.
+  if (setLanguage(settings.language)) return reopen();
+  document.title = t("s.window");
+  let reopened: string | null = null;
+  try {
+    reopened = sessionStorage.getItem(REOPEN_AT);
+    sessionStorage.removeItem(REOPEN_AT);
+  } catch {
+    // Nothing kept: the first category.
+  }
   shortcutsNow = statuses;
   paths = where;
   applyAppearance();
-  versionLine.textContent = version ? `Version ${version}` : "";
+  versionLine.textContent = version ? t("s.version", { v: version }) : "";
 
   // Every category, built once: the search finds a row in any of them.
   for (const id of SECTIONS) {
@@ -2163,16 +2205,16 @@ async function start() {
 
   clear(root);
   app.append(
-    h("nav", { class: "sp-side", "aria-label": "Ajustes" },
+    h("nav", { class: "sp-side", "aria-label": t("s.about.settings") },
       h("div", { class: "sp-brand" },
         h("div", { class: "sp-oleo", "aria-hidden": "true" }, sideBot.el),
         h("div", { class: "sp-brand-text" }, h("b", { text: "Oleo" }), versionLine)),
       searchBox, searchOpen,
       nav,
-      oleo.fake ? h("div", { class: "sp-fake", text: "Fake data", title: "Nothing here is read from or written to this machine." }) : null),
+      oleo.fake ? h("div", { class: "sp-fake", text: t("s.fake"), title: t("s.fakeTip") }) : null),
     main);
   root.append(app, live);
-  setSection(sectionNamed(oleo.start) ?? "connect", false);
+  setSection(sectionNamed(oleo.start) ?? sectionNamed(reopened) ?? "connect", false);
   paintResets();
   startBots(still);
 

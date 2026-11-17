@@ -118,6 +118,10 @@ pub struct Settings {
     #[serde(default)]
     pub check_updates: bool,
     pub weather_location: Option<WeatherLocation>,
+    /// Settings → Island: the language of the island, the settings window and
+    /// the tray, one of LANGUAGES. "system" follows Windows (i18n.rs).
+    #[serde(default = "default_follow_system")]
+    pub language: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -222,6 +226,8 @@ pub const BOT_MASCOTS: &[&str] = &["durazno"];
 pub const FINISHED_NOTICES: &[&str] = &["mark", "card"];
 /// The Shelf's widgets, in the order they come in.
 pub const SHELF_WIDGETS: &[&str] = &["media", "todo", "timer", "reminders", "mirror", "projects"];
+/// The interface's languages (src/core/i18n `LANGUAGE_SETTINGS`): the first is the default.
+pub const LANGUAGES: &[&str] = &["system", "en", "es", "pt"];
 
 fn default_follow_system() -> String {
     "system".into()
@@ -299,6 +305,7 @@ impl Settings {
         self.reduce_motion = one_of(REDUCE_MOTION, &self.reduce_motion);
         self.bot_mascot = one_of(BOT_MASCOTS, &self.bot_mascot);
         self.finished_notice = one_of(FINISHED_NOTICES, &self.finished_notice);
+        self.language = one_of(LANGUAGES, &self.language);
         self.shelf_order = shelf_order(&self.shelf_order);
         self.shelf_hidden = shelf_hidden(&self.shelf_hidden);
         self.folded_auto_hide = folded_auto_hide(self.folded_auto_hide);
@@ -361,6 +368,7 @@ impl Default for Settings {
             finished_notice: default_finished_notice(),
             check_updates: false,
             weather_location: None,
+            language: default_follow_system(),
         }
     }
 }

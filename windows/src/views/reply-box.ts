@@ -9,6 +9,7 @@
 // box is not there at all.
 
 import { MAX_REPLY_CHARS, Reply } from "../core/reply";
+import { t } from "../core/i18n";
 import { State, type ClaudeSession } from "../core/state";
 import { h } from "./dom";
 import { LUCIDE, lucide } from "./iconset";
@@ -20,7 +21,7 @@ const FOCUS_MS = 120;
 const MAX_LINES = { card: 2, panel: 5 } as const;
 
 /** What a reply does, said on the field. */
-const SENT_HOW = "Oleo types it into the window this session runs in, and the conversation carries on there. In a terminal with tabs, this session's tab has to be the one showing.";
+const sentHow = () => t("reply.how");
 
 export interface ReplyBoxActions {
   /** A text field wants the keyboard, or gives it back. */
@@ -40,10 +41,10 @@ export interface ReplyBox {
  */
 export function buildReplyBox(actions: ReplyBoxActions, where: "card" | "panel", resized: () => void = () => {}): ReplyBox {
   const field = h("textarea", {
-    class: "rb-field", rows: "1", maxlength: String(MAX_REPLY_CHARS), autocomplete: "off", spellcheck: "false", "aria-label": "Responder",
+    class: "rb-field", rows: "1", maxlength: String(MAX_REPLY_CHARS), autocomplete: "off", spellcheck: "false", "aria-label": () => t("home.answer"),
   }) as HTMLTextAreaElement;
-  const send = h("button", { class: "rb-btn rb-send", type: "button", title: "Enviar (Enter)", "aria-label": "Enviar" }, lucide(LUCIDE.arrowUp, 13, 2.6));
-  const stop = h("button", { class: "rb-btn rb-stop", type: "button", title: "Detener", "aria-label": "Detener" }, lucide(LUCIDE.square, 9, 3));
+  const send = h("button", { class: "rb-btn rb-send", type: "button", title: () => t("reply.sendTip"), "aria-label": () => t("views.q.send") }, lucide(LUCIDE.arrowUp, 13, 2.6));
+  const stop = h("button", { class: "rb-btn rb-stop", type: "button", title: () => t("reply.stop"), "aria-label": () => t("reply.stop") }, lucide(LUCIDE.square, 9, 3));
   const status = h("span", { class: "rb-status", role: "status" });
   const row = h("div", { class: "rb-row" }, field, status, send, stop);
   const note = h("div", { class: "rb-note", role: "alert" });
@@ -165,12 +166,12 @@ export function buildReplyBox(actions: ReplyBoxActions, where: "card" | "panel",
       status.hidden = !running;
       el.dataset.state = open ? "open" : Reply.starting(to) ? "starting" : "working";
       if (open) {
-        field.placeholder = `Reply to ${name}…`;
-        field.title = `Enter sends, Shift+Enter starts a new line. ${SENT_HOW}`;
+        field.placeholder = t("reply.to", { name });
+        field.title = `${t("reply.keys")} ${sentHow()}`;
         send.disabled = !field.value.trim() || busy;
       } else {
-        status.textContent = `Sending to ${name}…`;
-        status.title = SENT_HOW;
+        status.textContent = t("reply.sending", { name });
+        status.title = sentHow();
       }
       // Why the last one was not sent; where it was put; or, with neither, what to know before sending this one.
       const error = open ? Reply.error(to) : null;

@@ -2,19 +2,20 @@
 // size of the island while it is expanded. The ids are Rust's (settings.rs
 // `SHELF_WIDGETS`); Settings → Shelf has its own copy of the names and colours.
 
+import { t } from "../core/i18n";
 import { OVERSHOOT_H, Room } from "../core/layout";
 import { State } from "../core/state";
 import { LUCIDE } from "../views/iconset";
 
 export const SHELF_WIDGETS = {
   // Each widget's `w` × `h` is the island's size while it is expanded (the approved preview's).
-  media: { name: "Multimedia", accent: "#34D399", icon: LUCIDE.music, w: 460, h: 200 },
-  todo: { name: "Tareas", accent: "#FACC15", icon: LUCIDE.listTodo, w: 520, h: 300 },
-  timer: { name: "Temporizador", accent: "#F5A524", icon: LUCIDE.timer, w: 360, h: 338 },
-  reminders: { name: "Recordatorios", accent: "#F472B6", icon: LUCIDE.bell, w: 440, h: 304 },
+  media: { get name() { return t("w.media"); }, accent: "#34D399", icon: LUCIDE.music, w: 460, h: 200 },
+  todo: { get name() { return t("w.todo"); }, accent: "#FACC15", icon: LUCIDE.listTodo, w: 520, h: 300 },
+  timer: { get name() { return t("w.timer"); }, accent: "#F5A524", icon: LUCIDE.timer, w: 360, h: 338 },
+  reminders: { get name() { return t("w.reminders"); }, accent: "#F472B6", icon: LUCIDE.bell, w: 440, h: 304 },
   // The largest: a rounded 4:3 preview.
-  mirror: { name: "Espejo", accent: "#22D3EE", icon: LUCIDE.camera, w: 520, h: 390 },
-  projects: { name: "Proyectos", accent: "#3B9EFF", icon: LUCIDE.folder, w: 580, h: 330 },
+  mirror: { get name() { return t("w.mirror"); }, accent: "#22D3EE", icon: LUCIDE.camera, w: 520, h: 390 },
+  projects: { get name() { return t("w.projects"); }, accent: "#3B9EFF", icon: LUCIDE.folder, w: 580, h: 330 },
 } as const;
 export type ShelfWidgetId = keyof typeof SHELF_WIDGETS;
 export const WIDGET_IDS = Object.keys(SHELF_WIDGETS) as ShelfWidgetId[];

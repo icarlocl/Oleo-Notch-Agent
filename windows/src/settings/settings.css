@@ -1007,6 +1007,53 @@ body.settings-window {
   outline-offset: 1px;
 }
 
+/* A native list to pick from (the language): drawn like the number field, with its own chevron. */
+.sp-select-wrap {
+  flex: 0 0 auto;
+  position: relative;
+  display: inline-flex;
+}
+
+.sp-select-wrap::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  width: 6px;
+  height: 6px;
+  border-right: 1.6px solid var(--text-2);
+  border-bottom: 1.6px solid var(--text-2);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.sp-select {
+  appearance: none;
+  min-width: 190px;
+  max-width: 260px;
+  height: 30px;
+  padding: 0 30px 0 10px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: 500 12.5px var(--font);
+  cursor: default;
+}
+
+.sp-select:hover {
+  background: color-mix(in srgb, var(--surface), var(--text) 4%);
+}
+
+.sp-select:focus-visible {
+  outline-offset: 1px;
+}
+
+.sp-select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
 /* Something that opens under a control: no height when shut. */
 .sp-fold {
   display: grid;

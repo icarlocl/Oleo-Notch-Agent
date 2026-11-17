@@ -11,8 +11,9 @@
 // session fading, "updated 3 min ago" — when the island's slow timer says so.
 
 import { HOME_SIDE_BOT_H, HOME_SIDE_SESSIONS_H, HOME_STAGE, MAX_VISIBLE, washRGBA, type BotStateName, type Wash } from "../core/layout";
-import { DECISION_WORDS, State, USAGE_OLD_MS, USAGE_SOURCE_WORDS, usageLevel, usageShown } from "../core/state";
+import { decisionWords, State, USAGE_OLD_MS, usageSourceWords, usageLevel, usageShown } from "../core/state";
 import { clear, h, svg } from "./dom";
+import { currentLang, t } from "../core/i18n";
 import { ICONS } from "./icons";
 import { LUCIDE, lucide } from "./iconset";
 import { TOOL_NAME, toolMark } from "./tool";
@@ -26,10 +27,10 @@ import type { ViewActions, ViewHost } from "./views";
 /** The island's entrance curve (.view.on in style.css): what moves, moves like this. */
 const SPRING = "cubic-bezier(0.3, 1.2, 0.4, 1)";
 
-const LANES: { key: Lane; title: string }[] = [
-  { key: "needs", title: "Necesita tu atención" },
-  { key: "working", title: "Trabajando" },
-  { key: "done", title: "Listo" },
+const LANES: { key: Lane; title: () => string }[] = [
+  { key: "needs", title: () => t("home.lane.needs") },
+  { key: "working", title: () => t("home.lane.working") },
+  { key: "done", title: () => t("home.lane.done") },
 ];
 
 const WASH: Partial<Record<BotStateName, Wash>> = {
@@ -105,14 +106,14 @@ export function buildHome(actions: ViewActions): ViewHost {
     return { el, resets, value, fill };
   });
   const noUsage = h("div", { class: "res-none" });
-  const noUsageBtn = h("button", { class: "btn primary", text: "Activar", onclick: () => actions.openSettingsWindow() });
-  const usageBox = h("div", { class: "res-usage", title: USAGE_SOURCE_WORDS }, usageRows[0].el, usageRows[1].el, noUsage);
-  const ageWhat = h("span", { class: "what", text: "según la última actividad de Claude Code" });
+  const noUsageBtn = h("button", { class: "btn primary", text: () => t("home.turnOn"), onclick: () => actions.openSettingsWindow() });
+  const usageBox = h("div", { class: "res-usage", title: usageSourceWords }, usageRows[0].el, usageRows[1].el, noUsage);
+  const ageWhat = h("span", { class: "what", text: () => t("home.usageAge") });
   const ageWhen = h("span", { class: "when" });
   const usageAge = h("div", { class: "res-age" }, ageWhat, ageWhen);
   const resCard = h(
     "div", { class: "card home-res" },
-    h("div", { class: "lane-h", text: "Claude · uso" }),
+    h("div", { class: "lane-h", text: () => t("home.usageHead") }),
     usageBox,
     usageAge,
   );
@@ -181,7 +182,7 @@ export function buildHome(actions: ViewActions): ViewHost {
   function updateCell(cell: Cell, entry: Entry) {
     const running = entry.session ? runningSubagents(entry.session) : [];
     const { name, n } = labelOf(entry);
-    const key = [entry.state, entry.lane, entry.unseen, entry.decision, entry.color, name, n, running.map((r) => (r.asking ? "a" : "r")).join("")].join("~");
+    const key = [entry.state, entry.lane, entry.unseen, entry.decision, entry.color, name, n, running.map((r) => (r.asking ? "a" : "r")).join(""), currentLang()].join("~");
     if (key === cell.key) return;
     cell.key = key;
     cell.state = entry.state;
@@ -192,7 +193,7 @@ export function buildHome(actions: ViewActions): ViewHost {
     // One mark at its corner: the decision's comes before the plain "unseen".
     cell.mark.hidden = !(entry.unseen || entry.decision);
     cell.mark.classList.toggle("decide", entry.decision);
-    cell.el.title = entry.decision ? DECISION_WORDS : "";
+    cell.el.title = entry.decision ? decisionWords() : "";
 
     clear(cell.kids);
     for (const r of running.slice(0, MAX_CHILD_DOTS)) {
@@ -288,10 +289,10 @@ export function buildHome(actions: ViewActions): ViewHost {
     // "+N" wears the colour of the most urgent session it hides: a hidden request is never silent.
     more.hidden = hidden.length === 0;
     if (hidden.length) {
-      more.textContent = `+${hidden.length} más ›`;
+      more.textContent = t("home.more", { n: hidden.length });
       wear(more, hidden[0].color);
       more.classList.toggle("calls", hidden[0].rank === 0);
-      more.title = `${hidden.length} más`;
+      more.title = t("home.moreTitle", { n: hidden.length });
     } else {
       listOpen = false;
     }
@@ -306,14 +307,14 @@ export function buildHome(actions: ViewActions): ViewHost {
   function sayOf(front: Entry, live: Entry[]): string {
     const who = labelOf(front).name;
     const needs = live.filter((e) => e.lane === "needs");
-    if (needs.length > 1) return `${needs.length} sesiones te necesitan.`;
-    if (needs.length === 1) return front.session?.question ? `${who} tiene una pregunta.` : `${who} necesita tu permiso.`;
-    if (front.state === "error") return `${who} tuvo un error.`;
+    if (needs.length > 1) return t("home.say.needsMany", { n: needs.length });
+    if (needs.length === 1) return front.session?.question ? t("home.say.question", { who }) : t("home.say.permission", { who });
+    if (front.state === "error") return t("home.say.error", { who });
     const working = live.filter((e) => e.lane === "working");
-    if (working.length > 1) return `${working.length} sesiones trabajando.`;
-    if (working.length === 1) return `Trabajando en ${labelOf(working[0]).name}…`;
+    if (working.length > 1) return t("home.say.workingMany", { n: working.length });
+    if (working.length === 1) return t("home.say.workingOn", { name: labelOf(working[0]).name });
     const done = live.filter((e) => e.lane === "done").length;
-    return `Todo en calma. ${done} ${done === 1 ? "sesión terminó" : "sesiones terminaron"}.`;
+    return t("home.say.calm", { count: done });
   }
 
   function drawMain(front: Entry | null, tracked: number, live: Entry[]) {
@@ -324,11 +325,11 @@ export function buildHome(actions: ViewActions): ViewHost {
       botCard.style.setProperty("--wash", washRGBA("soft"));
       whoTool.replaceChildren();
       whoName.textContent = "Durazno";
-      say.textContent = missing ? "Aún no te oigo. Instala los hooks." : "Sin sesiones. Abre Claude Code.";
+      say.textContent = missing ? t("home.say.noHooks") : t("home.say.none");
       whoName.title = "";
       whoModel.textContent = "";
       whoState.textContent = "";
-      doing.textContent = missing ? "Claude Code aún no llega a Oleo" : "";
+      doing.textContent = missing ? t("home.notReaching") : "";
       doing.title = "";
       review.style.display = "none";
       return;
@@ -354,7 +355,7 @@ export function buildHome(actions: ViewActions): ViewHost {
     // No Allow here: this card cannot show a request whole, and Allow allows
     // all of it. The button goes to the request's own card, which can — and
     // which arms its buttons from the moment it is on show.
-    const asks = front.session?.question ? "Responder" : front.session?.approval ? "Revisar" : "";
+    const asks = front.session?.question ? t("home.answer") : front.session?.approval ? t("home.review") : "";
     review.style.display = asks ? "" : "none";
     reviewLabel.textContent = asks;
   }
@@ -364,28 +365,28 @@ export function buildHome(actions: ViewActions): ViewHost {
     laneRow.hidden = none;
     foot.hidden = none;
     const missing = !State.settings.hooksInstalled && tracked === 0;
-    const key = none ? `${missing}:${tracked}` : "";
+    const key = none ? `${missing}:${tracked}:${currentLang()}` : "";
     if (key === emptyKey) return;
     emptyKey = key;
     clear(empty);
     if (!none) return;
     if (missing) {
       empty.append(
-        h("div", { class: "title", text: "Hooks sin instalar" }),
-        h("div", { class: "sub", text: "Instala los hooks de Claude Code para ver sus sesiones aquí." }),
-        h("button", { class: "btn secondary", onclick: () => actions.openSettingsWindow() }, svg(ICONS.gear, 12), "Abrir Ajustes"),
+        h("div", { class: "title", text: t("home.empty.noHooks") }),
+        h("div", { class: "sub", text: t("home.empty.noHooksSub") }),
+        h("button", { class: "btn secondary", onclick: () => actions.openSettingsWindow() }, svg(ICONS.gear, 12), t("home.openSettings")),
       );
     } else if (tracked > 0) {
       // Sessions are still followed: they have only been at rest long enough to leave the view.
       empty.append(
-        h("div", { class: "title", text: "Sin sesiones activas" }),
-        h("div", { class: "sub", text: `${tracked} ${tracked === 1 ? "sesión está" : "sesiones están"} en reposo. Vuelven aquí cuando trabajen.` }),
-        h("button", { class: "btn secondary", text: tracked === 1 ? "Mostrarla" : "Mostrarlas", onclick: () => { actions.blip(); actions.openSessions(); } }),
+        h("div", { class: "title", text: t("home.empty.noActive") }),
+        h("div", { class: "sub", text: t("home.empty.resting", { count: tracked }) }),
+        h("button", { class: "btn secondary", text: t("home.empty.show", { count: tracked }), onclick: () => { actions.blip(); actions.openSessions(); } }),
       );
     } else {
       empty.append(
-        h("div", { class: "title", text: "Sin sesiones de Claude Code" }),
-        h("div", { class: "sub" }, "Ejecuta ", h("code", { class: "code", text: "claude" }), " en la carpeta de un proyecto para verlo aquí."),
+        h("div", { class: "title", text: t("home.empty.none") }),
+        h("div", { class: "sub" }, t("home.empty.runPre"), h("code", { class: "code", text: "claude" }), t("home.empty.runPost")),
       );
     }
   }
@@ -414,7 +415,7 @@ export function buildHome(actions: ViewActions): ViewHost {
         h("b", { text: name, title: path }),
         n == null ? null : h("em", { text: `·${n}` }),
         model ? h("span", { class: "model", text: model.label, title: model.id }) : null,
-        h("span", { text: entry.task ? `agent · ${stateWords(entry)}` : stateWords(entry) }),
+        h("span", { text: entry.task ? t("home.agentState", { state: stateWords(entry) }) : stateWords(entry) }),
         subs ? h("span", { class: "subs", text: subs }) : null),
       h("div", { class: "hf-doing", text: what, title: what }),
     );
@@ -482,23 +483,23 @@ export function buildHome(actions: ViewActions): ViewHost {
     if (!usage) {
       const off = State.usageInstalled !== true;
       const why = State.usageInstalled === false
-        ? "Actívalos para ver tu límite de 5 h y 7 d."
-        : "Aparecerá cuando una sesión se ejecute.";
+        ? t("home.usage.off")
+        : t("home.usage.later");
       const key = `${off}:${why}`;
       if (noUsage.dataset.why !== key) {
         noUsage.dataset.why = key;
         clear(noUsage);
-        noUsage.append(h("b", { text: "Aún sin datos de uso" }), h("span", { text: why }));
+        noUsage.append(h("b", { text: t("home.usage.none") }), h("span", { text: why }));
         if (off && State.usageInstalled === false) noUsage.append(noUsageBtn);
       }
     }
     // How old the numbers are, said as what they are: Claude Code's last word. Ticks with the home view's slow timer.
     const age = usage ? now - usage.updatedAt : 0;
-    const when = !usage ? "" : age < 60_000 ? " · ahora" : ` · hace ${span(age)}`;
+    const when = !usage ? "" : age < 60_000 ? t("home.ageNow") : t("home.ageAgo", { span: span(age) });
     usageAge.style.visibility = usage ? "visible" : "hidden";
     usageAge.classList.toggle("old", usage != null && age > USAGE_OLD_MS);
     if (ageWhen.textContent !== when) ageWhen.textContent = when;
-    const whole = usage ? `${ageWhat.textContent}${when}. ${USAGE_SOURCE_WORDS}` : "";
+    const whole = usage ? `${ageWhat.textContent}${when}. ${usageSourceWords()}` : "";
     if (usageAge.title !== whole) usageAge.title = whole;
   }
 
@@ -518,7 +519,7 @@ export function buildHome(actions: ViewActions): ViewHost {
       drawLanes(visible, hidden);
       drawEmpty(live.length === 0, faded);
       // The bot speaks for the most urgent one, whatever the pointer holds in place.
-      sessHead.textContent = `Sesiones · ${live.length}`;
+      sessHead.textContent = t("home.sessions", { n: live.length });
       sessHead.hidden = live.length === 0;
       drawMain(live[0] ?? null, faded, live);
       drawList(hidden, now);

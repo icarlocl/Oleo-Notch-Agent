@@ -126,7 +126,7 @@ impl Tracker {
 
 /// The tray item's words, for what a press does.
 pub fn label(hidden: bool) -> &'static str {
-    if hidden { "Mostrar isla" } else { "Ocultar isla" }
+    crate::i18n::tr(if hidden { crate::i18n::Text::ShowIsland } else { crate::i18n::Text::HideIsland })
 }
 
 #[derive(Default)]
@@ -423,7 +423,9 @@ mod tests {
     }
     #[test]
     fn the_tray_says_what_a_press_does() {
-        assert_eq!(label(false), "Ocultar isla");
-        assert_eq!(label(true), "Mostrar isla");
+        use crate::i18n::{tr_in, Lang, Text};
+        assert_eq!(tr_in(Lang::Es, Text::HideIsland), "Ocultar isla");
+        assert_eq!(tr_in(Lang::Es, Text::ShowIsland), "Mostrar isla");
+        assert_ne!(label(false), label(true));
     }
 }

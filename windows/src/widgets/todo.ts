@@ -4,6 +4,7 @@
 // Small: the last few items, a box to tick on each, and a field to add one.
 // Expanded: the whole list (add, tick, remove) and a free text for notes.
 
+import { currentLang, t } from "../core/i18n";
 import { clear, h } from "../views/dom";
 import { loadWidget, notifyShelf, saveWidget } from "./core";
 import { addField, checkRow, frame, mini, removeButton, takesKeys, type Widget, type WidgetContext } from "./ui";
@@ -88,25 +89,25 @@ export function setTodoNotes(text: string) {
 export function buildTodo(ctx: WidgetContext): Widget {
   // Small: the last few items and a field to add one.
   const sList = h("div", { class: "wmini-list" });
-  const sAdd = addField(ctx, "Add a to-do item", "Add an item…", addTodo, "wmini-field");
+  const sAdd = addField(ctx, () => t("w.todo.add"), () => t("w.todo.placeholder"), addTodo, "wmini-field");
   const small = mini("todo", h("div", { class: "wbody-todo" }, sList, sAdd.field));
   sAdd.field.dataset.vt = "todo-add";
   sAdd.field.dataset.vtc = "text";
 
   // Expanded: the whole list, and the notes.
-  const list = h("div", { class: "gh-list fc-list", "aria-label": "Tareas pendientes" });
-  const add = addField(ctx, "Add a to-do item", "Add an item…", addTodo);
+  const list = h("div", { class: "gh-list fc-list", "aria-label": () => t("w.todo.list") });
+  const add = addField(ctx, () => t("w.todo.add"), () => t("w.todo.placeholder"), addTodo);
   add.field.dataset.vt = "todo-add";
   add.field.dataset.vtc = "text";
   const notes = takesKeys(ctx, h("textarea", {
-    class: "note-text", spellcheck: "false", placeholder: "Notas…", "aria-label": "Notas", maxlength: MAX_NOTES_CHARS,
+    class: "note-text", spellcheck: "false", placeholder: () => t("w.todo.notesPh"), "aria-label": () => t("w.todo.notes"), maxlength: MAX_NOTES_CHARS,
   }));
   notes.addEventListener("input", () => setTodoNotes(notes.value));
   const count = h("span", { class: "fc-aside" });
 
   const body = h("div", { class: "todo" },
     h("div", { class: "fc-col" }, list, h("div", { class: "fc-add" }, add.field)),
-    h("div", { class: "fc-col" }, h("div", { class: "fc-label", text: "Notas" }), notes));
+    h("div", { class: "fc-col" }, h("div", { class: "fc-label", text: () => t("w.todo.notes") }), notes));
 
   let shown: string | null = null;
   let shownCount = 0;
@@ -114,9 +115,9 @@ export function buildTodo(ctx: WidgetContext): Widget {
     // Never while typing: the text area is the source, and rewriting it would move the caret.
     if (document.activeElement !== notes && notes.value !== todo.notes) notes.value = todo.notes;
     const left = todo.items.filter((i) => !i.done).length;
-    count.textContent = `${left} to do · ${todo.items.length - left} done`;
+    count.textContent = t("w.todo.count", { left, done: todo.items.length - left });
 
-    const key = todo.items.map((i) => `${i.id}${i.done ? "x" : "o"}${i.text}`).join("|");
+    const key = todo.items.map((i) => `${i.id}${i.done ? "x" : "o"}${i.text}`).join("|") + currentLang();
     if (key === shown) return;
     const grew = todo.items.length > shownCount;
     shown = key;
@@ -128,13 +129,13 @@ export function buildTodo(ctx: WidgetContext): Widget {
         onToggle: () => toggleTodo(item.id),
       }));
     }
-    if (todo.items.length === 0) sList.append(h("div", { class: "wmini-none", text: "Sin tareas pendientes" }));
+    if (todo.items.length === 0) sList.append(h("div", { class: "wmini-none", text: t("w.todo.none") }));
     clear(list);
     for (const item of todo.items) {
       list.append(checkRow({
         name: `todo-${item.id}`, text: item.text, done: item.done, square: true,
         onToggle: () => toggleTodo(item.id),
-        extra: [removeButton("this item", () => removeTodo(item.id))],
+        extra: [removeButton(t("w.todo.this"), () => removeTodo(item.id))],
       }));
     }
     // A new item goes to the end: the list follows it.

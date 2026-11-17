@@ -8,8 +8,9 @@
 // become icons, then the bars.
 
 import { h } from "./dom";
+import { currentLang, t } from "../core/i18n";
 import { LUCIDE, lucide } from "./iconset";
-import { State, USAGE_SOURCE_WORDS, ramPercent, ramWords, usageLevel, usageShown } from "../core/state";
+import { State, usageSourceWords, ramPercent, ramWords, usageLevel, usageShown } from "../core/state";
 
 const ICON = 11;
 
@@ -43,7 +44,7 @@ export function buildHeaderStats(): { el: HTMLElement; draw(): void } {
   const keys = new Map<Item, string>();
 
   function machine(it: Item, name: string, percent: number | null, more = "") {
-    const key = `${percent == null ? "" : Math.round(percent)}|${more}`;
+    const key = `${percent == null ? "" : Math.round(percent)}|${more}|${currentLang()}`;
     if (keys.get(it) === key) return;
     keys.set(it, key);
     const known = percent != null;
@@ -51,11 +52,11 @@ export function buildHeaderStats(): { el: HTMLElement; draw(): void } {
     it.value.classList.toggle("blank", !known);
     it.fill.style.width = `${percent ?? 0}%`;
     it.el.dataset.level = known ? usageLevel(percent) : "";
-    it.el.title = known ? `${name} ${Math.round(percent)}%${more ? ` · ${more}` : ""}` : `${name}: not known yet`;
+    it.el.title = known ? `${name} ${Math.round(percent)}%${more ? ` · ${more}` : ""}` : t("stats.unknown", { name });
   }
 
   function usage(it: Item, name: string, win: ReturnType<typeof usageShown>) {
-    const key = win ? `${win.percent}|${win.state}|${win.countdown}` : "";
+    const key = win ? `${win.percent}|${win.state}|${win.countdown}|${currentLang()}` : "";
     if (keys.get(it) === key) return;
     keys.set(it, key);
     it.el.hidden = !win;
@@ -66,7 +67,7 @@ export function buildHeaderStats(): { el: HTMLElement; draw(): void } {
     it.el.classList.toggle("dim", win.state !== "fresh");
     it.fill.style.width = `${win.percent}%`;
     it.fill.style.setProperty("--used", String(win.percent / 100));
-    it.el.title = `${name}: ${win.percent}% used${win.countdown ? ` · ${win.countdown}` : ""}. ${USAGE_SOURCE_WORDS}`;
+    it.el.title = `${t("stats.used", { name, n: win.percent })}${win.countdown ? ` · ${win.countdown}` : ""}. ${usageSourceWords()}`;
   }
 
   return {
@@ -78,8 +79,8 @@ export function buildHeaderStats(): { el: HTMLElement; draw(): void } {
       machine(ram, "RAM", ramPercent(m), ramWords(m));
       const now = Date.now();
       const u = State.usage;
-      usage(five, "Uso de Claude en 5 horas", usageShown(u?.fiveHour, u?.updatedAt ?? now, now));
-      usage(seven, "Uso de Claude en 7 días", usageShown(u?.sevenDay, u?.updatedAt ?? now, now));
+      usage(five, t("stats.five"), usageShown(u?.fiveHour, u?.updatedAt ?? now, now));
+      usage(seven, t("stats.seven"), usageShown(u?.sevenDay, u?.updatedAt ?? now, now));
     },
   };
 }

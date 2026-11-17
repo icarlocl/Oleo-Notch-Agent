@@ -10,6 +10,7 @@
 // When it reaches zero it plays a sound (the island's own "finish") and opens the
 // island on the Timer. Kept in shelf.json, so a restart keeps a running timer.
 
+import { t } from "../core/i18n";
 import { Sound } from "../core/sound";
 import { h } from "../views/dom";
 import { loadWidget, notifyShelf, saveWidget, ShelfHooks } from "./core";
@@ -167,7 +168,7 @@ export function buildTimer(ctx: WidgetContext): Widget {
   const time = shared(h("div", { class: "timer-time" }), "timer-time");
   const sub = shared(h("div", { class: "timer-sub" }), "timer-sub", "text");
 
-  const presets = h("div", { class: "seg timer-presets", role: "group", "aria-label": "Tiempos predefinidos" });
+  const presets = h("div", { class: "seg timer-presets", role: "group", "aria-label": () => t("w.timer.presets") });
   for (const m of PRESETS) {
     const btn = h("button", { text: `${m} min`, onclick: () => timerSet(m) });
     btn.dataset.min = String(m);
@@ -175,7 +176,7 @@ export function buildTimer(ctx: WidgetContext): Widget {
   }
   const custom = takesKeys(ctx, h("input", {
     class: "island-field timer-custom", type: "number", min: 1, max: MAX_MINUTES, step: 1, placeholder: "min",
-    title: "Elige la duración en minutos", "aria-label": "Duración personalizada en minutos",
+    title: () => t("w.timer.customTip"), "aria-label": () => t("w.timer.custom"),
   }));
   const setCustom = () => {
     const value = Number(custom.value);
@@ -192,18 +193,18 @@ export function buildTimer(ctx: WidgetContext): Widget {
     h("div", { class: "timer-face" }, dial as unknown as Node, h("div", { class: "timer-read" }, time, sub)),
     h("div", { class: "timer-set" },
       presets,
-      h("div", { class: "timer-own" }, custom, h("button", { class: "chip-btn", text: "Fijar", onclick: setCustom }))),
-    h("div", { class: "actions" }, go, h("button", { class: "btn secondary", text: "Reiniciar", onclick: timerReset })));
+      h("div", { class: "timer-own" }, custom, h("button", { class: "chip-btn", text: () => t("w.timer.set"), onclick: setCustom }))),
+    h("div", { class: "actions" }, go, h("button", { class: "btn secondary", text: () => t("w.timer.reset"), onclick: timerReset })));
 
   function paint() {
     const left = timerLeft();
     const read = clock(left);
-    const of = timer.done ? "Time's up" : `of ${clock(timer.durationMs)}`;
-    const label = timer.running ? "Pausar" : timer.done ? "Restart" : "Iniciar";
+    const of = timer.done ? t("w.timer.up") : t("w.timer.of", { clock: clock(timer.durationMs) });
+    const label = timer.running ? t("w.timer.pause") : timer.done ? t("w.timer.restart") : t("w.timer.start");
     for (const el of [sTime, time]) if (el.textContent !== read) el.textContent = read;
     time.classList.toggle("long", read.length > 5);
     sub.textContent = of;
-    sSub.textContent = timer.done ? of : timer.running ? `${of} · running` : `${of} · paused`;
+    sSub.textContent = timer.done ? of : `${of} · ${timer.running ? t("w.timer.running") : t("w.timer.paused")}`;
     for (const el of [sGo, go]) if (el.textContent !== label) el.textContent = label;
     ring.setAttribute("stroke-dashoffset", String(LENGTH * (1 - left / timer.durationMs)));
     body.classList.toggle("done", timer.done);

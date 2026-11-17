@@ -1,3 +1,4 @@
+import { currentLang, t } from "../core/i18n";
 import type { WeatherLocation } from "../core/state";
 import { h } from "../views/dom";
 
@@ -5,20 +6,20 @@ const GEOCODING = "https://geocoding-api.open-meteo.com/v1/search";
 
 export function weatherPicker(select: (location: WeatherLocation | null) => void) {
   const input = h("input", {
-    class: "sp-search-input", type: "search", placeholder: "Ciudad o código postal",
-    "aria-label": "Ciudad o código postal", required: true, minlength: 2, maxlength: 100,
+    class: "sp-search-input", type: "search", placeholder: t("s.wx.placeholder"),
+    "aria-label": t("s.wx.placeholder"), required: true, minlength: 2, maxlength: 100,
   });
-  const search = h("button", { class: "sp-btn primary", type: "submit", text: "Buscar" });
-  const remove = h("button", { class: "sp-btn quiet", type: "button", text: "Desactivar clima" });
+  const search = h("button", { class: "sp-btn primary", type: "submit", text: t("s.wx.search") });
+  const remove = h("button", { class: "sp-btn quiet", type: "button", text: t("s.wx.off") });
   const current = h("p", { class: "sp-help", role: "status" });
   const feedback = h("p", { class: "sp-help", role: "status" });
-  const results = h("ul", { class: "sp-weather-results", "aria-label": "Ubicaciones encontradas" });
+  const results = h("ul", { class: "sp-weather-results", "aria-label": t("s.wx.found") });
   const form = h("form", { class: "sp-weather-form" }, input, search);
   const el = h("div", {}, current, form, feedback, results, remove);
   let request: AbortController | null = null;
 
   function paint(location: WeatherLocation | null) {
-    current.textContent = location ? `Ubicación actual: ${location.label}` : "Clima desactivado.";
+    current.textContent = location ? t("s.wx.current", { label: location.label }) : t("s.wx.isOff");
     remove.hidden = !location;
   }
 
@@ -43,9 +44,9 @@ export function weatherPicker(select: (location: WeatherLocation | null) => void
     request = controller;
     const timeout = window.setTimeout(() => controller.abort(), 8_000);
     results.replaceChildren();
-    feedback.textContent = "Buscando ubicaciones…";
+    feedback.textContent = t("s.wx.searching");
     const url = new URL(GEOCODING);
-    url.search = new URLSearchParams({ name, count: "8", language: "es" }).toString();
+    url.search = new URLSearchParams({ name, count: "8", language: currentLang() }).toString();
     try {
       const response = await fetch(url, { credentials: "omit", signal: controller.signal });
       if (!response.ok) throw new Error("Error al buscar ubicaciones");
@@ -65,9 +66,9 @@ export function weatherPicker(select: (location: WeatherLocation | null) => void
           onclick: () => commit({ label, latitude, longitude }),
         })));
       }
-      feedback.textContent = results.childElementCount ? "Selecciona tu ubicación." : "No se encontraron ubicaciones.";
+      feedback.textContent = results.childElementCount ? t("s.wx.pick") : t("s.wx.noResults");
     } catch {
-      if (request === controller) feedback.textContent = "No se pudo completar la búsqueda. Inténtalo de nuevo.";
+      if (request === controller) feedback.textContent = t("s.wx.failed");
     } finally {
       window.clearTimeout(timeout);
       if (request === controller) request = null;

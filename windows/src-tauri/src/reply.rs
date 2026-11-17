@@ -31,6 +31,7 @@ use std::time::{Duration, Instant};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 
+use crate::i18n::{tr, trf, Text};
 use crate::{log, platform, settings};
 
 /// The longest text sent, in characters (as in Coucou).
@@ -57,7 +58,7 @@ impl Tool {
         match name {
             "claude" => Ok(Tool::Claude),
             "codex" => Ok(Tool::Codex),
-            _ => Err("Replies can only be sent to Claude Code or Codex sessions.".into()),
+            _ => Err(tr(Text::ReplyWrongTool).into()),
         }
     }
 
@@ -113,10 +114,10 @@ enum Outcome {
 fn clean_text(text: &str) -> Result<String, String> {
     let text = text.trim();
     if text.is_empty() {
-        return Err("Write a message first.".into());
+        return Err(tr(Text::ReplyEmpty).into());
     }
     if text.chars().count() > MAX_TEXT_CHARS {
-        return Err(format!("That message is too long (the limit is {MAX_TEXT_CHARS} characters)."));
+        return Err(trf(Text::ReplyTooLong, "max", &MAX_TEXT_CHARS.to_string()));
     }
     Ok(text.to_string())
 }
@@ -129,7 +130,7 @@ fn check_session_id(id: &str) -> Result<(), String> {
         || id.starts_with('-')
         || !id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_');
     if bad {
-        Err("This session has no id a reply can be sent to.".into())
+        Err(tr(Text::ReplyNoId).into())
     } else {
         Ok(())
     }
@@ -138,7 +139,7 @@ fn check_session_id(id: &str) -> Result<(), String> {
 fn check_cwd(cwd: &str) -> Result<PathBuf, String> {
     let path = Path::new(cwd);
     if cwd.trim().is_empty() || !path.is_dir() {
-        return Err("The session's folder no longer exists.".into());
+        return Err(tr(Text::ReplyNoFolder).into());
     }
     Ok(path.to_path_buf())
 }
@@ -428,14 +429,14 @@ fn begin(app: &AppHandle, tool: &str, session_id: &str, cwd: &str, text: &str) -
     let path = log_path(tool, session_id, others_running);
     if platform::ensure_private_dir(&settings::local_dir()).is_err() {
         release(app);
-        return Err("Oleo could not prepare its log folder.".into());
+        return Err(tr(Text::ReplyNoLogFolder).into());
     }
     let file = match std::fs::File::create(&path) {
         Ok(file) => file,
         Err(e) => {
             log::line(format!("reply: cannot open {}: {e}", path.display()));
             release(app);
-            return Err("Oleo could not open its log file.".into());
+            return Err(tr(Text::ReplyNoLogFile).into());
         }
     };
     let mut child = match launch(tool, &exe, session_id, &cwd, file) {
@@ -500,7 +501,7 @@ pub async fn session_reply(
 ) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || begin(&app, &tool, &session_id, &cwd, &text))
         .await
-        .map_err(|_| "The reply could not be started.".to_string())?
+        .map_err(|_| tr(Text::ReplyNotStarted).to_string())?
 }
 
 /// Stops the run for that session, if there is one.

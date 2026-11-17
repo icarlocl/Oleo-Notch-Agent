@@ -8,13 +8,14 @@
 // tells every widget `stop`). It does not come back by itself: it is turned on
 // again by a press. Nothing is recorded, nothing is saved, no frame is read.
 
+import { t, type Key } from "../core/i18n";
 import { h } from "../views/dom";
 import { camera, resetCamera, startCamera, stopCamera } from "./camera";
 import { notifyShelf } from "./core";
 import { frame, mark, mini, shared, type Widget, type WidgetContext } from "./ui";
 
 /** The Mirror's one video element. */
-const video = h("video", { class: "mirror-video", muted: true, playsinline: true, "aria-label": "Vista previa de la cámara" });
+const video = h("video", { class: "mirror-video", muted: true, playsinline: true, "aria-label": () => t("w.cam.preview") });
 video.muted = true;
 
 camera.onChange = () => notifyShelf();
@@ -24,20 +25,17 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) stopCamera(video, "the page was hidden");
 });
 
-const MESSAGES: Record<string, [string, string]> = {
-  denied: [
-    "Camera access was refused",
-    "Allow it for Oleo: Windows Settings → Privacy & security → Camera, and let desktop apps use your camera. If you chose Block when asked, that choice is remembered. Then try again.",
-  ],
-  missing: ["No camera found", "Plug one in, or check that Windows can see it, then try again."],
-  busy: ["The camera is busy", "Another app may be using it. Close it, then try again."],
-  error: ["The camera could not be started", "Try again; if it keeps failing, check the camera in Windows Settings."],
+const MESSAGES: Record<string, [Key, Key]> = {
+  denied: ["w.cam.denied", "w.cam.deniedHow"],
+  missing: ["w.cam.missing", "w.cam.missingHow"],
+  busy: ["w.cam.busy", "w.cam.busyHow"],
+  error: ["w.cam.error", "w.cam.errorHow"],
 };
 
 export function buildMirror(ctx: WidgetContext): Widget {
   // Small: one button. It expands Mirror and starts the camera there.
-  const sNote = h("div", { class: "wmini-note", text: "Cámara apagada. Solo funciona con el espejo abierto." });
-  const sStart = shared(h("button", { class: "btn secondary wmini-btn", text: "Encender cámara", onclick: () => ctx.expand("mirror", { camera: true }) }), "mirror-start");
+  const sNote = h("div", { class: "wmini-note", text: () => t("w.cam.smallNote") });
+  const sStart = shared(h("button", { class: "btn secondary wmini-btn", text: () => t("w.cam.turnOn"), onclick: () => ctx.expand("mirror", { camera: true }) }), "mirror-start");
   const small = mini("mirror", h("div", { class: "wbody-mirror" }, sNote, sStart));
 
   // Expanded: the large preview.
@@ -61,21 +59,21 @@ export function buildMirror(ctx: WidgetContext): Widget {
       case "on":
         break;
       case "starting":
-        title.textContent = "Esperando la cámara…";
+        title.textContent = t("w.cam.waiting");
         sub.textContent = camera.slow
-          ? "No answer yet. If no question appeared, allow the camera for Oleo in Windows Settings → Privacy & security → Camera, then go back and try again."
-          : "Windows may be asking for permission.";
+          ? t("w.cam.slow")
+          : t("w.cam.asking");
         break;
       case "off":
-        title.textContent = "Cámara apagada";
-        sub.textContent = "La cámara se apaga al salir de esta vista y no graba ni guarda imágenes.";
-        start.textContent = "Encender cámara";
+        title.textContent = t("w.cam.off");
+        sub.textContent = t("w.cam.offSub");
+        start.textContent = t("w.cam.turnOn");
         break;
       default: {
         const [heading, how] = MESSAGES[s] ?? MESSAGES.error;
-        title.textContent = heading;
-        sub.textContent = how;
-        start.textContent = "Reintentar";
+        title.textContent = t(heading);
+        sub.textContent = t(how);
+        start.textContent = t("views.error.retry");
       }
     }
   }

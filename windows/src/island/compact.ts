@@ -10,18 +10,19 @@
 // A cell's number is written when a sample comes (State.onGauges) and at no
 // other time: nothing here runs a frame.
 
+import { t } from "../core/i18n";
 import {
   COMPACT_BOT_SLOT, COMPACT_CELL_H, COMPACT_CHIP, COMPACT_CHIP_GAP, COMPACT_COLUMN_W, COMPACT_DOT, COMPACT_DOT_GAP,
   COMPACT_METRIC_GAP, COMPACT_MORE_W, COMPACT_PAD, COMPACT_SLOT_GAP, compactLayout, type CompactLayout,
 } from "../core/layout";
 import {
-  State, USAGE_SOURCE_WORDS, compactMetrics, finishedNotice, ramPercent, ramWords, usageLevel, usageShown,
+  State, usageSourceWords, compactMetrics, finishedNotice, ramPercent, ramWords, usageLevel, usageShown,
   type CompactMetric, type Metrics, type Usage, type UsageLevel,
 } from "../core/state";
 import { clear, h } from "../views/dom";
 import { LUCIDE, lucide } from "../views/iconset";
 import { wear } from "../views/palette";
-import { DOT_LEGEND, TOOL_NAME } from "../views/tool";
+import { dotLegend, TOOL_NAME } from "../views/tool";
 import { labelOf, labelText, roster, stateWords, waitingCount, type Entry } from "../views/roster";
 
 /** The bot's mark counts sessions up to this many; past it, "9+". */
@@ -33,13 +34,13 @@ const COMPACT_ICON = 14;
 const PERCENT_W = 52;
 
 /** Each cell, wide enough for the worst it can say. */
-const METRIC: Record<CompactMetric, { width: number; name: string; icon: string }> = {
-  cpu: { width: PERCENT_W, name: "CPU", icon: LUCIDE.cpu },
-  gpu: { width: PERCENT_W, name: "GPU", icon: LUCIDE.gpu },
-  ram: { width: PERCENT_W, name: "RAM", icon: LUCIDE.memoryStick },
-  usage5h: { width: PERCENT_W, name: "5-hour usage", icon: LUCIDE.timer },
-  usage7d: { width: PERCENT_W, name: "7-day usage", icon: LUCIDE.calendarDays },
-  waiting: { width: 38, name: "Sessions waiting for you", icon: LUCIDE.bell },
+const METRIC: Record<CompactMetric, { width: number; name: () => string; icon: string }> = {
+  cpu: { width: PERCENT_W, name: () => "CPU", icon: LUCIDE.cpu },
+  gpu: { width: PERCENT_W, name: () => "GPU", icon: LUCIDE.gpu },
+  ram: { width: PERCENT_W, name: () => "RAM", icon: LUCIDE.memoryStick },
+  usage5h: { width: PERCENT_W, name: () => t("compact.usage5h"), icon: LUCIDE.timer },
+  usage7d: { width: PERCENT_W, name: () => t("compact.usage7d"), icon: LUCIDE.calendarDays },
+  waiting: { width: 38, name: () => t("compact.waiting"), icon: LUCIDE.bell },
 };
 
 /** A cell as it reads now: its number, what its tooltip adds, and — for usage — how it is coloured. */
@@ -81,7 +82,7 @@ export function reading(kind: CompactMetric, { metrics: m, usage, waiting, now =
       const reset = shown.state === "reset";
       return {
         text: `${shown.percent}%`,
-        more: [shown.countdown, USAGE_SOURCE_WORDS].filter(Boolean).join(". "),
+        more: [shown.countdown, usageSourceWords()].filter(Boolean).join(". "),
         level: reset ? undefined : usageLevel(shown.percent),
         dim: shown.state !== "fresh",
       };
@@ -162,8 +163,8 @@ export function compactSlots(plan: CompactPlan, from: Gauges): CompactSlots {
       ? {
           count: plan.unseen.length,
           title: plan.unseen.length === 1
-            ? `${labelText(plan.unseen[0])} finished — click to open`
-            : `${plan.unseen.length} sessions finished — click to open`,
+            ? t("compact.finishedOne", { name: labelText(plan.unseen[0]) })
+            : t("compact.finishedMany", { n: plan.unseen.length }),
         }
       : null,
     chips: named.map((entry, i) => ({
@@ -172,19 +173,19 @@ export function compactSlots(plan: CompactPlan, from: Gauges): CompactSlots {
       // Two on show with one initial (api, app): a small number tells them apart.
       tag: initials.filter((l) => l === initials[i]).length > 1 ? initials.slice(0, i + 1).filter((l) => l === initials[i]).length : null,
       color: entry.color,
-      title: `${labelText(entry)} finished — click to open`,
+      title: t("compact.finishedOne", { name: labelText(entry) }),
     })),
     chipsMore: plan.chips > 0 ? Math.max(0, plan.unseen.length - plan.chips) : 0,
     dots: shown.map((entry) => ({
       id: entry.id, color: entry.color, calls: entry.rank === 0, rest: entry.lane === "done",
       decision: entry.decision && entry.lane === "done",
       cursor: entry.session?.agent === "cursor",
-      title: `${entry.session ? `${TOOL_NAME[entry.session.agent]} · ` : ""}${labelText(entry)} — ${stateWords(entry)}${plan.live.some((e) => e.session?.agent === "cursor") ? `\n${DOT_LEGEND}` : ""}`,
+      title: `${entry.session ? `${TOOL_NAME[entry.session.agent]} · ` : ""}${labelText(entry)} — ${stateWords(entry)}${plan.live.some((e) => e.session?.agent === "cursor") ? `\n${dotLegend()}` : ""}`,
     })),
     more: hidden.length ? { count: hidden.length, color: hidden[0].color, calls: hidden[0].rank === 0 } : null,
     cells: plan.kinds.map((kind) => {
       const read = reading(kind, from);
-      return { kind, ...read, title: read.more ? `${METRIC[kind].name} — ${read.more}` : METRIC[kind].name };
+      return { kind, ...read, title: read.more ? `${METRIC[kind].name()} — ${read.more}` : METRIC[kind].name() };
     }),
   };
 }
@@ -272,7 +273,7 @@ export function buildCompact(open: (id: string) => void = () => {}): CompactStri
     const from = gauges();
     for (const [kind, value] of values) {
       const { text, more, level, dim } = reading(kind, from);
-      const title = more ? `${METRIC[kind].name} — ${more}` : METRIC[kind].name;
+      const title = more ? `${METRIC[kind].name()} — ${more}` : METRIC[kind].name();
       const cell = value.parentElement!;
       if (cell.title !== title) cell.title = title;
       if (value.dataset.level !== (level ?? "")) value.dataset.level = level ?? "";
@@ -317,7 +318,7 @@ export function buildCompact(open: (id: string) => void = () => {}): CompactStri
         // The ring is a new element each time, so that its animation starts from the top.
         bot.querySelector(".ci-ring")?.remove();
         bot.append(h("i", { class: "ci-ring" }));
-        live.textContent = fresh.length === 1 ? `${labelText(fresh[0])} finished` : `${fresh.length} sessions finished`;
+        live.textContent = fresh.length === 1 ? t("compact.doneOne", { name: labelText(fresh[0]) }) : t("compact.doneMany", { n: fresh.length });
       } else if (!slots.mark) {
         bot.querySelector(".ci-ring")?.remove();
         live.textContent = "";
@@ -344,7 +345,7 @@ export function buildCompact(open: (id: string) => void = () => {}): CompactStri
           // "+N" as the dots' own, for the results with no chip: it opens Home, as the bot does.
           const rest = h("span", {
             class: "ci-more", style: `width:${COMPACT_MORE_W}px`, text: `+${Math.min(99, slots.chipsMore)}`,
-            title: `${slots.chipsMore} more finished`,
+            title: t("compact.moreFinished", { n: slots.chipsMore }),
           });
           const tone = slots.chips[0]?.color;
           if (tone) wear(rest, tone);
@@ -369,7 +370,7 @@ export function buildCompact(open: (id: string) => void = () => {}): CompactStri
           // "+N" wears the colour of the most urgent session it hides.
           const badge = h("span", {
             class: `ci-more${more.calls ? " calls" : ""}`, style: `width:${COMPACT_MORE_W}px`,
-            text: `+${Math.min(99, more.count)}`, title: `${more.count} more`,
+            text: `+${Math.min(99, more.count)}`, title: t("home.moreTitle", { n: more.count }),
           });
           wear(badge, more.color);
           dots.append(badge);

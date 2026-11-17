@@ -10,6 +10,7 @@
 // art is held in memory, as a data URL, while it is on show, and let go of the
 // moment the Shelf is off the screen; it is never written anywhere.
 
+import { t } from "../core/i18n";
 import type { MediaInfo } from "../core/bridge";
 import { clear, h, svg } from "../views/dom";
 import { ICONS } from "../views/icons";
@@ -120,9 +121,9 @@ export function buildMedia(ctx: WidgetContext): Widget {
   let expandedOn: () => boolean = () => false;
 
   const controls = (playSize: number, skipSize: number) => {
-    const prev = shared(h("button", { class: "media-skip", title: "Anterior", "aria-label": "Pista anterior", onclick: () => void press("previous", expandedOn()) }, svg(PREVIOUS, skipSize)), "media-prev");
-    const play = shared(h("button", { class: "media-play", title: "Reproducir o pausar", "aria-label": "Reproducir o pausar", onclick: () => void press("toggle", expandedOn()) }), "media-play");
-    const next = shared(h("button", { class: "media-skip", title: "Siguiente", "aria-label": "Pista siguiente", onclick: () => void press("next", expandedOn()) }, svg(NEXT, skipSize)), "media-next");
+    const prev = shared(h("button", { class: "media-skip", title: () => t("w.media.prev"), "aria-label": () => t("w.media.prevTrack"), onclick: () => void press("previous", expandedOn()) }, svg(PREVIOUS, skipSize)), "media-prev");
+    const play = shared(h("button", { class: "media-play", title: () => t("w.media.toggle"), "aria-label": () => t("w.media.toggle"), onclick: () => void press("toggle", expandedOn()) }), "media-play");
+    const next = shared(h("button", { class: "media-skip", title: () => t("views.q.next"), "aria-label": () => t("w.media.nextTrack"), onclick: () => void press("next", expandedOn()) }, svg(NEXT, skipSize)), "media-next");
     return { row: h("div", { class: "media-ctl" }, prev, play, next), play, prev, next, playSize };
   };
 
@@ -143,7 +144,7 @@ export function buildMedia(ctx: WidgetContext): Widget {
   const bar = h("div", { class: "media-bar" }, fill);
   const times = h("div", { class: "media-times" }, h("span"), h("span"));
   const ctl = controls(18, 16);
-  const volume = h("input", { class: "media-vol", type: "range", min: 0, max: 100, step: 1, title: "Volumen", "aria-label": "Volumen" });
+  const volume = h("input", { class: "media-vol", type: "range", min: 0, max: 100, step: 1, title: () => t("views.volume"), "aria-label": () => t("views.volume") });
   volume.addEventListener("input", () => setVolume(Number(volume.value)));
   const volumeIcon = h("span", { class: "media-vol-icon" });
   const volumeBox = h("div", { class: "media-volume" }, volumeIcon, volume);
@@ -161,8 +162,8 @@ export function buildMedia(ctx: WidgetContext): Widget {
     const info = media.info;
     const session = info?.kind === "session" ? info : null;
     const unavailable = info == null || info.kind === "unavailable";
-    const words = session ? session.title || "Unknown title" : !media.asked ? "Checking…" : unavailable ? "No disponible" : "Nothing playing";
-    const by = session ? session.artist : !media.asked ? "" : unavailable ? (info?.reason ?? "Media controls could not be reached.") : "Start something in any player.";
+    const words = session ? session.title || t("w.media.untitled") : !media.asked ? t("w.media.checking") : unavailable ? t("w.media.unavailable") : t("w.media.nothing");
+    const by = session ? session.artist : !media.asked ? "" : unavailable ? (info?.reason ?? t("w.media.unreachable")) : t("w.media.start");
     for (const el of [sTitle, title]) if (el.textContent !== words) el.textContent = words;
     for (const el of [sArtist, artist]) if (el.textContent !== by) el.textContent = by;
 
@@ -173,7 +174,7 @@ export function buildMedia(ctx: WidgetContext): Widget {
       (c.prev as HTMLButtonElement).disabled = !session;
       (c.next as HTMLButtonElement).disabled = !session;
     }
-    state.textContent = session ? `${session.app || "Player"} · ${playing ? "Playing" : "Paused"}` : "";
+    state.textContent = session ? `${session.app || t("w.media.player")} · ${playing ? t("w.media.playing") : t("w.media.paused")}` : "";
     small.classList.toggle("paused", !playing);
 
     // Album art: the player's own, or the widget's mark where there is none.

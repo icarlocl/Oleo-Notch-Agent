@@ -3,6 +3,7 @@
 // never used for this.
 
 import type { SessionAgent } from "../core/state";
+import { t } from "../core/i18n";
 import { BRANDS, CLAUDE_MARK, CODEX_MARK, brand, lucide } from "./iconset";
 import { h } from "./dom";
 
@@ -12,7 +13,7 @@ export const TOOL_NAME: Record<SessionAgent, string> = { claude: "Claude Code", 
 export const CLAUDE_ORANGE = "#D97757";
 
 /** What the folded island's legend says, for the tooltip. */
-export const DOT_LEGEND = "Solid dot: Claude Code or Codex · Ringed dot: Cursor";
+export const dotLegend = () => t("tool.legend");
 
 /** The tool's mark at `size`: a sparkle in Claude orange, Cursor's cube or Codex's prompt in the colour of the text. */
 export function toolMark(agent: SessionAgent, size = 12): HTMLElement {

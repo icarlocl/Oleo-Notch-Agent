@@ -126,7 +126,7 @@ pub fn state() -> MediaState {
     match read_state() {
         Ok(Some(state)) => state,
         Ok(None) => MediaState::none(),
-        Err(err) => MediaState::unavailable(format!("Windows would not say what is playing ({err}).")),
+        Err(err) => MediaState::unavailable(crate::i18n::trf(crate::i18n::Text::MediaNoAnswer, "err", &err.to_string())),
     }
 }
 

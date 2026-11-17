@@ -8,22 +8,31 @@
 // once the session is gone.
 
 import { h, svg } from "./dom";
+import { t } from "../core/i18n";
 import { diffLine, fileKind, readPatch } from "./code";
 import { ICONS } from "./icons";
-import type { SessionStep } from "../core/state";
+import { TURN_DONE, type SessionStep } from "../core/state";
 
 /** Tools by a name short enough for a column, where their own is not. */
-const STEP_NAMES: Record<string, string> = {
-  AskUserQuestion: "Question",
-  NotebookEdit: "Notebook",
-  MultiEdit: "Editar",
-  TodoWrite: "Todos",
-  WebSearch: "Buscar",
-  WebFetch: "Fetch",
-  PowerShell: "Shell",
+const STEP_NAMES: Record<string, () => string> = {
+  AskUserQuestion: () => t("step.question"),
+  NotebookEdit: () => "Notebook",
+  MultiEdit: () => t("step.edit"),
+  TodoWrite: () => t("step.todos"),
+  WebSearch: () => t("step.search"),
+  WebFetch: () => "Fetch",
+  PowerShell: () => "Shell",
+  [TURN_DONE]: () => t("home.lane.done"),
+  Agent: () => t("hooks.agent"),
+  Prompt: () => t("step.prompt"),
+  Notification: () => t("step.notification"),
+  Thinking: () => t("roster.thinking"),
+  Note: () => t("md.note"),
+  Error: () => t("hooks.error"),
+  "Cursor said": () => t("hooks.cursorSaid"),
 };
 
-export const stepName = (step: SessionStep) => STEP_NAMES[step.tool] ?? step.tool;
+export const stepName = (step: SessionStep) => STEP_NAMES[step.tool]?.() ?? step.tool;
 
 const STEP_ICONS: Record<SessionStep["kind"], { path: string; stroke: number }> = {
   read: { path: ICONS.doc, stroke: 0 },
@@ -94,7 +103,7 @@ export function stepPreview(step: SessionStep, limit?: number, typed?: ToType[],
       }
       rows.push(row);
     }
-    if (shown.length < lines.length - first) rows.push(termLine(`… ${lines.length - first - shown.length} more lines`));
+    if (shown.length < lines.length - first) rows.push(termLine(`… ${t("step.moreLines", { count: lines.length - first - shown.length })}`));
   } else if (step.kind === "command") {
     if (step.target && !printed) rows.push(termLine(oneLine(step.target), true));
     // Short of room, an empty line is one line less of what was printed.

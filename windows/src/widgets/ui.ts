@@ -7,7 +7,8 @@
 // into the other. `data-vtc="text"` asks for it to be moved without being
 // stretched (style.css).
 
-import { clear, h, svg } from "../views/dom";
+import { t } from "../core/i18n";
+import { clear, h, svg, type Words } from "../views/dom";
 import { ICONS } from "../views/icons";
 import { lucide } from "../views/iconset";
 import { SHELF_WIDGETS, type ShelfWidgetId } from "./defs";
@@ -69,8 +70,8 @@ export function mini(id: ShelfWidgetId, body: HTMLElement): HTMLElement {
   const card = h("div", { class: `wmini wmini-${id}` },
     h("div", { class: "wmini-head" },
       shared(h("span", { class: "w-mark" }, mark(id, 13)), "icon"),
-      shared(h("b", { text: def.name }), "title", "text"),
-      h("button", { class: "wmini-expand", title: `Expand ${def.name}`, "aria-label": `Expand ${def.name}`, "data-expand": "" },
+      shared(h("b", { text: () => def.name }), "title", "text"),
+      h("button", { class: "wmini-expand", title: () => t("w.expand", { name: def.name }), "aria-label": () => t("w.expand", { name: def.name }), "data-expand": "" },
         svg(EXPAND, 11, { stroke: 2.4 }))),
     body);
   body.classList.add("wmini-body");
@@ -83,10 +84,10 @@ export function mini(id: ShelfWidgetId, body: HTMLElement): HTMLElement {
 export function frame(id: ShelfWidgetId, body: HTMLElement, onBack: () => void, aside?: HTMLElement): HTMLElement {
   const def = SHELF_WIDGETS[id];
   const head = h("div", { class: "fc-head" },
-    h("button", { class: "back-pill", title: "Volver a Widgets (Esc o deslizar a la derecha)", onclick: onBack },
+    h("button", { class: "back-pill", title: () => t("w.back"), onclick: onBack },
       svg(ICONS.chevronLeft, 11, { stroke: 2.6 }), "Widgets"),
     shared(h("span", { class: "w-mark fc-mark" }, mark(id, 13)), "icon"),
-    shared(h("b", { text: def.name }), "title", "text"),
+    shared(h("b", { text: () => def.name }), "title", "text"),
     aside ?? null);
   const card = h("div", { class: `card wash focus-card fc-${id}` }, head, h("div", { class: "fc-body" }, body));
   card.dataset.id = id;
@@ -127,7 +128,7 @@ export function takesKeys<T extends HTMLInputElement | HTMLTextAreaElement>(ctx:
 }
 
 /** A field that adds what was typed when Enter is pressed. */
-export function addField(ctx: WidgetContext, label: string, placeholder: string, add: (text: string) => void, extra = "") {
+export function addField(ctx: WidgetContext, label: Words, placeholder: Words, add: (text: string) => void, extra = "") {
   const field = takesKeys(ctx, h("input", {
     class: `island-field ${extra}`, type: "text", placeholder, maxlength: 200, "aria-label": label, spellcheck: "false",
   }));
@@ -150,7 +151,7 @@ export function checkRow(o: {
   name: string; text: string; done: boolean; square: boolean; onToggle: () => void; extra?: (Node | null)[];
 }) {
   const row = h("div", { class: `gh-row check-row${o.done ? " done" : ""}` },
-    h("button", { class: "check-main", title: o.done ? "Mark as not done" : "Marcar como completado", onclick: o.onToggle },
+    h("button", { class: "check-main", title: o.done ? t("w.markUndone") : t("w.markDone"), onclick: o.onToggle },
       h("i", { class: `check${o.square ? " square" : ""}` }, o.done ? svg(ICONS.check, 9, { stroke: 3.4 }) : null),
       h("span", { class: "gh-row-title", text: o.text })),
     ...(o.extra ?? []));
@@ -158,5 +159,5 @@ export function checkRow(o: {
 }
 
 export const removeButton = (what: string, onRemove: () => void) =>
-  h("button", { class: "row-x", title: `Remove ${what}`, "aria-label": `Remove ${what}`, onclick: onRemove },
+  h("button", { class: "row-x", title: t("w.remove", { what }), "aria-label": t("w.remove", { what }), onclick: onRemove },
     svg(ICONS.xmark, 9));

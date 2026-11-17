@@ -21,7 +21,7 @@ import {
   botGlowColor, botGlowOpacity, fittedHeight, washRGBA, type BotStateName,
 } from "../src/core/layout";
 import { BotEngine } from "../src/bot/engine";
-import { DECISION_WORDS, QUESTION_TOOL, type ClaudeSession, type SessionStep } from "../src/core/state";
+import { decisionWords, QUESTION_TOOL, type ClaudeSession, type SessionStep } from "../src/core/state";
 import { clear, dot, h, svg } from "../src/views/dom";
 import { ICONS } from "../src/views/icons";
 import { COLOR } from "../src/views/palette";
@@ -124,7 +124,7 @@ function standing(s: ClaudeSession): { color: string; words: string; rank: numbe
     case "approval": return { color: COLOR.amber, words: "needs permission", rank: 0 };
     case "error": return { color: COLOR.red, words: "stopped on an error", rank: 1 };
     // Its last reply waits on a decision: said after a request and an error, before "finished".
-    case "finished": return s.decision ? { color: COLOR.purple, words: DECISION_WORDS.toLowerCase(), rank: 3 } : { color: COLOR.green, words: "finished", rank: 3 };
+    case "finished": return s.decision ? { color: COLOR.purple, words: decisionWords().toLowerCase(), rank: 3 } : { color: COLOR.green, words: "finished", rank: 3 };
     case "idle":
     case "sleeping": return { color: COLOR.grey, words: "at rest", rank: 4 };
     default: return { color: botGlowColor(state), words: state === "thinking" ? "thinking" : "at work", rank: 2 };
@@ -708,7 +708,7 @@ function drawRail(pv: PreviewSession) {
     if (os.decision) {
       tree.append(h(
         "div", { class: "sess-decide", title: "Its last reply has something marked IMPORTANT.", onclick: () => pickSession(os.id) },
-        lucide(LUCIDE.messageSquareWarning, 10, 2.2), h("span", { text: DECISION_WORDS }),
+        lucide(LUCIDE.messageSquareWarning, 10, 2.2), h("span", { text: decisionWords() }),
       ));
     }
 

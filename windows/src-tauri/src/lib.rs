@@ -4,6 +4,7 @@ mod about;
 mod agents;
 #[cfg_attr(not(windows), allow(dead_code))]
 mod codex_hooks;
+mod i18n;
 mod cursor_hooks;
 mod dock;
 mod fullscreen;
@@ -133,6 +134,9 @@ fn save_settings(app: AppHandle, shared: State<Shared>, settings: Settings) {
         *current = settings.clone();
         (screen_changed, autostart_changed, theme_changed, agents_changed, settings)
     };
+    if i18n::set_setting(&settings.language) {
+        relabel(&app);
+    }
     if let Err(err) = settings::save(&settings) {
         eprintln!("[oleo] could not save settings: {err}");
     }
@@ -157,6 +161,26 @@ fn save_settings(app: AppHandle, shared: State<Shared>, settings: Settings) {
     // once it knows the setting is on.
     if agents_changed {
         agents::set_enabled(&app, settings.show_agents_list);
+    }
+}
+
+/// The language Rust speaks changed: the tray and the windows' titles say it again.
+fn relabel(app: &AppHandle) {
+    tray::relabel(app);
+    if let Some(win) = app.get_webview_window("settings") {
+        let _ = win.set_title(i18n::tr(i18n::Text::SettingsTitle));
+    }
+    if let Some(win) = app.get_webview_window(agents::WINDOW_LABEL) {
+        let _ = win.set_title(i18n::tr(i18n::Text::AgentsTitle));
+    }
+}
+
+/// The island's page says the system's language (the WebView's, which follows
+/// Windows): what Rust says while the setting is "system".
+#[tauri::command]
+fn set_system_language(app: AppHandle, lang: String) {
+    if i18n::set_system(&lang) {
+        relabel(&app);
     }
 }
 
@@ -683,7 +707,7 @@ fn create_settings_window(app: &AppHandle) {
     let url = page_url(app, "settings.html");
     match WebviewWindowBuilder::new(app, "settings", url)
         .additional_browser_args(BROWSER_ARGS)
-        .title("Settings — Oleo")
+        .title(i18n::tr(i18n::Text::SettingsTitle))
         .inner_size(800.0, 760.0)
         .min_inner_size(460.0, 480.0)
         .resizable(true)
@@ -772,6 +796,8 @@ pub fn run() {
     platform::prepare_environment();
     settings::adopt_former_folder();
     let loaded = settings::load();
+    // The tray is built in the language saved; "system" is English until the island's page says otherwise.
+    i18n::set_setting(&loaded.language);
     let gate = Arc::new(PollGate::new());
 
     tauri::Builder::default()
@@ -796,6 +822,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             boot,
             save_settings,
+            set_system_language,
             set_collapsed,
             set_island_rect,
             focus_window,

@@ -2,6 +2,7 @@
 // Mirrors IslandRootView.swift + IslandWindowController.swift.
 
 import { Tracked, Spring, clamp, mixColor } from "../core/anim";
+import { t } from "../core/i18n";
 import { Bridge, IS_TAURI } from "../core/bridge";
 import { wipe } from "../core/canvas";
 import {
@@ -24,7 +25,7 @@ import { widgetsSettingsChanged } from "../widgets";
 import { ShelfHooks } from "../widgets/core";
 import { widgetOn, type ShelfWidgetId } from "../widgets/defs";
 import { h } from "../views/dom";
-import { UNSEEN_KEEP_MS, isActive, overallState, roster, type Entry } from "../views/roster";
+import { UNSEEN_KEEP_MS, isActive, labelOf, overallState, roster, type Entry } from "../views/roster";
 import { buildCompact, compactPlan, type CompactStrip } from "./compact";
 import { IslandStateMachine } from "./fsm";
 import { createNotch, type NotchShape } from "./notch";
@@ -2134,9 +2135,11 @@ export class Island {
   private threadHitRect(): { x: number; y: number; w: number; h: number } {
     const W = this.windowW;
     const H = this.windowH;
-    const L = 168;
+    // The line rests 8 px from the edge and grows to 184×7 under the pointer: the rect takes
+    // all of that, from the edge itself, and 6 px around it.
+    const L = 196;
     const T = 4;
-    const reach = 6;
+    const reach = 21;
     const m = HIT_MARGIN;
     switch (Room.dock) {
       case "bottom": return { x: (W - L) / 2 + m, y: H + m - reach, w: L - 2 * m, h: T };
@@ -2186,20 +2189,33 @@ export class Island {
       this.forceRect = true;
     }
 
-    // The segments: one per session, in its colour; one that calls stands taller and breathes.
-    // Chosen in Settings, one colour is all the thread is; otherwise each segment has its session's.
+    // One line, neutral at rest (or the colour chosen in Settings); amber, glowing, while a
+    // session needs the user. Under the pointer it grows and says what opening it shows.
     const own = /^#[0-9a-f]{6}$/i.test(State.settings.threadColor) ? State.settings.threadColor : "";
-    const segs = plan.live.slice(0, 6);
-    const key = `${own}/` + segs.map((e) => `${e.color}${e.rank === 0 ? "!" : ""}`).join("|");
+    const needs = plan.live.filter((e) => e.lane === "needs");
+    const tip = Island.threadTip(plan.live, needs);
+    const key = `${own}/${needs.length > 0}/${tip}`;
     if (key !== this.threadKey) {
       this.threadKey = key;
-      this.threadEl.title = "Abrir Oleo";
+      this.threadEl.classList.toggle("needs", needs.length > 0);
+      this.threadEl.style.setProperty("--line", own || "");
+      if (!own) this.threadEl.style.removeProperty("--line");
       this.threadEl.replaceChildren(
-        ...(segs.length
-          ? segs.map((e) => h("span", { class: e.rank === 0 ? "calls" : "", style: `background:${own || e.color};color:${own || e.color}` }))
-          : [h("span", { class: "none", style: own ? `background:${own}` : "" })]),
+        h("i", { class: "bar" }),
+        h("span", { class: "tip" }, tip),
       );
     }
+  }
+
+  /** What the line says under the pointer: who needs the user first, or how many sessions there are. */
+  private static threadTip(live: Entry[], needs: Entry[]): string {
+    if (needs.length > 1) return t("thread.needsMany", { n: needs.length });
+    if (needs.length === 1) {
+      const who = labelOf(needs[0]).name;
+      return needs[0].session?.question ? t("thread.question", { who }) : t("thread.permission", { who });
+    }
+    if (live.length > 0) return t("thread.open", { count: live.length });
+    return t("thread.openOleo");
   }
 
   private peekOut(calls: boolean) {
@@ -2240,6 +2256,7 @@ export class Island {
       clearTimeout(this.threadDwell);
       this.threadDwell = null;
     }
+    if (over !== this.onThread) this.threadEl.classList.toggle("hover", over);
     this.onThread = over;
     if (thread) {
       // Nothing here takes the pointer: it only fades the peek, to leave what is under it readable.

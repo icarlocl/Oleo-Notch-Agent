@@ -242,7 +242,7 @@ pub fn first_position(area: Rect, size: (i32, i32), margin: i32) -> (i32, i32) {
 
 /// The tray item's words, for what a press does.
 pub fn label(shown: bool) -> &'static str {
-    if shown { "Ocultar lista de agentes" } else { "Mostrar lista de agentes" }
+    crate::i18n::tr(if shown { crate::i18n::Text::HideAgents } else { crate::i18n::Text::ShowAgents })
 }
 
 fn window(app: &AppHandle) -> Option<WebviewWindow> {
@@ -270,7 +270,7 @@ pub fn create_window(app: &AppHandle) {
     let url = crate::page_url(app, "agents.html");
     let built = WebviewWindowBuilder::new(app, WINDOW_LABEL, url)
         .additional_browser_args(crate::BROWSER_ARGS)
-        .title("Agents — Oleo")
+        .title(crate::i18n::tr(crate::i18n::Text::AgentsTitle))
         .inner_size(WIDTH, MIN_HEIGHT)
         .resizable(false)
         .decorations(false)
@@ -829,7 +829,9 @@ mod tests {
 
     #[test]
     fn the_tray_says_what_a_press_does() {
-        assert_eq!(label(false), "Mostrar lista de agentes");
-        assert_eq!(label(true), "Ocultar lista de agentes");
+        use crate::i18n::{tr_in, Lang, Text};
+        assert_eq!(tr_in(Lang::Es, Text::ShowAgents), "Mostrar lista de agentes");
+        assert_eq!(tr_in(Lang::Es, Text::HideAgents), "Ocultar lista de agentes");
+        assert_ne!(label(false), label(true));
     }
 }

@@ -65,6 +65,9 @@ export const Bridge = {
 
   reposition: () => call<void>("reposition"),
 
+  /** The OS's language as the page reads it ("en", "es", "pt"): what Rust words the tray in while the setting is "system". */
+  setSystemLanguage: (lang: string) => call<void>("set_system_language", { lang }),
+
   /**
    * The ↗: brings forward the window a session runs in — its editor's, its
    * terminal's, the Claude app. Only the session is named: where it runs is

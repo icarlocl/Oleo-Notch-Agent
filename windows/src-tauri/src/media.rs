@@ -65,7 +65,7 @@ mod imp {
     use super::{Action, MediaState};
 
     pub fn state() -> MediaState {
-        MediaState::unavailable("Media controls are not available on this system.")
+        MediaState::unavailable(crate::i18n::tr(crate::i18n::Text::MediaUnavailable))
     }
     pub fn cover() -> Option<String> {
         None

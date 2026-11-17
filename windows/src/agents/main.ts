@@ -5,6 +5,7 @@
 // on show. A click on a row goes to that project's window (`Bridge.focusSession`);
 // the window itself never takes the keyboard (Rust makes it non-activating).
 
+import { locale, onLangChange, setLanguage, t, type Key } from "../core/i18n";
 import "../style.css";
 import "./agents.css";
 import { Bridge, IS_TAURI, onEvent } from "../core/bridge";
@@ -14,7 +15,7 @@ import { toolMark } from "../views/tool";
 import { fadeOf } from "./fade";
 import { formatElapsed, formatTokens, readSnapshot, shownStatus, type AgentRow, type AgentStatus } from "./model";
 
-const WORDS: Record<AgentStatus, string> = { wait: "ESPERA", work: "ACTIVO", done: "LISTO", idle: "INACTIVO" };
+const WORDS: Record<AgentStatus, Key> = { wait: "ag.wait", work: "ag.work", done: "ag.done", idle: "ag.idle" };
 /** A row that could not be gone to stays dimmed this long. */
 const NOGO_MS = 1400;
 
@@ -38,14 +39,14 @@ function applyAppearance() {
 
 // ── The window ────────────────────────────────────────────────────────────────
 
-const title = h("span", { class: "ag-title", text: "Agentes", "data-tauri-drag-region": true });
-const pill5 = pill("Límite de 5 horas");
-const pill7 = pill("Límite de 7 días");
-const close = h("button", { class: "ag-x", type: "button", title: "Ocultar", "aria-label": "Ocultar la lista de agentes", text: "×" });
+const title = h("span", { class: "ag-title", text: () => t("ag.title"), "data-tauri-drag-region": true });
+const pill5 = pill("ag.limit5");
+const pill7 = pill("ag.limit7");
+const close = h("button", { class: "ag-x", type: "button", title: () => t("ag.hide"), "aria-label": () => t("ag.hideList"), text: "×" });
 close.addEventListener("click", () => void Bridge.agentsHide());
 const head = h("header", { class: "ag-head", "data-tauri-drag-region": true }, title, pill5.el, pill7.el, close);
-const list = h("ul", { class: "ag-list", role: "list", "aria-label": "Agentes, una fila por proyecto" });
-const empty = h("p", { class: "ag-empty", role: "status", text: "No hay agentes activos" });
+const list = h("ul", { class: "ag-list", role: "list", "aria-label": () => t("ag.list") });
+const empty = h("p", { class: "ag-empty", role: "status", text: () => t("ag.empty") });
 const panel = h("div", { id: "ag-panel" }, head, list, empty);
 type Grip = "left" | "right" | "bottom" | "bottom-left" | "bottom-right";
 const GRIPS: Grip[] = ["left", "right", "bottom", "bottom-left", "bottom-right"];
@@ -100,7 +101,7 @@ head.addEventListener("mousedown", (e) => {
   if (e.detail === 2) void Bridge.agentsResizeReset();
 });
 
-function pill(name: string) {
+function pill(name: Key) {
   const label = h("b");
   const value = h("span");
   const el = h("span", { class: "ag-pill", "data-tauri-drag-region": true }, label, value);
@@ -117,7 +118,7 @@ function paintPill(p: ReturnType<typeof pill>, short: string, win: Usage["fiveHo
   p.value.textContent = `${shownUsage.percent}%`;
   p.el.dataset.level = usageLevel(shownUsage.percent);
   p.el.dataset.state = shownUsage.state;
-  p.el.title = [p.name, shownUsage.countdown].filter(Boolean).join(" · ");
+  p.el.title = [t(p.name), shownUsage.countdown].filter(Boolean).join(" · ");
 }
 
 function paintUsage() {
@@ -172,7 +173,7 @@ async function go(el: RowEl) {
   el.busy = false;
   if (went === true) return;
   el.li.classList.add("nogo");
-  el.li.title = "No se encontró la ventana";
+  el.li.title = t("ag.noWindow");
   window.clearTimeout(el.nogo);
   el.nogo = window.setTimeout(() => {
     el.li.classList.remove("nogo");
@@ -181,14 +182,14 @@ async function go(el: RowEl) {
 }
 
 const tip = (row: AgentRow) =>
-  `${row.project}${row.count > 1 ? `: ${row.count} sessions` : ""} — click to go to its window`;
+  row.count > 1 ? t("ag.tipMany", { project: row.project, count: row.count }) : t("ag.tip", { project: row.project });
 
 /** What changes with the clock: the status a done row has aged into, and the time it has lasted. */
 function paintClock(el: RowEl, now: number) {
   const status = shownStatus(el.row, now);
   if (el.li.dataset.status !== status) {
     el.li.dataset.status = status;
-    say(el.badge, WORDS[status]);
+    say(el.badge, t(WORDS[status]));
   }
   say(el.elapsed, formatElapsed(el.row.since, now));
 }
@@ -210,7 +211,7 @@ function paintRow(el: RowEl, row: AgentRow, now: number) {
   say(el.tokens, formatTokens(row.tokens));
   if (row.level && row.tokens != null) {
     el.tokens.dataset.level = row.level;
-    el.tokens.title = `Context ${row.percent}%`;
+    el.tokens.title = t("ag.context", { n: row.percent ?? 0 });
   } else {
     delete el.tokens.dataset.level;
     el.tokens.removeAttribute("title");
@@ -218,7 +219,7 @@ function paintRow(el: RowEl, row: AgentRow, now: number) {
   say(el.message, row.message ?? "");
   el.message.hidden = !row.message;
   if (!el.li.classList.contains("nogo")) el.li.title = tip(row);
-  el.li.setAttribute("aria-label", `${row.project}, ${row.count} ${row.count === 1 ? "session" : "sessions"}, ${WORDS[shownStatus(row, now)].toLowerCase()}`);
+  el.li.setAttribute("aria-label", `${row.project}, ${t("sess.n.session", { count: row.count })}, ${t(WORDS[shownStatus(row, now)]).toLocaleLowerCase(locale())}`);
   paintClock(el, now);
 }
 
@@ -355,11 +356,20 @@ function take(value: unknown) {
 async function main() {
   const boot = await Bridge.boot();
   if (boot) settings = { ...settings, ...boot.settings };
+  setLanguage(settings.language);
+  // A new language: every row says its words again (the badge too, which only changes with the status).
+  onLangChange(() => {
+    document.title = t("ag.window");
+    for (const el of els.values()) delete el.li.dataset.status;
+    render();
+  });
+  document.title = t("ag.window");
   applyAppearance();
   applyFade();
   systemStill.addEventListener("change", applyAppearance);
   await onEvent<Settings>("settings-changed", (next) => {
     settings = { ...settings, ...next };
+    setLanguage(settings.language);
     applyAppearance();
     // Live: a new opacity, or the fade turned off or on, shows at once.
     calmSince = Date.now();

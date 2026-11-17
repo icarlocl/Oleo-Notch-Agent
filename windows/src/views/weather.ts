@@ -1,19 +1,19 @@
 import { h, svg } from "./dom";
+import { formatNumber, t, type Key } from "../core/i18n";
 import type { WeatherLocation } from "../core/state";
 
 const FORECAST = "https://api.open-meteo.com/v1/forecast";
 const REFRESH_MS = 15 * 60_000;
 const RETRY_MS = 60_000;
-const conditions = new Map<number, string>([
-  [0, "Despejado"], [1, "Mayormente despejado"], [2, "Parcialmente nublado"], [3, "Cubierto"],
-  [45, "Niebla"], [48, "Niebla helada"], [51, "Llovizna"], [53, "Llovizna"], [55, "Llovizna intensa"],
-  [56, "Llovizna helada"], [57, "Llovizna helada"], [61, "Lluvia ligera"], [63, "Lluvia"],
-  [65, "Lluvia intensa"], [66, "Lluvia helada"], [67, "Lluvia helada"], [71, "Nevada ligera"],
-  [73, "Nevada"], [75, "Nevada intensa"], [77, "Granos de nieve"], [80, "Chubascos"],
-  [81, "Chubascos"], [82, "Chubascos intensos"], [85, "Chubascos de nieve"], [86, "Chubascos de nieve"],
-  [95, "Tormenta eléctrica"], [96, "Tormenta con granizo"], [99, "Tormenta con granizo"],
+const conditions = new Map<number, Key>([
+  [0, "wx.clear"], [1, "wx.mostlyClear"], [2, "wx.partly"], [3, "wx.overcast"],
+  [45, "wx.fog"], [48, "wx.rimeFog"], [51, "wx.drizzle"], [53, "wx.drizzle"], [55, "wx.drizzleHeavy"],
+  [56, "wx.freezingDrizzle"], [57, "wx.freezingDrizzle"], [61, "wx.rainLight"], [63, "wx.rain"],
+  [65, "wx.rainHeavy"], [66, "wx.freezingRain"], [67, "wx.freezingRain"], [71, "wx.snowLight"],
+  [73, "wx.snow"], [75, "wx.snowHeavy"], [77, "wx.snowGrains"], [80, "wx.showers"],
+  [81, "wx.showers"], [82, "wx.showersHeavy"], [85, "wx.snowShowers"], [86, "wx.snowShowers"],
+  [95, "wx.thunder"], [96, "wx.hail"], [99, "wx.hail"],
 ]);
-const degrees = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 0 });
 const cloud = "M6 18a4 4 0 1 1 1.1-7.85A5.5 5.5 0 0 1 18 11a3.5 3.5 0 0 1 .5 7Z";
 const icons = {
   cloud,
@@ -41,7 +41,7 @@ export function buildWeather() {
       lastWeather = null;
       value.textContent = "—";
       icon.replaceChildren(svg(cloud, 14, { stroke: 1.75 }));
-      el.title = status.textContent = next ? `${next.label} · Cargando clima…` : "";
+      el.title = status.textContent = next ? `${next.label} · ${t("wx.loading")}` : "";
     }
     el.hidden = !next;
     if (!next || !expanded || request || Date.now() < nextFetch) return;
@@ -58,23 +58,24 @@ export function buildWeather() {
     }).toString();
     try {
       const response = await fetch(url, { credentials: "omit", signal: controller.signal });
-      if (!response.ok) throw new Error("No se pudo consultar el clima");
+      if (!response.ok) throw new Error("weather request failed");
       const data = await response.json();
       const current = data?.current;
       if (!Number.isFinite(current?.temperature_2m) || !Number.isInteger(current?.weather_code)) {
-        throw new Error("La respuesta del clima está incompleta");
+        throw new Error("weather response incomplete");
       }
       if (request !== controller) return;
       const code = current.weather_code;
       const shape = code <= 1 ? (current.is_day === 0 ? icons.moon : icons.sun) : code >= 51 ? icons.rain : icons.cloud;
-      value.textContent = `${degrees.format(current.temperature_2m)} °C`;
-      lastWeather = `${next.label} · ${value.textContent} · ${conditions.get(code) ?? "Estado desconocido"}`;
+      value.textContent = `${formatNumber(current.temperature_2m, { maximumFractionDigits: 0 })} °C`;
+      const said = conditions.get(code);
+      lastWeather = `${next.label} · ${value.textContent} · ${said ? t(said) : t("wx.unknown")}`;
       icon.replaceChildren(svg(shape, 14, { stroke: 1.75 }));
       el.title = status.textContent = lastWeather;
       nextFetch = Date.now() + REFRESH_MS;
     } catch {
       if (request !== controller) return;
-      el.title = status.textContent = lastWeather ? `${lastWeather} (sin actualizar)` : `${next.label} · Clima no disponible`;
+      el.title = status.textContent = lastWeather ? `${lastWeather} ${t("wx.stale")}` : `${next.label} · ${t("wx.unavailable")}`;
       nextFetch = Date.now() + RETRY_MS;
     } finally {
       window.clearTimeout(timeout);

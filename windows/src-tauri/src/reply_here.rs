@@ -20,6 +20,7 @@
 
 use tauri::State;
 
+use crate::i18n::{tr, trf, Text};
 use crate::target::Sessions;
 
 /// The longest reply, in characters (reply.rs has the same limit).
@@ -49,13 +50,13 @@ fn clean_text(text: &str) -> Result<String, String> {
     let text = text.replace("\r\n", "\n").replace('\r', "\n");
     let text = text.trim();
     if text.is_empty() {
-        return Err("Write a message first.".into());
+        return Err(tr(Text::ReplyEmpty).into());
     }
     if text.chars().count() > MAX_TEXT_CHARS {
-        return Err(format!("That message is too long (the limit is {MAX_TEXT_CHARS} characters)."));
+        return Err(trf(Text::ReplyTooLong, "max", &MAX_TEXT_CHARS.to_string()));
     }
     if text.chars().any(|c| c.is_control() && c != '\n' && c != '\t') {
-        return Err("That message has a character that can't be typed.".into());
+        return Err(tr(Text::ReplyBadChar).into());
     }
     Ok(text.to_string())
 }
@@ -135,14 +136,14 @@ fn percent_encode(text: &str) -> String {
 /// prompt filled with `text` and not sent.
 fn prompt_link(scheme: &str, session_id: &str, text: &str) -> Result<String, String> {
     if !link_session_id(session_id) {
-        return Err("This session has no id the Claude Code panel can be opened with.".into());
+        return Err(tr(Text::ReplyNoPanelId).into());
     }
     if text.chars().count() > MAX_LINK_TEXT_CHARS {
-        return Err(format!("That message is too long for the panel ({MAX_LINK_TEXT_CHARS} characters at most)."));
+        return Err(trf(Text::ReplyTooLongPanelMax, "max", &MAX_LINK_TEXT_CHARS.to_string()));
     }
     let link = format!("{scheme}://anthropic.claude-code/open?session={session_id}&prompt={}", percent_encode(text));
     if link.len() > MAX_LINK_BYTES {
-        return Err("That message is too long for the panel.".into());
+        return Err(tr(Text::ReplyTooLongPanel).into());
     }
     Ok(link)
 }
@@ -164,11 +165,11 @@ pub async fn session_reply_here(
     }
     let Some(plan) = sessions.plan(&session_id) else {
         crate::log::line("reply here: nothing known of where the session runs");
-        return Err("Oleo doesn't know where this session runs.".into());
+        return Err(tr(Text::ReplyNoWhere).into());
     };
     tauri::async_runtime::spawn_blocking(move || imp::reply(&plan, &session_id, title.as_deref(), &text))
         .await
-        .map_err(|_| "The reply could not be delivered.".to_string())?
+        .map_err(|_| tr(Text::ReplyNotDelivered).to_string())?
 }
 
 /// Whether a reply could be delivered in the session's own window at all: its
@@ -202,6 +203,7 @@ mod imp {
     use std::time::Duration;
 
     use super::{clean_text, key_actions, link_scheme, prompt_link, shows_conversation, KeyAction, MIN_TITLE_CHARS};
+    use crate::i18n::{tr, Text};
     use crate::target::{self, Kind, Plan};
     use crate::{log, platform};
 
@@ -230,7 +232,7 @@ mod imp {
         let done = match plan.target.kind {
             Kind::Terminal => type_in_terminal(plan, title, &text),
             Kind::Vscode | Kind::Cursor => prefill_panel(plan, session_id, &text),
-            Kind::Claude | Kind::Unknown => Err("This session's window can't be typed into.".to_string()),
+            Kind::Claude | Kind::Unknown => Err(tr(Text::ReplyCantType).to_string()),
         };
         match &done {
             Ok(how) => log::line(format!("reply here in {}: {how}", plan.target.label)),
@@ -247,18 +249,18 @@ mod imp {
         let title = title.map(str::trim).filter(|t| t.chars().count() >= MIN_TITLE_CHARS).ok_or("This conversation has no title to find its tab by.")?;
         let proven = |hwnd: isize| shows_conversation(&platform::window_title(hwnd), title);
         if !proven(hwnd) {
-            return Err("Its terminal is showing another tab.".into());
+            return Err(tr(Text::ReplyOtherTab).into());
         }
         // 3. Windows drops input meant for a window that runs with more rights.
         if platform::elevated_out_of_reach(hwnd) {
-            return Err("Its terminal runs as administrator.".into());
+            return Err(tr(Text::ReplyAdmin).into());
         }
         // 4. In front, still on the same tab, and the user's own keys let go of.
         if !platform::bring_forward(hwnd) || !platform::wait_foreground(hwnd, FRONT_WAIT_MS) {
-            return Err("Its terminal couldn't be brought forward.".into());
+            return Err(tr(Text::ReplyNoForeground).into());
         }
         if !proven(hwnd) {
-            return Err("Its terminal is showing another tab.".into());
+            return Err(tr(Text::ReplyOtherTab).into());
         }
         if !platform::wait_keys_released(KEYS_UP_WAIT_MS) {
             return Err("A key is still held down.".into());
@@ -269,11 +271,11 @@ mod imp {
         let mut started = false;
         for chunk in keys.chunks(CHUNK) {
             if !platform::is_foreground(hwnd) {
-                return if started { Ok("interrupted".into()) } else { Err("Its terminal lost the keyboard.".into()) };
+                return if started { Ok("interrupted".into()) } else { Err(tr(Text::ReplyLostKeyboard).into()) };
             }
             let (sent, wanted) = platform::send_keys(chunk);
             if sent == 0 && !started {
-                return Err("Windows would not take the keystrokes.".into());
+                return Err(tr(Text::ReplyNoKeystrokes).into());
             }
             started = true;
             if sent < wanted {
@@ -295,14 +297,14 @@ mod imp {
     /// B: the prompt box of the Claude Code panel, through the extension's link.
     fn prefill_panel(plan: &Plan, session_id: &str, text: &str) -> Result<String, String> {
         if !target::is_extension(&plan.entrypoint) {
-            return Err("This session runs in the editor's terminal, which can't be picked from outside.".into());
+            return Err(tr(Text::ReplyEditorTerminal).into());
         }
         let scheme = target::editor_image(&plan.target).and_then(link_scheme).ok_or("Oleo doesn't know this editor's link.")?;
         let link = prompt_link(scheme, session_id, text)?;
         // The link opens in whichever window is in front: the session's first.
         let hwnd = crate::plan_window(plan).ok_or("This session's window couldn't be found.")?;
         if !platform::bring_forward(hwnd) {
-            return Err("Its editor couldn't be brought forward.".into());
+            return Err(tr(Text::ReplyNoEditor).into());
         }
         platform::open_url(&link);
         Ok("prefilled".into())

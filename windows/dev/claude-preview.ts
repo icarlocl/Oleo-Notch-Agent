@@ -13,6 +13,7 @@
 //             dock=top|bottom|left|right   time=HH:MM (10:09)   date=text   bg=#rrggbb|transparent (scene=none)
 //             w=, h=  the display's size in px (default: the window)   scale=1.25 (alias zoom)  display scale
 //             seed=n  the made-up CPU/GPU numbers      motion=reduce|full
+//             lang=en|es|pt  the interface's language (core/i18n pins it; the settings' fake=1 page reads it too)
 //   Tooling:  ui=1 opens the sidebar   toggle=0 hides its corner button
 //             shot=1 capture mode: no sidebar/button/cursor/hover, springs jumped, numbers frozen; sets
 //             <html data-ready="1"> and window.__shotReady when settled (shot wins over ui)

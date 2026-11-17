@@ -2183,6 +2183,9 @@ export class Island {
     classes.toggle("peek", peeking);
     classes.toggle("peek-near", peeking && this.peekNear);
     this.threadEl.classList.toggle("on", thread);
+    // The bot peeks out of the edge where the line is: the line steps aside, and is back when
+    // the pointer comes near and the bot fades.
+    this.threadEl.classList.toggle("peeking", peeking && !this.peekNear);
     // The style changed under a folded island: what the window takes of the pointer follows at once.
     if (thread !== this.wasThread) {
       this.wasThread = thread;

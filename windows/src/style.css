@@ -1,19 +1,18 @@
 /* Oleo for Windows — same palette, sizes and type scale as the macOS island.
    Every colour below is copied from the Swift views. */
 
+@import "./core/tokens.css";
+
 :root {
   color-scheme: dark;
 
   --font: system-ui, "Segoe UI Variable Text", "Segoe UI", "Segoe UI Emoji", sans-serif;
   --mono: "Cascadia Mono", "Consolas", ui-monospace, monospace;
 
-  --ink: #f5f6f8;        /* primary text */
-  --ink-2: #f1f2f4;
-  --dim: #9398a1;
-  --dim-2: #8e939c;
-  --dim-3: #6b7079;
-  --dim-4: #5f646d;
-  --dim-5: #4b5563;
+  /* Three greys for text, each 4.5:1 or more on the island's black. */
+  --ink: #f5f6f8; /* what is read first */
+  --ink-2: #c4c8cf; /* what goes with it: 10.7:1 */
+  --ink-3: #9aa0a9; /* times, counts, hints: 6.8:1 */
   --card: #141518;
   --card-flat: #0e0f11;
   --tab-on: #1d1f23;
@@ -94,7 +93,7 @@ body {
   position: absolute;
   top: 0;
   left: 50%;
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 var(--r-card) var(--r-card);
   overflow: visible;
   will-change: width, height, transform;
 }
@@ -104,7 +103,7 @@ body {
 :root[data-dock="bottom"] #island {
   top: auto;
   bottom: 0;
-  border-radius: 16px 16px 0 0;
+  border-radius: var(--r-card) var(--r-card) 0 0;
 }
 
 /* Hanging from a side: flush with it, and centred along it — island.ts moves
@@ -114,14 +113,14 @@ body {
 :root[data-dock="left"] #island {
   top: 50%;
   left: 0;
-  border-radius: 0 16px 16px 0;
+  border-radius: 0 var(--r-card) var(--r-card) 0;
 }
 
 :root[data-dock="right"] #island {
   top: 50%;
   left: auto;
   right: 0;
-  border-radius: 16px 0 0 16px;
+  border-radius: var(--r-card) 0 0 var(--r-card);
 }
 
 #island-shape {
@@ -178,7 +177,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   height: 2px;
-  border-radius: 2px;
+  border-radius: var(--r-chip);
   background: rgba(255, 255, 255, 0.35);
   width: 0;
 }
@@ -245,7 +244,7 @@ body {
   background: var(--green);
   color: #052e16;
   box-shadow: 0 0 0 2px #000;
-  font: 700 12px/1 var(--font);
+  font: 600 var(--t-body)/1 var(--font);
   font-variant-numeric: tabular-nums;
 }
 
@@ -320,10 +319,10 @@ body {
   place-items: center;
   padding: 0;
   border: 0;
-  border-radius: 9px;
+  border-radius: var(--r-ctl);
   background: var(--green);
   color: #052e16;
-  font: 700 15px/1 var(--font);
+  font: 600 var(--t-label)/1 var(--font);
   cursor: pointer;
 }
 
@@ -341,7 +340,7 @@ body {
   position: absolute;
   right: 3px;
   bottom: 2px;
-  font: 700 9px/1 var(--font);
+  font: 600 var(--t-badge)/1 var(--font);
 }
 
 /* Said to a screen reader when a result comes, seen by nobody. */
@@ -427,8 +426,8 @@ body {
   height: 16px;
   display: grid;
   place-items: center;
-  border-radius: 999px;
-  font: 600 10.5px var(--font);
+  border-radius: var(--r-chip);
+  font: 600 var(--t-meta) var(--font);
   font-variant-numeric: tabular-nums;
   color: var(--c);
   background: var(--tint);
@@ -452,7 +451,7 @@ body {
   align-items: center;
   gap: 5px;
   overflow: hidden;
-  color: var(--dim-2);
+  color: var(--ink-2);
   white-space: nowrap;
 }
 
@@ -461,9 +460,9 @@ body {
 }
 
 .ci-metric b {
-  font: 500 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   font-variant-numeric: tabular-nums;
-  color: var(--ink-2);
+  color: var(--ink);
   transition: color 0.3s ease-out;
 }
 
@@ -481,12 +480,12 @@ body {
 }
 
 .ci-metric b.blank {
-  color: var(--dim-4);
+  color: var(--ink-3);
 }
 
 /* A usage window that has reset, or a number hours old: there, and quiet. */
 .ci-metric b.dim {
-  color: var(--dim-3);
+  color: var(--ink-3);
 }
 
 /* Folded on a side: the same slots, top to bottom, in a column flush with the
@@ -597,8 +596,8 @@ body {
   place-items: center;
   border: 0;
   background: transparent;
-  border-radius: 11px;
-  color: var(--dim-2);
+  border-radius: var(--r-ctl);
+  color: var(--ink-2);
   cursor: default;
 }
 
@@ -609,7 +608,7 @@ body {
   align-items: center;
   gap: 5px;
   padding: 0 10px 0 8px;
-  font: 600 11px var(--font);
+  font: 600 var(--t-meta) var(--font);
 }
 
 .tab:hover {
@@ -680,13 +679,13 @@ body {
   gap: 4px;
   padding: 0 7px;
   color: var(--ink);
-  font: 600 11px/1 var(--font);
+  font: 600 var(--t-meta)/1 var(--font);
   white-space: nowrap;
 }
 
 .weather-icon {
   display: flex;
-  color: var(--dim-2);
+  color: var(--ink-2);
 }
 
 .weather[hidden] {
@@ -723,14 +722,14 @@ body {
 }
 
 .hs-label {
-  font: 600 10px var(--font);
+  font: 600 var(--t-meta) var(--font);
   letter-spacing: 0.02em;
-  color: var(--dim-3);
+  color: var(--ink-3);
 }
 
 .hs-icon {
   display: none;
-  color: var(--dim-3);
+  color: var(--ink-3);
 }
 
 .hs-icon svg {
@@ -759,7 +758,7 @@ body {
 .hs .res-value.hs-value {
   width: 26px;
   margin: 0;
-  font-size: 10.5px;
+  font-size: var(--t-meta);
 }
 
 .hs-usage .res-bar i {
@@ -796,7 +795,7 @@ body {
 .header-actions button {
   border: 0;
   background: transparent;
-  color: var(--dim-2);
+  color: var(--ink-2);
   display: grid;
   place-items: center;
   cursor: default;
@@ -887,7 +886,7 @@ body {
   scroll-snap-type: x mandatory;
   overscroll-behavior-x: contain;
   scrollbar-width: none;
-  border-radius: 18px;
+  border-radius: var(--r-card);
 }
 
 /* Moved by the island, step by step, with a swipe (views/shelf.ts `scrollRow`):
@@ -989,7 +988,7 @@ body {
   flex-direction: column;
   gap: 6px;
   padding: 9px 10px 10px;
-  border-radius: 18px;
+  border-radius: var(--r-card);
   background: var(--card);
   border: 1px solid color-mix(in srgb, var(--c) 24%, rgba(255, 255, 255, 0.03));
   box-shadow: inset 0 0 24px -15px var(--c);
@@ -1028,7 +1027,7 @@ body {
 }
 
 .wmini-head > b {
-  font: 600 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   white-space: nowrap;
 }
 
@@ -1052,7 +1051,7 @@ body {
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: var(--dim-4);
+  color: var(--ink-3);
   display: grid;
   place-items: center;
   cursor: default;
@@ -1060,7 +1059,7 @@ body {
 }
 
 .wmini:hover .wmini-expand {
-  color: var(--dim-2);
+  color: var(--ink-2);
 }
 
 .wmini-expand:hover {
@@ -1081,7 +1080,7 @@ body {
   min-width: 70px;
   justify-content: center;
   padding: 5px 12px;
-  font-size: 11.5px;
+  font-size: var(--t-meta);
   white-space: nowrap;
 }
 
@@ -1092,7 +1091,7 @@ body {
   width: 100%;
   height: 26px;
   padding: 0 10px;
-  font-size: 11.5px;
+  font-size: var(--t-meta);
 }
 
 .wmini-list {
@@ -1106,8 +1105,8 @@ body {
 
 .wmini-none {
   padding: 4px 5px;
-  font: 400 11.5px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
 }
 
 /* Every widget switched off in Settings. */
@@ -1118,24 +1117,24 @@ body {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  border-radius: 18px;
+  border-radius: var(--r-card);
   background: var(--card);
   border: 1px solid var(--hairline);
   text-align: center;
 }
 
 .shelf-empty .title {
-  font-size: 13px;
+  font-size: var(--t-body);
 }
 
 .shelf-empty .sub {
-  font-size: 12px;
+  font-size: var(--t-body);
 }
 
 .shelf-empty .link-btn {
   margin-top: 6px;
   padding: 2px 6px;
-  color: var(--dim);
+  color: var(--ink-2);
 }
 
 .shelf-empty .link-btn:hover {
@@ -1191,7 +1190,7 @@ body {
 }
 
 .fc-head > b {
-  font: 600 12.5px var(--font);
+  font: 600 var(--t-body) var(--font);
   white-space: nowrap;
 }
 
@@ -1202,10 +1201,10 @@ body {
   gap: 3px;
   padding: 0 9px 0 5px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: rgba(255, 255, 255, 0.09);
-  color: var(--ink-2);
-  font: 500 11px var(--font);
+  color: var(--ink);
+  font: 400 var(--t-meta) var(--font);
   cursor: default;
   transition: background 0.12s ease-out, transform 0.08s ease-out;
 }
@@ -1226,8 +1225,8 @@ body {
 
 .fc-aside {
   margin-left: auto;
-  font: 400 11px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
   white-space: nowrap;
 }
 
@@ -1262,7 +1261,7 @@ body {
 
 .fc-add .btn {
   padding: 6px 12px;
-  font-size: 12px;
+  font-size: var(--t-body);
 }
 
 .fc-select {
@@ -1270,7 +1269,7 @@ body {
   height: 28px;
   padding: 0 22px 0 11px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   /* The browser's own arrow is dropped for a small one drawn here, and the list it opens
      is told to be dark: left alone it comes up white, with white text on it. */
   appearance: none;
@@ -1278,13 +1277,13 @@ body {
   color-scheme: dark;
   background-color: rgba(255, 255, 255, 0.06);
   background-image:
-    linear-gradient(45deg, transparent 50%, var(--dim-2) 50%),
-    linear-gradient(135deg, var(--dim-2) 50%, transparent 50%);
+    linear-gradient(45deg, transparent 50%, var(--ink-2) 50%),
+    linear-gradient(135deg, var(--ink-2) 50%, transparent 50%);
   background-position: calc(100% - 13px) 50%, calc(100% - 9px) 50%;
   background-size: 4px 4px, 4px 4px;
   background-repeat: no-repeat;
   color: var(--ink);
-  font: 400 12px var(--font);
+  font: 400 var(--t-body) var(--font);
   outline: none;
   cursor: default;
   transition: border-color 0.12s ease-out, background-color 0.12s ease-out;
@@ -1312,8 +1311,8 @@ body {
 
 .fc-note {
   flex: 0 0 auto;
-  font: 400 10.5px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1321,10 +1320,10 @@ body {
 
 .fc-label {
   flex: 0 0 auto;
-  font: 600 9.5px var(--font);
+  font: 600 var(--t-meta) var(--font);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--dim-3);
+  color: var(--ink-3);
 }
 
 /* A line with a box to tick, in either size. The box and the words are one button. */
@@ -1346,7 +1345,7 @@ body {
   gap: 8px;
   padding: 5px 6px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--r-ctl);
   background: transparent;
   color: inherit;
   text-align: left;
@@ -1363,7 +1362,7 @@ body {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 1.5px solid var(--dim-3);
+  border: 1.5px solid var(--ink-3);
   display: grid;
   place-items: center;
   color: var(--on-light);
@@ -1371,11 +1370,11 @@ body {
 }
 
 .check.square {
-  border-radius: 4px;
+  border-radius: var(--r-xs);
 }
 
 .check-main:hover .check {
-  border-color: var(--dim);
+  border-color: var(--ink-2);
 }
 
 .check-row.done .check {
@@ -1385,9 +1384,9 @@ body {
 
 .check-row.done .gh-row-title,
 .check-row.done .row-edit {
-  color: var(--dim-3);
+  color: var(--ink-3);
   text-decoration: line-through;
-  text-decoration-color: var(--dim-4);
+  text-decoration-color: var(--ink-3);
 }
 
 .row-x {
@@ -1398,7 +1397,7 @@ body {
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: var(--dim-4);
+  color: var(--ink-3);
   display: grid;
   place-items: center;
   cursor: default;
@@ -1421,10 +1420,10 @@ body {
   height: 22px;
   padding: 0 10px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: var(--gh-plate);
   color: var(--gh-text);
-  font: 500 10.5px var(--font);
+  font: 400 var(--t-meta) var(--font);
   white-space: nowrap;
   cursor: default;
   transition: background 0.12s ease-out, color 0.12s ease-out, transform 0.08s ease-out;
@@ -1458,10 +1457,10 @@ body {
   resize: none;
   padding: 9px 11px;
   border: 1px solid var(--gh-edge);
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: var(--card-flat);
   color: var(--gh-text);
-  font: 400 12.5px/1.5 var(--font);
+  font: 400 var(--t-body)/1.5 var(--font);
   outline: none;
   user-select: text;
   scrollbar-width: thin;
@@ -1494,7 +1493,7 @@ html.vt-back::view-transition-group(*) {
    round below, and what it holds is cut at its edge and never stretched. */
 ::view-transition-group(island) {
   overflow: clip;
-  border-radius: 0 0 22px 22px;
+  border-radius: 0 0 var(--r-island) var(--r-island);
   background: #000;
 }
 
@@ -1507,18 +1506,18 @@ html.vt-back::view-transition-group(*) {
 }
 
 :root[data-dock="bottom"]::view-transition-group(island) {
-  border-radius: 22px 22px 0 0;
+  border-radius: var(--r-island) var(--r-island) 0 0;
 }
 /* The snapshots stay top-aligned (object-position 50% 0, above) on the bottom
    too: what is in the island hangs from its top whichever edge it stands on.
    On a side they keep to its top as well, and to the edge it hangs from. */
 
 :root[data-dock="left"]::view-transition-group(island) {
-  border-radius: 0 22px 22px 0;
+  border-radius: 0 var(--r-island) var(--r-island) 0;
 }
 
 :root[data-dock="right"]::view-transition-group(island) {
-  border-radius: 22px 0 0 22px;
+  border-radius: var(--r-island) 0 0 var(--r-island);
 }
 
 :root[data-dock="left"]::view-transition-old(island),
@@ -1545,7 +1544,7 @@ html.vt-back::view-transition-group(*) {
    in as the box opens over it. */
 ::view-transition-group(w-card) {
   overflow: clip;
-  border-radius: 20px;
+  border-radius: var(--r-card);
   background: #141518;
 }
 
@@ -1626,7 +1625,7 @@ html.vt-back::view-transition-group(*) {
 .card {
   position: relative;
   height: 100%;
-  border-radius: 20px;
+  border-radius: var(--r-card);
   background: var(--card);
   border: 1px solid var(--hairline);
   overflow: hidden;
@@ -1659,10 +1658,10 @@ html.vt-back::view-transition-group(*) {
 /* ── Buttons ────────────────────────────────────────────────────────────── */
 
 .btn {
-  font: 500 12.5px var(--font);
+  font: 600 var(--t-body) var(--font);
   padding: 7px 13px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   cursor: default;
   display: inline-flex;
   align-items: center;
@@ -1681,7 +1680,7 @@ html.vt-back::view-transition-group(*) {
 
 .btn.secondary {
   background: rgba(255, 255, 255, 0.09);
-  color: var(--ink-2);
+  color: var(--ink);
 }
 
 .btn.secondary:hover {
@@ -1689,9 +1688,9 @@ html.vt-back::view-transition-group(*) {
 }
 
 .btn .kbd {
-  font-size: 10.5px;
+  font-size: var(--t-meta);
   padding: 0 4px;
-  border-radius: 4px;
+  border-radius: var(--r-xs);
   opacity: 0.55;
 }
 
@@ -1706,7 +1705,7 @@ html.vt-back::view-transition-group(*) {
 .link-btn {
   border: 0;
   background: transparent;
-  font: 500 11px var(--font);
+  font: 400 var(--t-meta) var(--font);
   cursor: default;
 }
 
@@ -1716,7 +1715,7 @@ html.vt-back::view-transition-group(*) {
   border: 0;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.07);
-  color: var(--dim-4);
+  color: var(--ink-3);
   display: grid;
   place-items: center;
   cursor: default;
@@ -1754,7 +1753,7 @@ html.vt-back::view-transition-group(*) {
 }
 
 .who .name {
-  font: 600 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
@@ -1762,14 +1761,14 @@ html.vt-back::view-transition-group(*) {
 }
 
 .who .tool {
-  font: 400 11px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-2);
   white-space: nowrap;
 }
 
 .who .count {
-  font: 400 11px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
   margin-left: auto;
   flex: 0 0 auto;
 }
@@ -1798,7 +1797,7 @@ html.vt-back::view-transition-group(*) {
 .pill {
   position: relative;
   height: 28px;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: var(--card-flat);
   border: 1px solid rgba(255, 255, 255, 0.14);
   display: flex;
@@ -1817,8 +1816,8 @@ html.vt-back::view-transition-group(*) {
   left: 0;
   right: 0;
   text-align: center;
-  font: 600 10px var(--font);
-  color: var(--dim-3);
+  font: 600 var(--t-meta) var(--font);
+  color: var(--ink-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1910,7 +1909,7 @@ html.vt-back::view-transition-group(*) {
 .hb-who .name {
   flex: 0 0 auto;
   max-width: 100%;
-  font: 600 12.5px var(--font);
+  font: 600 var(--t-body) var(--font);
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
@@ -1919,8 +1918,8 @@ html.vt-back::view-transition-group(*) {
 
 .hb-who .words {
   flex: 0 0 auto;
-  font: 500 10.5px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-2);
   white-space: nowrap;
   transition: color 0.3s ease-out;
 }
@@ -1928,8 +1927,8 @@ html.vt-back::view-transition-group(*) {
 .hb-doing {
   max-width: 100%;
   margin-top: 3px;
-  font: 400 11px/14px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-meta)/14px var(--font);
+  color: var(--ink-2);
   text-align: center;
   /* One line as a rule; a long command gets a second before it is cut. */
   display: -webkit-box;
@@ -1948,7 +1947,7 @@ html.vt-back::view-transition-group(*) {
 
 .hb-actions .btn {
   padding: 5px 14px;
-  font-size: 12px;
+  font-size: var(--t-body);
   animation: rise-in 0.3s cubic-bezier(0.3, 1.2, 0.4, 1) both;
 }
 
@@ -1987,17 +1986,17 @@ html.vt-back::view-transition-group(*) {
 }
 
 .lane-h {
-  font: 600 9px var(--font);
+  font: 600 var(--t-meta) var(--font);
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--dim-3);
+  color: var(--ink-3);
   white-space: nowrap;
   padding-left: 3px;
 }
 
 .lane-h i {
   font-style: normal;
-  color: var(--dim);
+  color: var(--ink-2);
 }
 
 .lane-bots {
@@ -2011,7 +2010,7 @@ html.vt-back::view-transition-group(*) {
   height: 52px;
   padding: 14px 0 0;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--r-ctl);
   background: transparent;
   display: flex;
   flex-direction: column;
@@ -2097,8 +2096,8 @@ html.vt-back::view-transition-group(*) {
 }
 
 .kids small {
-  font: 600 7.5px/6px var(--font);
-  color: var(--dim-2);
+  font: 600 var(--t-badge)/6px var(--font);
+  color: var(--ink-2);
 }
 
 /* "+N", the sessions that have no room in the lanes. Its class is its own:
@@ -2112,8 +2111,8 @@ html.vt-back::view-transition-group(*) {
   margin: 12px 0 0 6px;
   padding: 0 6px;
   border: 0;
-  border-radius: 999px;
-  font: 600 10.5px var(--font);
+  border-radius: var(--r-chip);
+  font: 600 var(--t-meta) var(--font);
   color: var(--c);
   background: var(--tint);
   cursor: default;
@@ -2149,14 +2148,14 @@ html.vt-back::view-transition-group(*) {
   align-items: center;
   gap: 6px;
   min-width: 0;
-  font: 400 11px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-2);
 }
 
 .hf-who b {
   flex: 0 1 auto;
   min-width: 0;
-  font: 600 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
@@ -2167,7 +2166,7 @@ html.vt-back::view-transition-group(*) {
 .gh-row-title em {
   flex: 0 0 auto;
   font-style: normal;
-  color: var(--dim-3);
+  color: var(--ink-3);
   margin-left: -2px;
 }
 
@@ -2181,8 +2180,8 @@ html.vt-back::view-transition-group(*) {
 }
 
 .hf-doing {
-  font: 400 11px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2191,7 +2190,7 @@ html.vt-back::view-transition-group(*) {
 .hs-foot.quiet .hf-doing {
   white-space: normal;
   line-height: 1.3;
-  color: var(--dim-4);
+  color: var(--ink-3);
 }
 
 .hs-empty {
@@ -2207,24 +2206,24 @@ html.vt-back::view-transition-group(*) {
 }
 
 .hs-empty .title {
-  font-size: 14px;
+  font-size: var(--t-label);
 }
 
 .hs-empty .sub {
-  font-size: 12px;
+  font-size: var(--t-body);
   line-height: 1.5;
 }
 
 .hs-empty .code {
   display: inline;
   padding: 1px 6px;
-  border-radius: 6px;
+  border-radius: var(--r-ctl);
 }
 
 .hs-empty .btn {
   margin-top: 6px;
   padding: 6px 13px;
-  font-size: 12px;
+  font-size: var(--t-body);
 }
 
 /* Behind "+N": project, state, how long. */
@@ -2240,7 +2239,7 @@ html.vt-back::view-transition-group(*) {
   gap: 1px;
   padding: 5px;
   overflow-y: auto;
-  border-radius: 13px;
+  border-radius: var(--r-card);
   background: #1a1c20;
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
@@ -2284,14 +2283,14 @@ html.vt-back::view-transition-group(*) {
 .res-head b {
   flex: 0 0 auto;
   min-width: 24px;
-  font: 600 10.5px var(--font);
-  color: var(--dim);
+  font: 600 var(--t-meta) var(--font);
+  color: var(--ink-2);
 }
 
 .res-head svg {
   flex: 0 0 auto;
   margin-right: -1px;
-  color: var(--dim-3);
+  color: var(--ink-3);
 }
 
 /* The machine: a line each — what it is, how full, and the figure. */
@@ -2309,9 +2308,9 @@ html.vt-back::view-transition-group(*) {
 .res-value {
   flex: 0 0 auto;
   margin-left: auto;
-  font: 600 10.5px var(--font);
+  font: 600 var(--t-meta) var(--font);
   font-variant-numeric: tabular-nums;
-  color: var(--ink-2);
+  color: var(--ink);
   text-align: right;
   white-space: nowrap;
 }
@@ -2336,13 +2335,13 @@ html.vt-back::view-transition-group(*) {
 }
 
 .res-value.blank {
-  color: var(--dim-4);
+  color: var(--ink-3);
 }
 
 .res-sub {
   min-width: 0;
-  font: 400 9.5px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2351,7 +2350,7 @@ html.vt-back::view-transition-group(*) {
 
 .res-bar {
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--r-chip);
   background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
@@ -2359,7 +2358,7 @@ html.vt-back::view-transition-group(*) {
 .res-bar i {
   display: block;
   height: 100%;
-  border-radius: 2px;
+  border-radius: var(--r-chip);
   background: rgba(241, 242, 244, 0.6);
   transition: width 0.5s cubic-bezier(0.3, 1.2, 0.4, 1), background 0.3s ease-out;
 }
@@ -2414,13 +2413,13 @@ html.vt-back::view-transition-group(*) {
 }
 
 .res-none b {
-  font: 600 11.5px var(--font);
-  color: var(--ink-2);
+  font: 600 var(--t-meta) var(--font);
+  color: var(--ink);
 }
 
 .res-none span {
-  font: 400 10.5px/1.35 var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta)/1.35 var(--font);
+  color: var(--ink-3);
 }
 
 .res-age {
@@ -2429,8 +2428,8 @@ html.vt-back::view-transition-group(*) {
   margin-top: auto;
   display: flex;
   min-width: 0;
-  font: 400 10px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
   white-space: nowrap;
   transition: color 0.3s ease-out;
 }
@@ -2480,21 +2479,21 @@ html.vt-back::view-transition-group(*) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--dim-3);
+  color: var(--ink-3);
 }
 
 .hb-who .model {
-  font: 400 9.5px/11px var(--font);
+  font: 400 var(--t-meta)/11px var(--font);
 }
 
 .hf-who .model {
   flex: 0 0 auto;
   padding: 0 5px;
-  border-radius: 999px;
-  font-size: 10px;
+  border-radius: var(--r-chip);
+  font-size: var(--t-meta);
   line-height: 15px;
   background: rgba(255, 255, 255, 0.06);
-  color: var(--dim-2);
+  color: var(--ink-2);
 }
 
 /* The lanes and the resources: at the top and bottom no box of their own, so
@@ -2620,16 +2619,16 @@ html.vt-back::view-transition-group(*) {
 /* ── Generic text blocks ────────────────────────────────────────────────── */
 
 .title {
-  font: 600 15px var(--font);
+  font: 600 var(--t-label) var(--font);
 }
 
 .sub {
-  font: 400 13px var(--font);
-  color: var(--dim);
+  font: 400 var(--t-body) var(--font);
+  color: var(--ink-2);
 }
 
 .detail {
-  font: 400 12px var(--font);
+  font: 400 var(--t-body) var(--font);
   color: var(--red-text);
 }
 
@@ -2637,21 +2636,21 @@ html.vt-back::view-transition-group(*) {
   display: flex;
   align-items: center;
   gap: 7px;
-  font: 400 12px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-body) var(--font);
+  color: var(--ink-2);
 }
 
 .who-row .n {
-  font: 600 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   color: var(--ink);
 }
 
 .code {
-  font: 400 12px var(--mono);
+  font: 400 var(--t-body) var(--mono);
   color: #e8e9ec;
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
+  border-radius: var(--r-ctl);
   padding: 5px 10px;
   max-width: 100%;
   white-space: nowrap;
@@ -2674,7 +2673,7 @@ html.vt-back::view-transition-group(*) {
 
 /* In place of Allow and Deny, for a request too long to show here. */
 .too-long {
-  font-size: 12px;
+  font-size: var(--t-body);
   color: var(--amber);
 }
 
@@ -2697,8 +2696,8 @@ html.vt-back::view-transition-group(*) {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font: 400 11px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-2);
 }
 
 /* ── Settings view (in-island) ──────────────────────────────────────────── */
@@ -2713,7 +2712,7 @@ html.vt-back::view-transition-group(*) {
   display: flex;
   align-items: center;
   gap: 10px;
-  font: 400 12.5px var(--font);
+  font: 400 var(--t-body) var(--font);
   color: #c5c8cd;
 }
 
@@ -2721,7 +2720,7 @@ html.vt-back::view-transition-group(*) {
   position: relative;
   width: 32px;
   height: 18px;
-  border-radius: 9px;
+  border-radius: var(--r-ctl);
   background: rgba(255, 255, 255, 0.15);
   flex: 0 0 32px;
   transition: background 0.18s;
@@ -2753,7 +2752,7 @@ input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   height: 3px;
-  border-radius: 2px;
+  border-radius: var(--r-chip);
   background: rgba(255, 255, 255, 0.2);
   width: 72px;
 }
@@ -2773,12 +2772,12 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .seg button {
-  font: 400 11px var(--font);
+  font: 400 var(--t-meta) var(--font);
   padding: 3px 7px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: transparent;
-  color: var(--dim-3);
+  color: var(--ink-3);
   cursor: default;
 }
 
@@ -2839,32 +2838,32 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .ss-title {
-  font: 600 13px/16px var(--font);
+  font: 600 var(--t-body)/16px var(--font);
 }
 
 .ss-conn {
   display: flex;
   align-items: center;
   gap: 6px;
-  font: 400 11px/14px var(--font);
-  color: var(--dim);
+  font: 400 var(--t-meta)/14px var(--font);
+  color: var(--ink-2);
 }
 
 .ss-card {
   flex: 0 0 auto;
   margin: 0;
   padding: 12px;
-  border-radius: 16px;
+  border-radius: var(--r-card);
   background: var(--card);
   border: 1px solid var(--ss-hair);
 }
 
 .ss-label {
   margin: 0 0 8px;
-  font: 600 11px/14px var(--font);
+  font: 600 var(--t-meta)/14px var(--font);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--dim-2);
+  color: var(--ink-2);
 }
 
 .ss-row {
@@ -2881,7 +2880,7 @@ input[type="range"]::-webkit-slider-thumb {
   place-items: center;
   padding: 0;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: var(--ss-plate);
   color: var(--ink);
 }
@@ -2913,7 +2912,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .settings-side input[type="range"].ss-volume::-webkit-slider-runnable-track {
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--r-chip);
   background: linear-gradient(to right, var(--ink) var(--p), rgba(255, 255, 255, 0.16) var(--p));
 }
 
@@ -2932,7 +2931,7 @@ input[type="range"]::-webkit-slider-thumb {
   flex: 0 0 auto;
   min-width: 46px;
   text-align: right;
-  font: 600 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   font-variant-numeric: tabular-nums;
 }
 
@@ -2945,7 +2944,7 @@ input[type="range"]::-webkit-slider-thumb {
   grid-template-columns: repeat(6, 1fr);
   gap: 2px;
   padding: 3px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: #0b0c0e;
 }
 
@@ -2953,10 +2952,10 @@ input[type="range"]::-webkit-slider-thumb {
   height: 30px;
   padding: 0;
   border: 0;
-  border-radius: 9px;
+  border-radius: var(--r-ctl);
   background: transparent;
-  color: var(--dim);
-  font: 600 12px var(--font);
+  color: var(--ink-2);
+  font: 600 var(--t-body) var(--font);
 }
 
 .ss-opt.on {
@@ -2967,8 +2966,8 @@ input[type="range"]::-webkit-slider-thumb {
 
 .ss-note {
   margin: 6px 0 0;
-  font: 400 11px/15px var(--font);
-  color: var(--dim);
+  font: 400 var(--t-meta)/15px var(--font);
+  color: var(--ink-2);
 }
 
 .ss-all {
@@ -2976,10 +2975,10 @@ input[type="range"]::-webkit-slider-thumb {
   height: 32px;
   padding: 0 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 11px;
+  border-radius: var(--r-ctl);
   background: transparent;
   color: var(--ink);
-  font: 600 12px var(--font);
+  font: 600 var(--t-body) var(--font);
 }
 
 /* ── Utility ────────────────────────────────────────────────────────────── */
@@ -3015,13 +3014,13 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .int-head b {
-  font: 600 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   color: var(--ink);
 }
 
 .int-head > span {
-  font: 400 11px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-2);
   white-space: nowrap;
 }
 
@@ -3030,8 +3029,8 @@ input[type="range"]::-webkit-slider-thumb {
   align-items: center;
   gap: 5px;
   padding-top: 4px;
-  font: 400 11px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
 }
 
 .int-actions {
@@ -3042,14 +3041,14 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .int-ago {
-  font: 400 10px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
   flex: 0 0 auto;
 }
 
 .int-empty {
-  font: 400 11px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
   padding-left: 8px;
 }
 
@@ -3109,7 +3108,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .gh-side-who b {
-  font: 600 14px var(--font);
+  font: 600 var(--t-label) var(--font);
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
@@ -3117,8 +3116,8 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .gh-side-who span {
-  font: 400 12px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-body) var(--font);
+  color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3144,7 +3143,7 @@ input[type="range"]::-webkit-slider-thumb {
   margin: 7px 8px 7px 0;
   display: flex;
   flex-direction: column;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   background: var(--card-flat);
   border: 1px solid var(--gh-edge);
   overflow: hidden;
@@ -3173,7 +3172,7 @@ input[type="range"]::-webkit-slider-thumb {
   align-self: flex-end;
   height: 22px;
   padding: 0 10px 0 6px;
-  border-radius: 7px 7px 0 0;
+  border-radius: var(--r-ctl) var(--r-ctl) 0 0;
   background:
     linear-gradient(color-mix(in srgb, var(--accent) 13%, transparent) 0 0),
     rgba(255, 255, 255, 0.06);
@@ -3185,7 +3184,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* A file's name, in the face its code is set in — as an editor's tab has it. */
 .gh-tab b.file {
-  font: 400 11px var(--mono);
+  font: 400 var(--t-meta) var(--mono);
 }
 
 .gh-head .gh-icon {
@@ -3194,7 +3193,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .gh-tab b {
-  font: 600 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
@@ -3223,8 +3222,8 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* Where it sits, on the right, like the file's path. */
 .gh-sub {
-  font: 400 11px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3235,7 +3234,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* A file's path, as an editor writes it. */
 .gh-sub.path {
-  font: 400 10.5px var(--mono);
+  font: 400 var(--t-meta) var(--mono);
 }
 
 .gh-icon {
@@ -3244,7 +3243,7 @@ input[type="range"]::-webkit-slider-thumb {
   border: 0;
   border-radius: 50%;
   background: var(--gh-plate);
-  color: var(--dim-2);
+  color: var(--ink-2);
   display: grid;
   place-items: center;
   flex: 0 0 auto;
@@ -3345,7 +3344,7 @@ input[type="range"]::-webkit-slider-thumb {
   min-width: 0;
   padding: 4px 8px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--r-ctl);
   background: transparent;
   text-align: left;
   cursor: default;
@@ -3364,7 +3363,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* The title keeps its room; the repository gives way first. */
 .gh-row-title {
-  font: 500 11.5px var(--font);
+  font: 400 var(--t-meta) var(--font);
   color: var(--gh-text);
   white-space: nowrap;
   overflow: hidden;
@@ -3374,8 +3373,8 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .gh-row-where {
-  font: 400 10.5px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3430,7 +3429,7 @@ input[type="range"]::-webkit-slider-thumb {
 /* The lines added and removed. */
 .gh-pm {
   flex: 0 0 auto;
-  font: 500 10.5px var(--mono);
+  font: 400 var(--t-meta) var(--mono);
   white-space: nowrap;
 }
 
@@ -3444,10 +3443,10 @@ input[type="range"]::-webkit-slider-thumb {
   min-width: 17px;
   height: 13px;
   padding: 0 3px;
-  border-radius: 3.5px;
+  border-radius: var(--r-xs);
   background: var(--c);
   color: #fff;
-  font: 700 7.5px/1 var(--font);
+  font: 600 var(--t-badge)/1 var(--font);
   font-style: normal;
   white-space: nowrap;
   /* Centred on the line's box, a badge reads as standing on the name's
@@ -3471,8 +3470,8 @@ input[type="range"]::-webkit-slider-thumb {
    the rest (see statusWord). */
 .gh-file-status {
   flex: 0 0 auto;
-  font: 500 10px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
   white-space: nowrap;
 }
 
@@ -3513,7 +3512,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .gh-diff {
-  font: 400 10.5px/16px var(--mono);
+  font: 400 var(--t-meta)/16px var(--mono);
   color: var(--code);
   user-select: text;
 }
@@ -3528,7 +3527,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .gh-diff-line .n {
   text-align: right;
-  color: var(--dim-5);
+  color: var(--ink-3);
   user-select: none;
 }
 
@@ -3577,7 +3576,7 @@ input[type="range"]::-webkit-slider-thumb {
 /* Lines skipped: a quiet break, with where the next ones sit. */
 .gh-diff-line.hunk {
   margin: 4px 0;
-  color: var(--dim-4);
+  color: var(--ink-3);
 }
 
 .gh-diff-line.hunk .t {
@@ -3643,23 +3642,23 @@ input[type="range"]::-webkit-slider-thumb {
 .q-opt.other {
   background: transparent;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
-  color: var(--dim);
-}
-
-.q-opt.other:hover {
   color: var(--ink-2);
 }
 
+.q-opt.other:hover {
+  color: var(--ink);
+}
+
 .q-chip {
-  font: 500 10.5px var(--font);
+  font: 400 var(--t-meta) var(--font);
   color: var(--cyan);
   padding: 1px 6px;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: color-mix(in srgb, var(--cyan) 14%, transparent);
 }
 
 .q-count {
-  color: var(--dim-3);
+  color: var(--ink-3);
 }
 
 /* Under the options: what the one under the mouse means, and the ways out. */
@@ -3671,8 +3670,8 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .q-hint {
-  font: 400 11.5px var(--font);
-  color: var(--dim);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-2);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3681,12 +3680,12 @@ input[type="range"]::-webkit-slider-thumb {
 
 .q-link {
   flex: 0 0 auto;
-  color: var(--dim-3);
+  color: var(--ink-3);
   white-space: nowrap;
 }
 
 .q-link:hover {
-  color: var(--ink-2);
+  color: var(--ink);
 }
 
 /* A session at work is its card: the whole of it opens the session panel. */
@@ -3695,7 +3694,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .who .gh-pm.count {
-  font-size: 10.5px;
+  font-size: var(--t-meta);
 }
 
 /* The line that says what is asked never gives its height to the diff under it. */
@@ -3711,7 +3710,7 @@ input[type="range"]::-webkit-slider-thumb {
   min-height: 0;
   overflow-y: auto;
   margin: 2px 0;
-  border-radius: 10px;
+  border-radius: var(--r-ctl);
   border: 1px solid var(--gh-edge);
   background: var(--card-flat);
   scrollbar-width: thin;
@@ -3765,10 +3764,10 @@ input[type="range"]::-webkit-slider-thumb {
   height: 17px;
   padding: 0 8px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: var(--gh-plate);
   color: var(--gh-text);
-  font: 500 10.5px var(--font);
+  font: 400 var(--t-meta) var(--font);
   cursor: default;
 }
 
@@ -3805,7 +3804,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .sess-talk p {
-  font: 400 12.5px/1.45 var(--font);
+  font: 400 var(--t-body)/1.45 var(--font);
   color: var(--gh-text);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -3815,10 +3814,10 @@ input[type="range"]::-webkit-slider-thumb {
   align-self: flex-end;
   max-width: 85%;
   padding: 5px 10px;
-  border-radius: 11px;
+  border-radius: var(--r-ctl);
   background: var(--gh-plate);
-  font: 400 12px/1.4 var(--font);
-  color: var(--ink-2);
+  font: 400 var(--t-body)/1.4 var(--font);
+  color: var(--ink);
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -3829,7 +3828,7 @@ input[type="range"]::-webkit-slider-thumb {
 /* What Claude said, on the finished card: the whole of it is in the session
    panel, here it is two lines and the buttons keep their place. */
 .title.said {
-  font: 500 13px/1.35 var(--font);
+  font: 600 var(--t-body)/1.35 var(--font);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -3845,15 +3844,15 @@ input[type="range"]::-webkit-slider-thumb {
   height: 28px;
   padding: 0 11px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: rgba(255, 255, 255, 0.06);
   color: var(--ink);
-  font: 400 12.5px var(--font);
+  font: 400 var(--t-body) var(--font);
   outline: none;
 }
 
 .island-field::placeholder {
-  color: var(--dim-3);
+  color: var(--ink-3);
 }
 
 .island-field:focus {
@@ -3881,7 +3880,7 @@ input[type="range"]::-webkit-slider-thumb {
   min-height: 30px;
   padding: 3px 3px 3px 12px;
   border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 16px;
+  border-radius: var(--r-card);
   background: rgba(255, 255, 255, 0.06);
   transition: border-color 0.12s ease-out, background 0.12s ease-out;
 }
@@ -3903,7 +3902,7 @@ input[type="range"]::-webkit-slider-thumb {
   resize: none;
   background: transparent;
   color: var(--ink);
-  font: 400 12.5px/17px var(--font);
+  font: 400 var(--t-body)/17px var(--font);
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
 }
@@ -3916,7 +3915,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .rb-field::placeholder {
-  color: var(--dim-3);
+  color: var(--ink-3);
 }
 
 .rb-status {
@@ -3926,8 +3925,8 @@ input[type="range"]::-webkit-slider-thumb {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font: 400 12px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-body) var(--font);
+  color: var(--ink-2);
 }
 
 /* Sending, or at work on it: three dots that breathe after the words. */
@@ -3979,7 +3978,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .rb-send:disabled {
   background: rgba(255, 255, 255, 0.1);
-  color: var(--dim-3);
+  color: var(--ink-3);
   transform: none;
 }
 
@@ -3997,7 +3996,7 @@ input[type="range"]::-webkit-slider-thumb {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font: 400 11px var(--font);
+  font: 400 var(--t-meta) var(--font);
   color: #ff8f8f;
 }
 
@@ -4019,7 +4018,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .session-view.large .rb-field {
   height: 23px;
-  font-size: 13px;
+  font-size: var(--t-body);
   line-height: 18px;
 }
 
@@ -4054,7 +4053,7 @@ input[type="range"]::-webkit-slider-thumb {
   min-height: 36px;
   padding: 4px 12px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--r-ctl);
   background: rgba(255, 255, 255, 0.07);
   text-align: left;
   cursor: default;
@@ -4066,14 +4065,14 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .q-row > b {
-  font: 600 12.5px var(--font);
+  font: 600 var(--t-body) var(--font);
   color: var(--ink);
   max-width: 190px;
 }
 
 .q-row > span {
-  font: 400 11.5px/1.3 var(--font);
-  color: var(--dim);
+  font: 400 var(--t-meta)/1.3 var(--font);
+  color: var(--ink-2);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -4098,7 +4097,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .q-tail .btn {
   padding: 5px 11px;
-  font-size: 12px;
+  font-size: var(--t-body);
 }
 
 /* The question keeps its lines: it is the list that gives way, and scrolls. */
@@ -4111,7 +4110,7 @@ input[type="range"]::-webkit-slider-thumb {
 .q-skip {
   flex: 0 0 auto;
   padding: 5px 11px;
-  font-size: 12px;
+  font-size: var(--t-body);
 }
 
 /* Whose words these are, over a reply: Claude's, and how old. */
@@ -4120,12 +4119,12 @@ input[type="range"]::-webkit-slider-thumb {
   align-items: center;
   gap: 7px;
   margin-top: 2px;
-  font: 400 11px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
 }
 
 .sess-said b {
-  font: 600 11.5px var(--font);
+  font: 600 var(--t-meta) var(--font);
   color: var(--ink);
 }
 
@@ -4136,13 +4135,13 @@ input[type="range"]::-webkit-slider-thumb {
   display: flex;
   flex-direction: column;
   gap: 7px;
-  font: 400 12.5px/1.45 var(--font);
+  font: 400 var(--t-body)/1.45 var(--font);
   color: var(--gh-text);
   overflow-wrap: anywhere;
 }
 
 .session-view.large .md {
-  font-size: 13.5px;
+  font-size: var(--t-label);
 }
 
 .md p {
@@ -4156,7 +4155,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* The bold words an item of a list opens on: its name, a touch above the rest. */
 .md b.md-lead {
-  font-weight: 650;
+  font-weight: 600;
   color: #fff;
 }
 
@@ -4166,9 +4165,9 @@ input[type="range"]::-webkit-slider-thumb {
 .md-path {
   font: 400 0.9em var(--mono);
   padding: 1px 5px;
-  border-radius: 5px;
+  border-radius: var(--r-xs);
   background: rgba(255, 255, 255, 0.08);
-  color: var(--ink-2);
+  color: var(--ink);
   white-space: nowrap;
 }
 
@@ -4219,7 +4218,7 @@ input[type="range"]::-webkit-slider-thumb {
   place-items: center;
   overflow: hidden;
   white-space: nowrap;
-  font: 500 0.95em var(--font);
+  font: 400 0.95em var(--font);
   color: var(--red-text);
   animation: md-miss 0.18s ease-out;
 }
@@ -4229,9 +4228,9 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .md-link {
-  color: var(--ink-2);
+  color: var(--ink);
   text-decoration: underline;
-  text-decoration-color: var(--dim-3);
+  text-decoration-color: var(--ink-3);
   text-underline-offset: 2px;
 }
 
@@ -4246,7 +4245,7 @@ input[type="range"]::-webkit-slider-thumb {
 .md-h.h1 {
   margin-top: 0.7em;
   font-size: 1.3em;
-  font-weight: 650;
+  font-weight: 600;
   color: #fff;
   letter-spacing: -0.005em;
 }
@@ -4254,7 +4253,7 @@ input[type="range"]::-webkit-slider-thumb {
 .md-h.h2 {
   margin-top: 0.7em;
   font-size: 1.16em;
-  font-weight: 650;
+  font-weight: 600;
   color: #fff;
 }
 
@@ -4293,7 +4292,7 @@ input[type="range"]::-webkit-slider-thumb {
   flex: 0 0 auto;
   min-width: 10px;
   font-style: normal;
-  color: var(--dim-3);
+  color: var(--ink-3);
 }
 
 .md-item > span {
@@ -4302,7 +4301,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .md-code {
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   background: var(--card-flat);
   border: 1px solid var(--gh-edge);
   font: 400 0.92em/1.45 var(--mono);
@@ -4343,7 +4342,7 @@ input[type="range"]::-webkit-slider-thumb {
   gap: 5px;
   padding: 1px 0 1px 10px;
   border-left: 2px solid rgba(255, 255, 255, 0.16);
-  color: var(--dim);
+  color: var(--ink-2);
 }
 
 .md-quote b {
@@ -4362,7 +4361,7 @@ input[type="range"]::-webkit-slider-thumb {
   gap: 5px;
   padding: 7px 10px 8px 10px;
   border-left: 3px solid var(--c);
-  border-radius: 3px 8px 8px 3px;
+  border-radius: var(--r-xs) var(--r-ctl) var(--r-ctl) var(--r-xs);
   background: color-mix(in srgb, var(--c) 10%, transparent);
   color: #d6d9de;
 }
@@ -4399,7 +4398,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .md-callout-h b {
-  font: 650 0.94em/1.3 var(--font);
+  font: 600 0.94em/1.3 var(--font);
   color: inherit;
   letter-spacing: 0.01em;
 }
@@ -4410,10 +4409,10 @@ input[type="range"]::-webkit-slider-thumb {
   align-items: center;
   gap: 8px;
   margin-top: 2px;
-  font: 500 0.82em var(--font);
+  font: 400 0.82em var(--font);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--dim-3);
+  color: var(--ink-3);
 }
 
 .md-skip::before,
@@ -4436,10 +4435,10 @@ input[type="range"]::-webkit-slider-thumb {
   height: 22px;
   padding: 0 10px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: var(--gh-plate);
   font: 400 0.88em/22px var(--font);
-  color: var(--dim-2);
+  color: var(--ink-2);
   cursor: pointer;
   user-select: none;
   transition: background 0.12s ease-out;
@@ -4462,10 +4461,10 @@ input[type="range"]::-webkit-slider-thumb {
   height: 17px;
   padding: 0 8px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: var(--gh-plate);
   color: var(--gh-text);
-  font: 500 10.5px var(--font);
+  font: 400 var(--t-meta) var(--font);
   white-space: nowrap;
   cursor: default;
   transition: color 0.3s ease-out, background 0.3s ease-out;
@@ -4506,8 +4505,8 @@ input[type="range"]::-webkit-slider-thumb {
 
 .who-waiting {
   padding: 1px 6px;
-  border-radius: 999px;
-  font: 500 10.5px var(--font);
+  border-radius: var(--r-chip);
+  font: 400 var(--t-meta) var(--font);
   color: var(--amber);
   background: color-mix(in srgb, var(--amber) 14%, transparent);
 }
@@ -4542,12 +4541,12 @@ input[type="range"]::-webkit-slider-thumb {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  color: var(--dim);
+  color: var(--ink-2);
 }
 
 .now-line > b {
   flex: 0 0 auto;
-  font: 600 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   color: var(--ink);
 }
 
@@ -4556,16 +4555,16 @@ input[type="range"]::-webkit-slider-thumb {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--dim-2);
+  color: var(--ink-2);
 }
 
 /* A file or a command, as it is typed; Claude's words, as they are said. */
 .now-line > .at {
-  font: 400 10.5px var(--mono);
+  font: 400 var(--t-meta) var(--mono);
 }
 
 .now-line > .said {
-  font: 400 11.5px var(--font);
+  font: 400 var(--t-meta) var(--font);
 }
 
 .now-box {
@@ -4573,7 +4572,7 @@ input[type="range"]::-webkit-slider-thumb {
   min-height: 0;
   margin: 0 12px 0 108px;
   padding: 3px 0;
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   background: var(--card-flat);
   overflow: hidden;
 }
@@ -4591,8 +4590,8 @@ input[type="range"]::-webkit-slider-thumb {
 
 .now-words {
   padding: 0 9px;
-  font: 400 11px/16px var(--font);
-  color: var(--dim);
+  font: 400 var(--t-meta)/16px var(--font);
+  color: var(--ink-2);
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -4604,13 +4603,13 @@ input[type="range"]::-webkit-slider-thumb {
 .term-line {
   display: grid;
   grid-template-columns: 22px 1fr;
-  color: var(--dim);
+  color: var(--ink-2);
 }
 
 .term-line .p {
   text-align: right;
   padding-right: 4px;
-  color: var(--dim-4);
+  color: var(--ink-3);
   user-select: none;
 }
 
@@ -4622,7 +4621,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .term-line.cmd .t {
-  color: var(--ink-2);
+  color: var(--ink);
 }
 
 .step-preview.failed .term-line:not(.cmd) .t {
@@ -4657,8 +4656,8 @@ input[type="range"]::-webkit-slider-thumb {
 /* A word from Claude Code between two steps: a subagent, a notification. */
 .jr-note {
   padding: 0 4px;
-  font: 400 11px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
 }
 
 .jr-note.failed {
@@ -4679,12 +4678,12 @@ input[type="range"]::-webkit-slider-thumb {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  color: var(--dim);
+  color: var(--ink-2);
 }
 
 .jr-head > b {
   flex: 0 0 auto;
-  font: 600 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   color: var(--ink);
 }
 
@@ -4693,8 +4692,8 @@ input[type="range"]::-webkit-slider-thumb {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font: 400 10.5px var(--mono);
-  color: var(--dim-2);
+  font: 400 var(--t-meta) var(--mono);
+  color: var(--ink-2);
 }
 
 .jr-head > .grow {
@@ -4703,15 +4702,15 @@ input[type="range"]::-webkit-slider-thumb {
 
 .jr-time {
   flex: 0 0 auto;
-  font: 400 10px var(--font);
-  color: var(--dim-4);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
 }
 
 .jr-chip {
   flex: 0 0 auto;
   padding: 1px 6px;
-  border-radius: 999px;
-  font: 500 10px var(--font);
+  border-radius: var(--r-chip);
+  font: 400 var(--t-meta) var(--font);
   color: var(--c);
   background: color-mix(in srgb, var(--c) 14%, transparent);
 }
@@ -4719,7 +4718,7 @@ input[type="range"]::-webkit-slider-thumb {
 .jr-body {
   margin-top: 4px;
   padding: 4px 0;
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   border: 1px solid var(--gh-edge);
   background: var(--card);
   overflow: hidden;
@@ -4736,7 +4735,7 @@ input[type="range"]::-webkit-slider-thumb {
   gap: 7px;
   margin-top: 4px;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   border: 1px solid color-mix(in srgb, var(--cyan) 22%, transparent);
   background: color-mix(in srgb, var(--cyan) 6%, transparent);
 }
@@ -4748,8 +4747,8 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .jr-q-title {
-  font: 500 12px/1.35 var(--font);
-  color: var(--ink-2);
+  font: 600 var(--t-body)/1.35 var(--font);
+  color: var(--ink);
 }
 
 .jr-options {
@@ -4760,10 +4759,10 @@ input[type="range"]::-webkit-slider-thumb {
 
 .jr-option {
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   border: 1px solid var(--gh-edge);
-  font: 500 10.5px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
 }
 
 .jr-option.on {
@@ -4773,12 +4772,12 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .jr-option.typed {
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
 }
 
 .jr-waiting {
-  font: 400 11px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
 }
 
 /* ── How a session's states come and go ─────────────────────────────────────
@@ -4884,16 +4883,16 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .sess-rail .gh-side-who b {
-  font-size: 13px;
+  font-size: var(--t-body);
 }
 
 .session-view.large .sess-rail .gh-side-who b {
-  font-size: 14px;
+  font-size: var(--t-label);
 }
 
 /* A conversation's title gets a second line before it is cut. */
 .sess-rail .gh-side-who span {
-  font-size: 11.5px;
+  font-size: var(--t-meta);
   line-height: 1.25;
   white-space: normal;
   display: -webkit-box;
@@ -4920,8 +4919,8 @@ input[type="range"]::-webkit-slider-thumb {
 .sess-rail .gh-side-who .sess-name-model {
   flex: 0 0 auto;
   display: block;
-  font: 400 10px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
   white-space: nowrap;
 }
 
@@ -4956,8 +4955,8 @@ input[type="range"]::-webkit-slider-thumb {
   display: flex;
   align-items: center;
   min-width: 0;
-  border-radius: 7px;
-  color: var(--dim-2);
+  border-radius: var(--r-ctl);
+  color: var(--ink-2);
   cursor: default;
   outline: none;
   user-select: none;
@@ -4998,7 +4997,7 @@ input[type="range"]::-webkit-slider-thumb {
   flex: 0 0 auto;
   width: 3px;
   height: 12px;
-  border-radius: 2px;
+  border-radius: var(--r-chip);
   background: var(--c);
   opacity: 0.85;
 }
@@ -5006,14 +5005,14 @@ input[type="range"]::-webkit-slider-thumb {
 .sess-node b {
   flex: 1 1 auto;
   min-width: 0;
-  font: 500 11.5px var(--font);
+  font: 400 var(--t-meta) var(--font);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .session-view.large .sess-node b {
-  font-size: 12.5px;
+  font-size: var(--t-body);
 }
 
 /* The session in front, with one of its subagents on show. */
@@ -5038,8 +5037,8 @@ input[type="range"]::-webkit-slider-thumb {
   margin: 0 -2px;
   display: grid;
   place-items: center;
-  border-radius: 4px;
-  color: var(--dim-3);
+  border-radius: var(--r-xs);
+  color: var(--ink-3);
   transition: transform 0.2s cubic-bezier(0.3, 1.2, 0.4, 1), color 0.12s ease-out;
 }
 
@@ -5057,11 +5056,11 @@ input[type="range"]::-webkit-slider-thumb {
   min-width: 15px;
   height: 14px;
   padding: 0 4px;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: var(--gh-plate);
-  font: 600 9.5px/14px var(--font);
+  font: 600 var(--t-meta)/14px var(--font);
   text-align: center;
-  color: var(--dim-2);
+  color: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
 
@@ -5082,7 +5081,7 @@ input[type="range"]::-webkit-slider-thumb {
   position: relative;
   width: 18px;
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--r-chip);
   background: var(--gh-plate);
   overflow: hidden;
 }
@@ -5091,7 +5090,7 @@ input[type="range"]::-webkit-slider-thumb {
   display: block;
   height: 100%;
   min-width: 2px;
-  border-radius: 2px;
+  border-radius: var(--r-chip);
   background: var(--green-2);
 }
 
@@ -5123,8 +5122,8 @@ input[type="range"]::-webkit-slider-thumb {
   width: 17px;
   height: 17px;
   margin: 0 -2px;
-  border-radius: 5px;
-  color: var(--dim-2);
+  border-radius: var(--r-xs);
+  color: var(--ink-2);
   transition: background 0.12s ease-out, color 0.12s ease-out;
 }
 
@@ -5156,8 +5155,8 @@ input[type="range"]::-webkit-slider-thumb {
   flex: 0 0 auto;
   margin-top: -3px;
   padding: 0 7px 2px 24px;
-  font: 400 9.5px/12px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta)/12px var(--font);
+  color: var(--ink-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -5177,9 +5176,9 @@ input[type="range"]::-webkit-slider-thumb {
   height: 15px;
   margin: -2px 0 3px 22px;
   padding: 0 6px 0 5px;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: color-mix(in srgb, var(--purple) 16%, transparent);
-  font: 600 9.5px/15px var(--font);
+  font: 600 var(--t-meta)/15px var(--font);
   color: #c9adfb;
   white-space: nowrap;
   cursor: default;
@@ -5203,7 +5202,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .session-view.large .sess-decide {
   height: 17px;
-  font-size: 10.5px;
+  font-size: var(--t-meta);
   line-height: 17px;
 }
 
@@ -5254,13 +5253,13 @@ input[type="range"]::-webkit-slider-thumb {
   gap: 5px;
   height: 31px;
   padding: 0 7px 0 21px;
-  font: 400 11px var(--font);
+  font: 400 var(--t-meta) var(--font);
 }
 
 .session-view.large .sess-sub {
   height: 35px;
   padding-left: 24px;
-  font-size: 11.5px;
+  font-size: var(--t-meta);
 }
 
 /* The mark stands beside the first line. */
@@ -5301,15 +5300,15 @@ input[type="range"]::-webkit-slider-thumb {
 /* "<type> · <model>", cut as a whole when it is too long: the tooltip has all of it. */
 .sess-sub-meta {
   min-width: 0;
-  font-size: 9.5px;
-  color: var(--dim-3);
+  font-size: var(--t-meta);
+  color: var(--ink-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .session-view.large .sess-sub-meta {
-  font-size: 10.5px;
+  font-size: var(--t-meta);
 }
 
 .sess-sub-task {
@@ -5365,10 +5364,10 @@ input[type="range"]::-webkit-slider-thumb {
   min-width: 0;
   height: 17px;
   padding: 0 7px;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: rgba(255, 255, 255, 0.06);
-  font: 500 10px/17px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-meta)/17px var(--font);
+  color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -5383,7 +5382,7 @@ input[type="range"]::-webkit-slider-thumb {
 .sess-sub-needs {
   display: none;
   flex: 0 0 auto;
-  font: 600 9.5px var(--font);
+  font: 600 var(--t-meta) var(--font);
   color: var(--amber);
   white-space: nowrap;
 }
@@ -5421,10 +5420,10 @@ input[type="range"]::-webkit-slider-thumb {
   height: 19px;
   padding: 0 8px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: transparent;
-  color: var(--dim-2);
-  font: 500 10.5px var(--font);
+  color: var(--ink-2);
+  font: 400 var(--t-meta) var(--font);
   white-space: nowrap;
   cursor: default;
   transition: background 0.12s ease-out, color 0.12s ease-out;
@@ -5432,7 +5431,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .sess-f b {
   font-weight: 600;
-  color: var(--dim-3);
+  color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
 
@@ -5481,7 +5480,7 @@ input[type="range"]::-webkit-slider-thumb {
 .session-view.large .sess-f {
   height: 22px;
   padding: 0 10px;
-  font-size: 11.5px;
+  font-size: var(--t-meta);
 }
 
 /* ── The session panel: the journal ─────────────────────────────────────── */
@@ -5523,8 +5522,8 @@ input[type="range"]::-webkit-slider-thumb {
 /* How a subagent stands, in words: "running 1m 23s". */
 .sess-status {
   flex: 0 0 auto;
-  font: 400 11px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-2);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -5551,7 +5550,7 @@ input[type="range"]::-webkit-slider-thumb {
   height: 24px;
   padding: 0 6px 0 5px;
   border: 1px solid var(--gh-edge);
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   background: rgba(255, 255, 255, 0.025);
   color: inherit;
   text-align: left;
@@ -5577,14 +5576,14 @@ input[type="range"]::-webkit-slider-thumb {
 
 .sess-launch > b {
   flex: 0 0 auto;
-  font: 600 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   color: var(--ink);
 }
 
 .sess-launch-type {
   flex: 0 0 auto;
   margin-right: -2px;
-  font: 500 11.5px var(--font);
+  font: 400 var(--t-meta) var(--font);
   color: var(--gh-text);
   white-space: nowrap;
 }
@@ -5592,7 +5591,7 @@ input[type="range"]::-webkit-slider-thumb {
 .sess-launch-task {
   flex: 0 1 auto;
   min-width: 24px;
-  font: 400 11.5px var(--font);
+  font: 400 var(--t-meta) var(--font);
   color: var(--gh-text);
   white-space: nowrap;
   overflow: hidden;
@@ -5602,7 +5601,7 @@ input[type="range"]::-webkit-slider-thumb {
 .sess-launch-sep {
   flex: 0 0 auto;
   margin: 0 -2px;
-  color: var(--dim-4);
+  color: var(--ink-3);
 }
 
 .sess-launch > .grow {
@@ -5613,7 +5612,7 @@ input[type="range"]::-webkit-slider-thumb {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  color: var(--dim-3);
+  color: var(--ink-3);
   transition: transform 0.16s ease-out, color 0.12s ease-out;
 }
 
@@ -5640,15 +5639,15 @@ input[type="range"]::-webkit-slider-thumb {
   padding: 0 9px 0 5px;
   border-bottom: 1px solid var(--gh-edge);
   background: rgba(255, 255, 255, 0.02);
-  font: 400 11.5px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-2);
   white-space: nowrap;
 }
 
 .session-view.large .sess-crumb {
   height: 34px;
   padding: 0 12px 0 8px;
-  font-size: 12.5px;
+  font-size: var(--t-body);
 }
 
 .sess-crumb-back {
@@ -5676,10 +5675,10 @@ input[type="range"]::-webkit-slider-thumb {
   max-width: 34%;
   padding: 2px 4px;
   border: 0;
-  border-radius: 5px;
+  border-radius: var(--r-xs);
   background: transparent;
   font: inherit;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--gh-text);
   white-space: nowrap;
   overflow: hidden;
@@ -5695,7 +5694,7 @@ input[type="range"]::-webkit-slider-thumb {
 .sess-crumb-sep,
 .sess-crumb-dot {
   flex: 0 0 auto;
-  color: var(--dim-4);
+  color: var(--ink-3);
 }
 
 .sess-crumb-type {
@@ -5723,10 +5722,10 @@ input[type="range"]::-webkit-slider-thumb {
   gap: 8px;
   min-width: 0;
   padding: 6px 9px;
-  border-radius: 9px;
+  border-radius: var(--r-ctl);
   border: 1px dashed rgba(255, 255, 255, 0.12);
-  font: 400 11.5px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-2);
   user-select: none;
 }
 
@@ -5763,7 +5762,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .sess-end-what {
-  font: 400 10.5px var(--mono);
+  font: 400 var(--t-meta) var(--mono);
 }
 
 .sess-end-btn {
@@ -5771,9 +5770,9 @@ input[type="range"]::-webkit-slider-thumb {
   height: 20px;
   padding: 0 10px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: var(--gh-plate);
-  font: 500 11px var(--font);
+  font: 400 var(--t-meta) var(--font);
   color: var(--ink);
   white-space: nowrap;
   cursor: default;
@@ -5795,7 +5794,7 @@ input[type="range"]::-webkit-slider-thumb {
   flex-direction: column;
   gap: 6px;
   padding: 8px 10px 9px;
-  border-radius: 10px;
+  border-radius: var(--r-ctl);
   border: 1px solid color-mix(in srgb, var(--green-2) 26%, transparent);
   background: color-mix(in srgb, var(--green-2) 6%, transparent);
 }
@@ -5809,12 +5808,12 @@ input[type="range"]::-webkit-slider-thumb {
   display: flex;
   align-items: center;
   gap: 7px;
-  font: 400 11px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-2);
 }
 
 .sess-result-h b {
-  font: 600 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   color: var(--ink);
 }
 
@@ -5828,7 +5827,7 @@ input[type="range"]::-webkit-slider-thumb {
   display: flex;
   gap: 9px;
   padding: 9px 11px 10px;
-  border-radius: 10px;
+  border-radius: var(--r-ctl);
   background: color-mix(in srgb, var(--amber) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--amber) 24%, transparent);
   color: #fbc06a;
@@ -5848,12 +5847,12 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .sess-apart b {
-  font: 600 12px/1.35 var(--font);
+  font: 600 var(--t-body)/1.35 var(--font);
   color: var(--ink);
 }
 
 .sess-apart span {
-  font: 400 11.5px/1.4 var(--font);
+  font: 400 var(--t-meta)/1.4 var(--font);
   color: var(--gh-text);
 }
 
@@ -5885,7 +5884,7 @@ input[type="range"]::-webkit-slider-thumb {
   flex: 0 1000 auto;
   min-width: 56px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
@@ -5895,9 +5894,9 @@ input[type="range"]::-webkit-slider-thumb {
 /* A request that does not say who it comes from, while subagents are at work. */
 .who-maybe {
   padding: 1px 6px;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: var(--gh-plate);
-  font: 500 10.5px var(--font);
+  font: 400 var(--t-meta) var(--font);
   color: var(--gh-text);
   white-space: nowrap;
 }
@@ -5905,8 +5904,8 @@ input[type="range"]::-webkit-slider-thumb {
 /* Behind the request on the card: the one that asked next. */
 .who-next {
   flex: 0 0 auto;
-  font: 400 11px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -5956,7 +5955,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .wmini .timer-sub {
-  font: 400 10.5px var(--font);
+  font: 400 var(--t-meta) var(--font);
   white-space: nowrap;
 }
 
@@ -5976,7 +5975,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .timer-dial {
   display: block;
-  color: var(--ink-2);
+  color: var(--ink);
 }
 
 .timer-ring {
@@ -6003,8 +6002,8 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .timer-sub {
-  font: 400 11px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
 }
 
 /* Time's up: the countdown wears the widget's colour. */
@@ -6034,7 +6033,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .timer-presets button:hover {
-  color: var(--ink-2);
+  color: var(--ink);
 }
 
 .timer-own {
@@ -6048,7 +6047,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 58px;
   height: 24px;
   padding: 0 9px;
-  font-size: 11.5px;
+  font-size: var(--t-meta);
   appearance: textfield;
 }
 
@@ -6090,7 +6089,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .next-text {
-  font: 500 11.5px/15px var(--font);
+  font: 400 var(--t-meta)/15px var(--font);
   color: var(--gh-text);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -6101,8 +6100,8 @@ input[type="range"]::-webkit-slider-thumb {
 
 .next-when {
   padding-left: 27px;
-  font: 400 10.5px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
 }
 
 /* Due, and not yet ticked: its time is in the widget's colour. */
@@ -6128,7 +6127,7 @@ input[type="range"]::-webkit-slider-thumb {
   height: 26px;
   padding: 0 18px 0 10px;
   background-position: calc(100% - 11px) 50%, calc(100% - 7px) 50%;
-  font-size: 11.5px;
+  font-size: var(--t-meta);
 }
 
 /* A reminder's words, editable where they stand. */
@@ -6138,10 +6137,10 @@ input[type="range"]::-webkit-slider-thumb {
   height: 22px;
   padding: 0 5px;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--r-ctl);
   background: transparent;
   color: var(--gh-text);
-  font: 500 11.5px var(--font);
+  font: 400 var(--t-meta) var(--font);
   outline: none;
   user-select: text;
   text-overflow: ellipsis;
@@ -6161,7 +6160,7 @@ input[type="range"]::-webkit-slider-thumb {
 .rem-row .rem-when {
   min-width: 52px;
   background: transparent;
-  color: var(--dim-3);
+  color: var(--ink-3);
 }
 
 .rem-row .rem-when:hover {
@@ -6178,7 +6177,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 176px;
   height: 22px;
   padding: 0 8px;
-  font-size: 10.5px;
+  font-size: var(--t-meta);
   color-scheme: dark;
 }
 
@@ -6194,11 +6193,11 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .wmini .media-title {
-  font: 600 12.5px var(--font);
+  font: 600 var(--t-body) var(--font);
 }
 
 .wmini .media-artist {
-  font: 400 11px var(--font);
+  font: 400 var(--t-meta) var(--font);
 }
 
 .wmini .media-ctl {
@@ -6227,7 +6226,7 @@ input[type="range"]::-webkit-slider-thumb {
   position: relative;
   flex: 0 0 116px;
   height: 116px;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -6250,7 +6249,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .media-title {
-  font: 600 15px var(--font);
+  font: 600 var(--t-label) var(--font);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -6258,8 +6257,8 @@ input[type="range"]::-webkit-slider-thumb {
 
 .media-artist {
   margin-top: 1px;
-  font: 400 12px var(--font);
-  color: var(--dim);
+  font: 400 var(--t-body) var(--font);
+  color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -6268,7 +6267,7 @@ input[type="range"]::-webkit-slider-thumb {
 .media-bar {
   margin-top: 11px;
   height: 3px;
-  border-radius: 2px;
+  border-radius: var(--r-chip);
   background: rgba(255, 255, 255, 0.12);
   overflow: hidden;
 }
@@ -6276,8 +6275,8 @@ input[type="range"]::-webkit-slider-thumb {
 .media-bar > i {
   display: block;
   height: 100%;
-  border-radius: 2px;
-  background: var(--ink-2);
+  border-radius: var(--r-chip);
+  background: var(--ink);
   transition: width 0.3s linear;
 }
 
@@ -6285,8 +6284,8 @@ input[type="range"]::-webkit-slider-thumb {
   margin-top: 4px;
   display: flex;
   justify-content: space-between;
-  font: 400 10px var(--font);
-  color: var(--dim-3);
+  font: 400 var(--t-meta) var(--font);
+  color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
 
@@ -6320,7 +6319,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 30px;
   height: 30px;
   background: transparent;
-  color: var(--ink-2);
+  color: var(--ink);
 }
 
 .media-skip:hover:not(:disabled) {
@@ -6349,7 +6348,7 @@ input[type="range"]::-webkit-slider-thumb {
   display: flex;
   align-items: center;
   gap: 7px;
-  color: var(--dim-2);
+  color: var(--ink-2);
 }
 
 .media-vol-icon {
@@ -6374,8 +6373,8 @@ input[type="range"]::-webkit-slider-thumb {
 
 .wmini-note {
   padding-top: 2px;
-  font: 400 11px/15px var(--font);
-  color: var(--dim-2);
+  font: 400 var(--t-meta)/15px var(--font);
+  color: var(--ink-2);
 }
 
 /* The preview and nothing else: the back pill floats over it. */
@@ -6437,9 +6436,9 @@ input[type="range"]::-webkit-slider-thumb {
 
 .mirror-ph .sub {
   max-width: 400px;
-  font-size: 12px;
+  font-size: var(--t-body);
   line-height: 1.45;
-  color: var(--dim-2);
+  color: var(--ink-2);
 }
 
 .mirror-ph .btn {
@@ -6479,7 +6478,7 @@ input[type="range"]::-webkit-slider-thumb {
 .wmini-proj > b {
   flex: 1 1 auto;
   min-width: 0;
-  font: 600 11.5px var(--font);
+  font: 600 var(--t-meta) var(--font);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -6502,7 +6501,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .proj-name b {
-  font: 600 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   color: var(--ink);
   white-space: nowrap;
 }
@@ -6578,7 +6577,7 @@ input[type="range"]::-webkit-slider-thumb {
   align-items: center;
   gap: 0;
   margin-right: 5px;
-  font: 500 11px var(--font);
+  font: 400 var(--t-meta) var(--font);
   opacity: 0.72;
   white-space: nowrap;
 }
@@ -6625,10 +6624,10 @@ input[type="range"]::-webkit-slider-thumb {
   height: 18px;
   padding: 0 7px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: transparent;
   color: inherit;
-  font: 500 10px var(--font);
+  font: 400 var(--t-meta) var(--font);
   opacity: 0.7;
   cursor: default;
 }
@@ -6673,17 +6672,22 @@ input[type="range"]::-webkit-slider-thumb {
   position: absolute;
   pointer-events: auto;
   cursor: pointer;
-  transition: width 0.18s ease, height 0.18s ease;
+  transition: width 0.18s ease, height 0.18s ease, opacity 0.18s ease;
 }
 
 #thread.on {
   display: block;
 }
 
+/* While the bot peeks out of the edge, the line would run under it. */
+#thread.peeking {
+  opacity: 0;
+}
+
 #thread .bar {
   position: absolute;
   inset: 0;
-  border-radius: 4px;
+  border-radius: var(--r-xs);
   background: var(--line);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.38), 0 1px 6px rgba(0, 0, 0, 0.35);
   transition: background 0.3s ease, box-shadow 0.3s ease;
@@ -6698,11 +6702,11 @@ input[type="range"]::-webkit-slider-thumb {
 #thread .tip {
   position: absolute;
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: rgba(12, 14, 18, 0.9);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 2px 10px rgba(0, 0, 0, 0.3);
   color: #fff;
-  font-size: 12px;
+  font-size: var(--t-body);
   font-weight: 600;
   line-height: 1.3;
   white-space: nowrap;
@@ -6833,7 +6837,7 @@ input[type="range"]::-webkit-slider-thumb {
 .hb-say {
   max-width: 100%;
   margin-top: 4px;
-  font: 650 15px/1.2 var(--font);
+  font: 600 var(--t-label)/1.2 var(--font);
   color: var(--ink);
   text-align: center;
   display: -webkit-box;
@@ -6854,9 +6858,9 @@ input[type="range"]::-webkit-slider-thumb {
   gap: 6px;
   align-items: center;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: rgba(255, 255, 255, 0.05);
-  font: 500 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   color: var(--ink);
   max-width: 100%;
 }
@@ -6866,6 +6870,16 @@ input[type="range"]::-webkit-slider-thumb {
 .agent.calls { border-color: rgba(251, 191, 36, 0.45); background: rgba(251, 191, 36, 0.12); }
 .agent.rest { opacity: 0.88; }
 .res-none .btn { margin-top: 6px; align-self: flex-start; }.hb-who { display: none; }
-.hb-say { font-size: 13.5px; -webkit-line-clamp: 2; margin-top: 2px; }
+.hb-say { font-size: var(--t-label); -webkit-line-clamp: 2; margin-top: 2px; }
 .home-bot .hb-doing { -webkit-line-clamp: 1; }
 .agent .tool-mark.corner { display: none; }
+/* In a chip the mark is one more item of the row, inside its padding: its corner
+   position was for the old column and put it across the chip's edge. */
+.agent .unseen,
+.agent .unseen.decide {
+  position: static;
+  flex: 0 0 auto;
+  box-shadow: none;
+}
+.agent .unseen { width: 8px; height: 8px; }
+.agent .unseen.decide { width: 14px; height: 14px; margin-right: -3px; }

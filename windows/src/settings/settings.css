@@ -1,7 +1,10 @@
 /* The settings window.
    Self-contained: it does not load the island's style.css. Everything is on
    the tokens below, given once for light and once for dark; main.ts says which
-   with `data-theme` on <html>, and whether anything moves with `data-motion`. */
+   with `data-theme` on <html>, and whether anything moves with `data-motion`.
+   The type scale and the radii are the island's (core/tokens.css). */
+
+@import "../core/tokens.css";
 
 *,
 *::before,
@@ -139,7 +142,7 @@ body.settings-window {
   overflow: hidden;
   background: var(--side);
   color: var(--text);
-  font: 400 13px/18px var(--font);
+  font: 400 var(--t-body)/18px var(--font);
   -webkit-font-smoothing: antialiased;
   user-select: none;
   cursor: default;
@@ -214,7 +217,7 @@ body.settings-window {
   flex: 0 0 auto;
   width: 36px;
   height: 36px;
-  border-radius: 11px;
+  border-radius: var(--r-ctl);
   background: #000;
   display: grid;
   place-items: center;
@@ -228,12 +231,12 @@ body.settings-window {
 }
 
 .sp-brand-text b {
-  font: 600 14px/18px var(--font-title);
+  font: 600 var(--t-label)/18px var(--font-title);
   letter-spacing: -0.005em;
 }
 
 .sp-brand-text span {
-  font: 400 11.5px/15px var(--font);
+  font: 400 var(--t-meta)/15px var(--font);
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
@@ -249,7 +252,7 @@ body.settings-window {
 .sp-nav-group {
   margin: 10px 0 3px;
   padding: 0 10px;
-  font: 600 10.5px/14px var(--font);
+  font: 600 var(--t-meta)/14px var(--font);
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--text-3);
@@ -274,10 +277,10 @@ body.settings-window {
   align-items: center;
   gap: 10px;
   border: 0;
-  border-radius: 9px;
+  border-radius: var(--r-ctl);
   background: transparent;
   color: var(--text-2);
-  font: 500 13px var(--font);
+  font: 600 var(--t-body) var(--font);
   text-align: left;
   cursor: default;
   transition: background 0.14s ease-out, color 0.14s ease-out;
@@ -321,7 +324,7 @@ body.settings-window {
   flex: 0 0 auto;
   width: 26px;
   height: 26px;
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   display: grid;
   place-items: center;
   background: color-mix(in srgb, var(--c) 14%, transparent);
@@ -337,7 +340,7 @@ body.settings-window {
 .sp-tile.big {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: var(--c);
   color: var(--on-hue);
 }
@@ -350,7 +353,7 @@ body.settings-window {
   top: 0;
   width: 3px;
   height: 16px;
-  border-radius: 2px;
+  border-radius: var(--r-chip);
   background: var(--accent);
   transform: translateY(var(--y, 0));
   transition: transform var(--spring-ms) var(--spring), opacity 0.14s ease-out;
@@ -371,7 +374,7 @@ body.settings-window {
   height: 34px;
   padding: 0 6px 0 10px;
   border: 1px solid color-mix(in srgb, var(--edge) 50%, transparent);
-  border-radius: 9px;
+  border-radius: var(--r-ctl);
   background: var(--surface);
   color: var(--text-3);
   transition: border-color 0.14s ease-out, box-shadow 0.14s ease-out;
@@ -398,7 +401,7 @@ body.settings-window {
   border: 0;
   background: transparent;
   color: var(--text);
-  font: 400 13px var(--font);
+  font: 400 var(--t-body) var(--font);
   user-select: text;
 }
 
@@ -443,10 +446,10 @@ body.settings-window {
   padding: 0 5px;
   display: grid;
   place-items: center;
-  border-radius: 5px;
+  border-radius: var(--r-xs);
   background: var(--sunken);
   color: var(--text-3);
-  font: 600 11px var(--font);
+  font: 600 var(--t-meta) var(--font);
 }
 
 :root[data-theme="dark"] .sp-search-key {
@@ -467,7 +470,7 @@ body.settings-window {
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--r-ctl);
   background: transparent;
   color: var(--text-2);
   cursor: default;
@@ -541,7 +544,7 @@ body.settings-window {
 
 .sp-title {
   margin: 0;
-  font: 600 20px/26px var(--font-title);
+  font: 600 var(--t-title)/26px var(--font-title);
   letter-spacing: -0.012em;
   color: var(--text);
   overflow-wrap: anywhere;
@@ -549,7 +552,7 @@ body.settings-window {
 
 .sp-lede {
   margin: 3px 0 0;
-  font: 400 12.5px/18px var(--font);
+  font: 400 var(--t-body)/18px var(--font);
   color: var(--text-2);
 }
 
@@ -567,7 +570,7 @@ body.settings-window {
   align-items: baseline;
   gap: 8px;
   margin: 0 0 8px;
-  font: 600 11px/16px var(--font);
+  font: 600 var(--t-meta)/16px var(--font);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-2);
@@ -583,7 +586,7 @@ body.settings-window {
 
 .sp-group-label .count {
   margin-left: auto;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
   font-variant-numeric: tabular-nums;
@@ -593,7 +596,7 @@ body.settings-window {
 .sp-box {
   padding: 0 16px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: var(--card);
 }
 
@@ -635,7 +638,7 @@ body.settings-window {
   display: grid;
   place-items: center;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--r-ctl);
   background: var(--card);
   color: var(--text);
 }
@@ -652,14 +655,14 @@ body.settings-window {
 
 .sp-tool-name {
   margin: 0;
-  font: 600 15px/20px var(--font-title);
+  font: 600 var(--t-label)/20px var(--font-title);
   letter-spacing: -0.008em;
   color: var(--text);
 }
 
 .sp-tool-what {
   margin: 1px 0 0;
-  font: 400 12px/16px var(--font);
+  font: 400 var(--t-body)/16px var(--font);
   color: var(--text-2);
 }
 
@@ -686,10 +689,10 @@ body.settings-window {
 
 .sp-tag {
   padding: 1px 7px;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: var(--sunken);
   color: var(--text-2);
-  font: 500 10.5px/15px var(--font);
+  font: 400 var(--t-meta)/15px var(--font);
   letter-spacing: 0;
   text-transform: none;
   white-space: nowrap;
@@ -707,7 +710,7 @@ body.settings-window {
 /* Why a control is greyed out: another setting is off. */
 .sp-needs {
   margin: 4px 0 0;
-  font: 500 12px/16px var(--font);
+  font: 600 var(--t-body)/16px var(--font);
   color: var(--warn);
 }
 
@@ -728,19 +731,19 @@ body.settings-window {
 }
 
 .sp-row-label {
-  font: 500 13px/18px var(--font);
+  font: 600 var(--t-body)/18px var(--font);
   color: var(--text);
 }
 
 .sp-help {
   margin: 2px 0 0;
-  font: 400 12px/16px var(--font);
+  font: 400 var(--t-body)/16px var(--font);
   color: var(--text-2);
 }
 
 .sp-note {
   margin: 12px 0 0;
-  font: 400 12px/17px var(--font);
+  font: 400 var(--t-body)/17px var(--font);
   color: var(--text-2);
 }
 
@@ -757,10 +760,10 @@ body.settings-window {
   height: 30px;
   padding: 0 13px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   background: transparent;
   color: var(--text);
-  font: 500 12.5px var(--font);
+  font: 600 var(--t-body) var(--font);
   white-space: nowrap;
   cursor: default;
   transition: background 0.14s ease-out, border-color 0.14s ease-out, color 0.14s ease-out;
@@ -807,9 +810,9 @@ body.settings-window {
   background: transparent;
   text-align: left;
   color: var(--accent-text);
-  font: 500 13px/18px var(--font);
+  font: 600 var(--t-body)/18px var(--font);
   cursor: default;
-  border-radius: 6px;
+  border-radius: var(--r-ctl);
 }
 
 .sp-link:hover .sp-link-text {
@@ -827,7 +830,7 @@ body.settings-window {
   height: 22px;
   padding: 0;
   border: 1.5px solid var(--edge);
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: transparent;
   cursor: default;
   transition: background 0.16s ease-out, border-color 0.16s ease-out;
@@ -876,7 +879,7 @@ body.settings-window {
   display: grid;
   grid-template-columns: repeat(var(--n), minmax(0, 1fr));
   padding: 2px;
-  border-radius: 9px;
+  border-radius: var(--r-ctl);
   background: var(--sunken);
 }
 
@@ -890,7 +893,7 @@ body.settings-window {
   bottom: 2px;
   left: 2px;
   width: calc((100% - 4px) / var(--n));
-  border-radius: 7px;
+  border-radius: var(--r-ctl);
   background: var(--surface);
   box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(0, 0, 0, 0.08);
   transform: translateX(calc(var(--i) * 100%));
@@ -903,10 +906,10 @@ body.settings-window {
   height: 28px;
   padding: 0 4px;
   border: 0;
-  border-radius: 7px;
+  border-radius: var(--r-ctl);
   background: transparent;
   color: var(--text-2);
-  font: 500 12.5px var(--font);
+  font: 600 var(--t-body) var(--font);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   cursor: default;
@@ -946,13 +949,13 @@ body.settings-window {
   height: 20px;
   margin: 0;
   background: transparent;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   cursor: default;
 }
 
 .sp-slider input::-webkit-slider-runnable-track {
   height: 4px;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   /* Filled up to the value: `--p` is the value, as a length. */
   background: linear-gradient(to right, var(--accent) var(--p), color-mix(in srgb, var(--edge) 45%, transparent) var(--p));
 }
@@ -976,7 +979,7 @@ body.settings-window {
 .sp-slider-value {
   flex: 0 0 38px;
   text-align: right;
-  font: 500 12.5px var(--font);
+  font: 600 var(--t-body) var(--font);
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
@@ -987,7 +990,7 @@ body.settings-window {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font: 400 12px var(--font);
+  font: 400 var(--t-body) var(--font);
   color: var(--text-2);
 }
 
@@ -996,10 +999,10 @@ body.settings-window {
   height: 30px;
   padding: 0 8px;
   border: 1px solid var(--edge);
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   background: var(--surface);
   color: var(--text);
-  font: 500 12.5px var(--font);
+  font: 600 var(--t-body) var(--font);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1034,10 +1037,10 @@ body.settings-window {
   height: 30px;
   padding: 0 30px 0 10px;
   border: 1px solid var(--edge);
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   background: var(--surface);
   color: var(--text);
-  font: 500 12.5px var(--font);
+  font: 600 var(--t-body) var(--font);
   cursor: default;
 }
 
@@ -1085,7 +1088,7 @@ body.settings-window {
 .sp-status {
   padding: 14px 16px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: var(--card);
 }
 
@@ -1109,13 +1112,13 @@ body.settings-window {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  font: 600 14px/22px var(--font-title);
+  font: 600 var(--t-label)/22px var(--font-title);
   color: var(--text);
 }
 
 .sp-status-text {
   margin: 2px 0 0;
-  font: 400 12.5px/18px var(--font);
+  font: 400 var(--t-body)/18px var(--font);
   color: var(--text-2);
 }
 
@@ -1124,7 +1127,7 @@ body.settings-window {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   gap: 3px 12px;
-  font: 400 11.5px/17px var(--font);
+  font: 400 var(--t-meta)/17px var(--font);
   color: var(--text-2);
 }
 
@@ -1135,7 +1138,7 @@ body.settings-window {
 
 .sp-facts dd {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--t-meta);
 }
 
 .sp-actions {
@@ -1163,10 +1166,10 @@ body.settings-window {
   align-items: center;
   gap: 4px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--r-ctl);
   background: transparent;
   color: var(--text-2);
-  font: 500 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   cursor: default;
   transition: background 0.14s ease-out, color 0.14s ease-out;
 }
@@ -1190,7 +1193,7 @@ body.settings-window {
 
 .sp-details > p {
   margin: 6px 0 0;
-  font: 400 12px/17px var(--font);
+  font: 400 var(--t-body)/17px var(--font);
   color: var(--text-2);
 }
 
@@ -1203,10 +1206,10 @@ body.settings-window {
   gap: 8px;
   margin: 12px 0 0 34px;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   background: var(--ok-soft);
   color: var(--ok);
-  font: 400 12px/17px var(--font);
+  font: 400 var(--t-body)/17px var(--font);
   overflow-wrap: anywhere;
 }
 
@@ -1234,13 +1237,13 @@ body.settings-window {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  font: 600 12.5px/18px var(--font);
+  font: 600 var(--t-body)/18px var(--font);
   color: var(--text);
 }
 
 .sp-panel-head .counts {
   margin-left: auto;
-  font: 500 11.5px var(--mono);
+  font: 400 var(--t-meta) var(--mono);
 }
 
 .sp-panel-head .plus { color: var(--add); }
@@ -1253,10 +1256,10 @@ body.settings-window {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--edge) 55%, transparent) transparent;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   background: var(--bg);
   padding: 6px 0;
-  font: 400 11.5px/18px var(--mono);
+  font: 400 var(--t-meta)/18px var(--mono);
   white-space: pre;
   /* One column as wide as the longest line: a changed line's ground runs the
      whole width, however far the panel is scrolled sideways. */
@@ -1295,7 +1298,7 @@ body.settings-window {
 }
 
 .sp-panel .sp-help code {
-  font: 400 11px var(--mono);
+  font: 400 var(--t-meta) var(--mono);
   overflow-wrap: anywhere;
 }
 
@@ -1327,10 +1330,10 @@ body.settings-window {
   align-items: center;
   gap: 5px;
   border: 1px solid color-mix(in srgb, var(--edge) 55%, transparent);
-  border-radius: 9px;
+  border-radius: var(--r-ctl);
   background: var(--surface);
   color: var(--text-2);
-  font: 400 12px var(--font);
+  font: 400 var(--t-body) var(--font);
   text-align: left;
   cursor: default;
   transition: border-color 0.14s ease-out, background 0.14s ease-out, box-shadow 0.14s ease-out;
@@ -1350,11 +1353,11 @@ body.settings-window {
   padding: 0 8px;
   display: inline-grid;
   place-items: center;
-  border-radius: 6px;
+  border-radius: var(--r-ctl);
   background: var(--sunken);
   box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--edge) 45%, transparent);
   color: var(--text);
-  font: 600 11.5px var(--font);
+  font: 600 var(--t-meta) var(--font);
 }
 
 .sp-keys .hint {
@@ -1366,7 +1369,7 @@ body.settings-window {
 .sp-keys .wait {
   padding-left: 6px;
   color: var(--accent-text);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .sp-shortcut[data-state="recording"] .sp-keys {
@@ -1393,7 +1396,7 @@ body.settings-window {
   align-items: center;
   gap: 6px;
   min-height: 16px;
-  font: 400 12px/16px var(--font);
+  font: 400 var(--t-body)/16px var(--font);
   color: var(--text-2);
 }
 
@@ -1450,7 +1453,7 @@ body.settings-window {
 .sp-desk {
   position: relative;
   height: 78px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: var(--desk);
   overflow: hidden;
 }
@@ -1460,7 +1463,7 @@ body.settings-window {
   justify-content: space-between;
   gap: 12px;
   margin-top: 6px;
-  font: 400 11.5px/16px var(--font);
+  font: 400 var(--t-meta)/16px var(--font);
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
@@ -1581,7 +1584,7 @@ body.settings-window {
 }
 
 .sp-ci-metric b {
-  font: 500 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   font-variant-numeric: tabular-nums;
   color: #f1f2f4;
 }
@@ -1643,7 +1646,7 @@ body.settings-window {
   margin-left: -6px;
   padding: 0;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--r-ctl);
   background: transparent;
   color: var(--text-3);
   display: grid;
@@ -1672,10 +1675,10 @@ body.settings-window {
   align-items: center;
   gap: 10px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   background: transparent;
   color: var(--text);
-  font: 500 13px var(--font);
+  font: 600 var(--t-body) var(--font);
   text-align: left;
   cursor: default;
   transition: background 0.14s ease-out;
@@ -1689,7 +1692,7 @@ body.settings-window {
   flex: 0 0 auto;
   width: 18px;
   height: 18px;
-  border-radius: 5px;
+  border-radius: var(--r-xs);
   border: 1.5px solid var(--edge);
   display: grid;
   place-items: center;
@@ -1719,7 +1722,7 @@ body.settings-window {
 
 .sp-check .sample {
   flex: 0 0 auto;
-  font: 400 12px var(--font);
+  font: 400 var(--t-body) var(--font);
   font-variant-numeric: tabular-nums;
   color: var(--text-2);
 }
@@ -1738,7 +1741,7 @@ body.settings-window {
 
 .sp-metric.lifted {
   z-index: 2;
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   background: var(--surface);
   box-shadow: 0 0 0 1px var(--line), 0 6px 16px rgba(0, 0, 0, 0.14);
 }
@@ -1763,10 +1766,10 @@ body.settings-window {
   gap: 8px;
   padding: 8px 10px;
   margin-top: 8px;
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   background: var(--warn-soft);
   color: var(--warn);
-  font: 500 12px/17px var(--font);
+  font: 600 var(--t-body)/17px var(--font);
 }
 
 .sp-refusal svg {
@@ -1790,7 +1793,7 @@ body.settings-window {
   width: 92px;
   padding: 10px 6px 8px;
   border: 0;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   background: #000;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   cursor: default;
@@ -1803,7 +1806,7 @@ body.settings-window {
 }
 
 .sp-mascot-name {
-  font: 500 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   color: rgba(255, 255, 255, 0.82);
 }
 
@@ -1827,7 +1830,7 @@ body.settings-window {
   position: relative;
   margin-top: 0;
   padding: 10px;
-  border-radius: 20px;
+  border-radius: var(--r-card);
   background: #000;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -1843,7 +1846,7 @@ body.settings-window {
   display: flex;
   flex-direction: column;
   gap: 7px;
-  border-radius: 16px;
+  border-radius: var(--r-card);
   background: #141518;
   border: 1px solid color-mix(in srgb, var(--c) 26%, rgba(255, 255, 255, 0.03));
   box-shadow: inset 0 0 24px -15px var(--c);
@@ -1875,7 +1878,7 @@ body.settings-window {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font: 600 12px var(--font);
+  font: 600 var(--t-body) var(--font);
 }
 
 /* The widget's mark: the one place its colour is worn in full, as on the shelf. */
@@ -1892,7 +1895,7 @@ body.settings-window {
 
 .sp-card p {
   margin: 0;
-  font: 400 11.5px/15px var(--font);
+  font: 400 var(--t-meta)/15px var(--font);
   color: #a3a8b1;
 }
 
@@ -1951,7 +1954,7 @@ body.settings-window {
 .sp-about .sp-oleo {
   width: 72px;
   height: 72px;
-  border-radius: 20px;
+  border-radius: var(--r-card);
 }
 
 .sp-privacy {
@@ -1968,7 +1971,7 @@ body.settings-window {
 
 .sp-privacy p {
   margin: 0;
-  font: 400 13px/19px var(--font);
+  font: 400 var(--t-body)/19px var(--font);
   color: var(--text);
 }
 
@@ -1979,13 +1982,13 @@ body.settings-window {
 
 .sp-about-name {
   margin: 0;
-  font: 600 22px/28px var(--font-title);
+  font: 600 var(--t-display)/28px var(--font-title);
   letter-spacing: -0.015em;
 }
 
 .sp-about-version {
   margin: 2px 0 0;
-  font: 400 12.5px/18px var(--font);
+  font: 400 var(--t-body)/18px var(--font);
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
@@ -1993,7 +1996,7 @@ body.settings-window {
 .sp-path {
   flex: 0 1 auto;
   min-width: 0;
-  font: 400 11.5px/16px var(--mono);
+  font: 400 var(--t-meta)/16px var(--mono);
   color: var(--text-2);
   overflow-wrap: anywhere;
   text-align: right;
@@ -2012,7 +2015,7 @@ body.settings-window {
 
 .sp-credits {
   margin: 12px 0 0;
-  font: 400 12px/17px var(--font);
+  font: 400 var(--t-body)/17px var(--font);
   color: var(--text-2);
 }
 
@@ -2048,10 +2051,10 @@ body.settings-window {
   align-items: center;
   gap: 7px;
   border: 1px solid color-mix(in srgb, var(--edge) 55%, transparent);
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   background: transparent;
   color: var(--text-2);
-  font: 500 12.5px var(--font);
+  font: 600 var(--t-body) var(--font);
   white-space: nowrap;
   cursor: default;
   transition: background 0.14s ease-out, border-color 0.14s ease-out, color 0.14s ease-out;
@@ -2103,10 +2106,10 @@ body.settings-window {
   align-items: center;
   gap: 7px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--r-chip);
   background: var(--card);
   color: var(--text);
-  font: 600 12px var(--font);
+  font: 600 var(--t-body) var(--font);
   cursor: default;
   transition: background 0.14s ease-out, border-color 0.14s ease-out;
 }
@@ -2114,7 +2117,7 @@ body.settings-window {
 .sp-crumb .sp-tile {
   width: 20px;
   height: 20px;
-  border-radius: 999px;
+  border-radius: var(--r-chip);
 }
 
 .sp-crumb > svg {
@@ -2134,14 +2137,14 @@ body.settings-window {
   align-items: center;
   gap: 4px;
   border: 1px dashed color-mix(in srgb, var(--edge) 55%, transparent);
-  border-radius: 12px;
+  border-radius: var(--r-card);
   text-align: center;
   color: var(--text-3);
 }
 
 .sp-empty-title {
   margin: 8px 0 0;
-  font: 600 13.5px/19px var(--font);
+  font: 600 var(--t-label)/19px var(--font);
   color: var(--text);
   overflow-wrap: anywhere;
 }
@@ -2211,7 +2214,7 @@ body.settings-window {
     display: grid;
     place-items: center;
     border: 1px solid color-mix(in srgb, var(--edge) 50%, transparent);
-    border-radius: 9px;
+    border-radius: var(--r-ctl);
     background: var(--surface);
     color: var(--text-2);
     cursor: default;
@@ -2258,7 +2261,7 @@ body.settings-window {
   .sp-tile.big {
     width: 34px;
     height: 34px;
-    border-radius: 10px;
+    border-radius: var(--r-ctl);
   }
 
   .sp-flash,
@@ -2311,7 +2314,7 @@ body.settings-window {
 /* Why the one action is not on offer, beside it. */
 .sp-actions-note {
   min-width: 0;
-  font: 400 12px/16px var(--font);
+  font: 400 var(--t-body)/16px var(--font);
   color: var(--text-2);
 }
 
@@ -2353,13 +2356,13 @@ body.settings-window {
 .sp-credit {
   padding: 14px 14px 14px 16px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: var(--card);
 }
 
 .sp-made {
   margin: 0;
-  font: 600 14px/20px var(--font-title);
+  font: 600 var(--t-label)/20px var(--font-title);
   letter-spacing: -0.005em;
   color: var(--text);
 }
@@ -2381,10 +2384,10 @@ body.settings-window {
   justify-content: center;
   gap: 8px;
   border: 1px solid color-mix(in srgb, var(--edge) 45%, transparent);
-  border-radius: 8px;
+  border-radius: var(--r-ctl);
   background: transparent;
   color: var(--text);
-  font: 500 12.5px/16px var(--font);
+  font: 600 var(--t-body)/16px var(--font);
   cursor: default;
   transition: background 0.14s ease-out, border-color 0.14s ease-out, color 0.14s ease-out;
 }
@@ -2425,10 +2428,10 @@ body.settings-window {
 .sp-fake {
   margin-top: auto;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: var(--r-ctl);
   background: var(--warn-soft);
   color: var(--warn);
-  font: 600 10.5px/14px var(--font);
+  font: 600 var(--t-meta)/14px var(--font);
   text-align: center;
 }
 
@@ -2457,7 +2460,7 @@ html.fake-frame body.settings-window {
 
   .sp-fake::after {
     content: "Fake";
-    font-size: 9.5px;
+    font-size: var(--t-meta);
   }
 }
 

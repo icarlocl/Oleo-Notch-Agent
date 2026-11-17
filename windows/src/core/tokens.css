@@ -1,0 +1,20 @@
+/* The type scale and the radii, one set for every window (the island, the agents
+   list, Settings): five sizes, two weights (400 and 600), four radii.
+   Greys are in each window's own :root, since Settings has a light theme. */
+
+:root {
+  /* A badge's letters or a count: the one size under the scale, for marks that
+     are a few characters in a small plate. */
+  --t-badge: 10px;
+  --t-meta: 11px; /* times, counts, a line under a title */
+  --t-body: 12.5px; /* text that is read */
+  --t-label: 14px; /* a name, a button */
+  --t-title: 17px; /* a card's or a window's title */
+  --t-display: 24px; /* a figure that is the card (a window's heading) */
+
+  --r-chip: 999px; /* pills, thin bars, round things */
+  --r-xs: 4px; /* a swatch, a keycap's corner */
+  --r-ctl: 10px; /* a button, a field, a row */
+  --r-card: 16px; /* a card, a panel */
+  --r-island: 22px; /* the island's own corners: layout.ts keeps the same figure */
+}

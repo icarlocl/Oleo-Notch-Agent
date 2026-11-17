@@ -800,6 +800,9 @@ if (params.has("home")) {
   State.present();
 }
 
+//   foldstyle=thread|capsule      how the folded island looks (Settings → Island → Folded island)
+if (params.get("foldstyle") === "thread" || params.get("foldstyle") === "capsule") State.settings.foldedStyle = params.get("foldstyle") as "thread" | "capsule";
+
 if (params.has("home") || params.has("fold") || params.has("metrics") || params.has("usage") || params.has("cells")) {
   const cells = params.get("cells");
   if (cells != null) State.settings.compactMetrics = cells === "none" ? [] : cells.split(",");

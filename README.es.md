@@ -48,7 +48,7 @@ equipo y solo habla con tus propios agentes: sin cuenta y sin telemetría.
 > [!NOTE]
 > Oleo es una versión temprana (0.2.2). Windows 10 y 11 son el objetivo
 > principal; el mismo código también compila para Linux, de forma
-> experimental. La interfaz está por ahora casi toda en español. Oleo es un
+> experimental. La interfaz está en español, inglés y portugués. Oleo es un
 > proyecto independiente y no está afiliado ni respaldado por Anthropic, OpenAI
 > ni Cursor.
 
@@ -99,7 +99,7 @@ más abajo).
 | **Widgets** | Una segunda pestaña con Multimedia, Tareas, Temporizador, Recordatorios, un Espejo de cámara y tus Proyectos recientes. Cada uno se puede desactivar y reordenar. |
 | **Lista de agentes** | Una ventana pequeña opcional que se queda encima, con una fila por proyecto, su estado, el tiempo transcurrido y el tamaño del contexto. |
 | **Clima** | Opcional. Elige una ciudad en Configuración y la temperatura aparece en la isla. Junto con la búsqueda de actualizaciones, es lo único que usa la red (ver [Privacidad](#privacidad-y-red)). |
-| **Se pliega y se acopla** | Se pliega en un hilo delgado o en una cápsula con tus métricas. Se acopla a cualquier borde de la pantalla, se oculta con las aplicaciones a pantalla completa y casi no usa CPU mientras está oculta. |
+| **Se pliega y se acopla** | Se pliega en una pequeña línea junto al borde, como la de los celulares, que se vuelve ámbar cuando una sesión te necesita; o en una cápsula con tus métricas. Se acopla a cualquier borde de la pantalla, se oculta con las aplicaciones a pantalla completa y casi no usa CPU mientras está oculta. |
 | **Teclado y sonidos** | Cinco atajos globales, todos configurables, y sonidos suaves que puedes silenciar. |
 
 ### Atajos de teclado
@@ -118,18 +118,17 @@ eso es AltGr y le quitaría un carácter a todos los demás programas.
 
 ## Instalación
 
-> [!IMPORTANT]
-> Todavía no hay un instalador ya compilado: el primero se publicará en la
-> página de [Releases](https://github.com/icarlocl/Oleo-Notch-Agent/releases).
-> Mientras tanto, puedes compilarlo tú mismo en pocos minutos (ver
-> [Compilar desde el código](#compilar-desde-el-código)).
+Descarga `Oleo-Windows-<versión>-setup.exe` de la
+[última versión publicada](https://github.com/icarlocl/Oleo-Notch-Agent/releases/latest)
+y ejecútalo. Junto a él, `SHA256SUMS.txt` trae el SHA-256 del instalador y de
+los dos programas que contiene. También puedes compilarlo tú (ver
+[Compilar desde el código](#compilar-desde-el-código)): `npm run pack` deja los
+mismos archivos en `windows\release\`.
 
-`npm run pack` genera `windows\release\Oleo-Windows-<versión>-setup.exe` y un
-`SHA256SUMS.txt` con el SHA-256 del instalador y de los dos programas que
-contiene. El instalador es por usuario y no necesita permisos de
-administrador. No está firmado digitalmente, así que Windows SmartScreen puede
-decir «Windows protegió tu PC»: elige **Más información** y luego
-**Ejecutar de todas formas**, una vez que hayas comprobado el hash:
+El instalador es por usuario y no necesita permisos de administrador. No está
+firmado digitalmente, así que Windows SmartScreen puede decir «Windows protegió
+tu PC»: elige **Más información** y luego **Ejecutar de todas formas**, una vez
+que hayas comprobado el hash:
 
 ```powershell
 Get-FileHash .\Oleo-Windows-0.2.2-setup.exe -Algorithm SHA256
@@ -254,8 +253,6 @@ Node 22 o superior y Edge o Chrome instalado:
 ```powershell
 npm run shots -- --out ..\docs\assets\screens --only hero,over-editor,question
 ```
-
-Los detalles están en [`docs/screenshots.md`](docs/screenshots.md).
 
 ## Licencia y créditos
 

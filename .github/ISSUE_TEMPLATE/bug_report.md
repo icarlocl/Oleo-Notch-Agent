@@ -14,4 +14,4 @@ labels: bug
 
 **Claude Code version** (`claude --version`)
 
-**Nook version**
+**Oleo version**

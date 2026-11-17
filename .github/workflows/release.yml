@@ -2,9 +2,7 @@ name: Release
 
 # Builds the Windows installer from a `v*` tag (or by hand) and attaches it to
 # the GitHub release together with SHA256SUMS.txt. Only the release job gets
-# write access to this repository. The scoop job then points oleo.json in the
-# Scoop bucket (zubairbinshaukat/scoop-bucket) at the new release; it is the one
-# place a secret is used (SCOOP_BUCKET_TOKEN), and it skips when that is not set.
+# write access to this repository.
 #
 # The build is not code-signed yet. Planned: the SignPath Foundation's free
 # programme, once the project qualifies (see README, "Code signing policy").
@@ -127,44 +125,3 @@ jobs:
             gh release create "${{ github.ref_name }}" --title "Oleo $v" --notes "$notes" --verify-tag
           fi
           gh release upload "${{ github.ref_name }}" out/Oleo-Windows-"$v"-setup.exe out/oleo.exe out/oleo-hook.exe out/SHA256SUMS.txt --clobber
-
-  # `scoop install oleo` (bucket "zubyr"): the manifest takes oleo.exe and
-  # oleo-hook.exe straight from the release, with the hashes from SHA256SUMS.txt.
-  scoop:
-    needs: [build, release]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: Oleo-Windows
-          path: out
-
-      - name: Update oleo.json in the Scoop bucket
-        env:
-          TOKEN: ${{ secrets.SCOOP_BUCKET_TOKEN }}
-          V: ${{ needs.build.outputs.version }}
-        run: |
-          if [ -z "$TOKEN" ]; then
-            echo "::warning::SCOOP_BUCKET_TOKEN is not set, so the Scoop manifest was not updated."
-            exit 0
-          fi
-          app=$(awk '$2 == "oleo.exe" { print $1 }' out/SHA256SUMS.txt)
-          hook=$(awk '$2 == "oleo-hook.exe" { print $1 }' out/SHA256SUMS.txt)
-          if [ -z "$app" ] || [ -z "$hook" ]; then echo "SHA256SUMS.txt lacks oleo.exe or oleo-hook.exe"; exit 1; fi
-
-          git clone --depth 1 "https://x-access-token:${TOKEN}@github.com/zubairbinshaukat/scoop-bucket" bucket
-          cd bucket
-          base="https://github.com/icarlocl/oleo/releases/download/v$V"
-          jq --indent 4 --arg v "$V" --arg base "$base" --arg app "$app" --arg hook "$hook" '
-            .version = $v
-            | .architecture."64bit".url = [$base + "/oleo.exe", $base + "/oleo-hook.exe"]
-            | .architecture."64bit".hash = [$app, $hook]
-          ' bucket/oleo.json > oleo.json.new
-          mv oleo.json.new bucket/oleo.json
-
-          if git diff --quiet; then echo "oleo.json already at $V"; exit 0; fi
-          git -c user.name="github-actions[bot]" -c user.email="41898283+github-actions[bot]@users.noreply.github.com" \
-            commit -am "chore(scoop): update oleo to v$V"
-          git push

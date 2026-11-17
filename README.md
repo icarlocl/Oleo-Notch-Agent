@@ -48,7 +48,7 @@ machine and talks to nothing but your own agents: no account, no telemetry.
 > [!NOTE]
 > Oleo is an early release (version 0.2.2). Windows 10 and 11 are the main
 > target; the same code also builds for Linux, which is experimental. The
-> interface is currently mostly in Spanish. Oleo is an independent project and is not
+> interface is in English, Spanish and Portuguese. Oleo is an independent project and is not
 > affiliated with or endorsed by Anthropic, OpenAI or Cursor.
 
 ## What it looks like
@@ -97,7 +97,7 @@ made-up sessions on a made-up desktop (see [Screenshots](#screenshots) below).
 | **Widgets** | A second tab with Media, To-dos, Timer, Reminders, a camera Mirror and your recent Projects. Each can be switched off and reordered. |
 | **Agents list** | An optional small window that stays on top, with one row per project, its state, elapsed time and context size. |
 | **Weather** | Optional. Pick a city in Settings and the temperature shows in the island. It is the one feature, besides the update check, that uses the network (see [Privacy](#privacy-and-network)). |
-| **Folds and docks** | Folds to a thin thread or to a capsule with your metrics. Docks to any edge of the screen, hides in full-screen apps, and uses almost no CPU while hidden. |
+| **Folds and docks** | Folds to a small line near the edge, like a phone's home indicator, that turns amber when a session needs you; or to a capsule with your metrics. Docks to any edge of the screen, hides in full-screen apps, and uses almost no CPU while hidden. |
 | **Keyboard and sounds** | Five global shortcuts, all configurable, and soft sounds you can mute. |
 
 ### Keyboard shortcuts
@@ -116,17 +116,16 @@ would take a character away from every other program.
 
 ## Install
 
-> [!IMPORTANT]
-> There is no prebuilt installer yet: the first one will be published on the
-> [Releases](https://github.com/icarlocl/Oleo-Notch-Agent/releases) page. Until
-> then, build it yourself in a few minutes (see
-> [Build from source](#build-from-source)).
+Download `Oleo-Windows-<version>-setup.exe` from the
+[latest release](https://github.com/icarlocl/Oleo-Notch-Agent/releases/latest)
+and run it. Next to it, `SHA256SUMS.txt` lists the SHA-256 of the installer and
+of the two programs inside it. You can also build it yourself (see
+[Build from source](#build-from-source)): `npm run pack` writes the same files
+to `windows\release\`.
 
-`npm run pack` produces `windows\release\Oleo-Windows-<version>-setup.exe` and
-a `SHA256SUMS.txt` with the SHA-256 of the installer and of the two programs
-inside it. The installer is per-user and needs no administrator rights. It is
-not code-signed, so Windows SmartScreen may say "Windows protected your PC":
-choose **More info**, then **Run anyway**, once you have checked the hash:
+The installer is per-user and needs no administrator rights. It is not
+code-signed, so Windows SmartScreen may say "Windows protected your PC": choose
+**More info**, then **Run anyway**, once you have checked the hash:
 
 ```powershell
 Get-FileHash .\Oleo-Windows-0.2.2-setup.exe -Algorithm SHA256
@@ -137,8 +136,8 @@ WebView2, which draws the island, ships with Windows 10 and 11.
 ## Connect your agents
 
 Oleo learns about your sessions through the hooks that each tool offers. You
-turn them on from **Settings → Conexiones** (Connections), one tool at a time,
-with the **Conectar…** button under each:
+turn them on from **Settings → Connections**, one tool at a time,
+with the **Connect…** button under each:
 
 | Tool | What Oleo can do | File it edits, after your click |
 |---|---|---|
@@ -242,8 +241,6 @@ or newer and Edge or Chrome installed:
 ```powershell
 npm run shots -- --out ..\docs\assets\screens --only hero,over-editor,question
 ```
-
-The details are in [`docs/screenshots.md`](docs/screenshots.md).
 
 ## Licence and credits
 

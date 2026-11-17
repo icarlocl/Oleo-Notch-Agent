@@ -3,7 +3,7 @@
 # (and what it says about the work) is not what gets published.
 #
 #   .\windows\scripts\make-public-branch.ps1            # from anywhere in the repository
-#   .\windows\scripts\make-public-branch.ps1 -Message "Nook 0.1.0"
+#   .\windows\scripts\make-public-branch.ps1 -Message "Oleo 0.1.0"
 #
 # What it does, and only this:
 #   * lists the files tracked in HEAD, leaves out plans/ and anything that
@@ -20,7 +20,7 @@
 # files are not in HEAD and are left out.
 
 param(
-    [string]$Message = "Nook"
+    [string]$Message = "Oleo"
 )
 
 $ErrorActionPreference = "Stop"
@@ -39,7 +39,7 @@ $keep = foreach ($f in $files) {
     $f
 }
 
-$tmpIndex = Join-Path ([IO.Path]::GetTempPath()) ("nook-public-index-" + [Guid]::NewGuid().ToString("N"))
+$tmpIndex = Join-Path ([IO.Path]::GetTempPath()) ("oleo-public-index-" + [Guid]::NewGuid().ToString("N"))
 try {
     $env:GIT_INDEX_FILE = $tmpIndex
     # The temporary index starts as HEAD's, then loses what is not kept.

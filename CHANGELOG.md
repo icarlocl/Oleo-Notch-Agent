@@ -8,30 +8,30 @@
   trusted with `/hooks`. "Show Codex sessions" in Settings.
 - Reply to a session from the island once its turn is over: a line to type in
   on the finished card and under the session panel's journal, for Claude Code
-  and Codex. Nook types the reply into the terminal the session runs in and
+  and Codex. Oleo types the reply into the terminal the session runs in and
   sends it, so the conversation carries on there; for the Claude Code panel of
   VS Code or Cursor it opens the session with the reply in its prompt, for you
-  to send. The box is there only while that window can be found. When Nook
+  to send. The box is there only while that window can be found. When Oleo
   cannot be sure of the place — another tab is showing, the terminal runs as
   administrator — the reply is not sent anywhere, and what you typed stays in
   the box with the reason.
 - An update check you switch on yourself: Settings → About has "Check for
   updates every day" (off by default) and "Check now". When a newer version
   is out, Settings and the island's header say so and open its download.
-  It is the only time Nook uses the internet, and it sends nothing about you.
+  It is the only time Oleo uses the internet, and it sends nothing about you.
 - Settings → Connect is grouped by tool — Claude Code, Cursor, Codex — each
   with its mark.
 - The usage limits no longer disappear or go back to older numbers when
   several Claude Code sessions are open: each window keeps its newest report.
-- A line of Nook's log no longer shows two timestamps when two things are
+- A line of Oleo's log no longer shows two timestamps when two things are
   logged in the same second.
 
 ## 0.2.1
 
-- The uninstaller and the installer pages now use the Nook icon and artwork: the
+- The uninstaller and the installer pages now use the Oleo icon and artwork: the
   uninstall window, its header logo and the welcome and finish pages no longer
   show the default installer art (in 0.2.0 only the installer file's own icon
-  was Nook's).
+  was Oleo's).
 - The install guide shows the release page with the installer and
   `SHA256SUMS.txt`.
 - The open island no longer hides on its own when you click outside it.
@@ -68,12 +68,12 @@
 - Settings reorganised into eight plain pages with coloured icons, a search and
   a reset for each section. Writing the Claude Code hooks is unchanged: a diff
   preview, a dated backup and an explicit click.
-- The installer uses the Nook icon.
+- The installer uses the Oleo icon.
 - Fixed: the island no longer ends up shifted after it is hidden and shown
   again.
 ## 0.1.0
 
-First release of Nook, a fork of Coucou for Windows.
+First release of Oleo, a fork of Coucou for Windows.
 
 - An island at the top of the screen that folds to a thin pill, opens on hover
   or when a session needs you, and rests between beats.
@@ -82,14 +82,14 @@ First release of Nook, a fork of Coucou for Windows.
 - Permission requests and questions answered from the island, with a real diff
   for edits. No approval without a click; if nobody answers, Claude Code asks
   in the terminal.
-- A relay (`nook-hook`) that Claude Code runs on each hook event. It never
-  blocks Claude Code, checks it is talking to Nook (same user, `nook.exe`, no
+- A relay (`oleo-hook`) that Claude Code runs on each hook event. It never
+  blocks Claude Code, checks it is talking to Oleo (same user, `oleo.exe`, no
   lower integrity level) and talks only over a named pipe that only the current
   user can open.
 - Hooks installed and removed from Settings with a diff preview, a dated backup
   and a click.
 - Claude usage limits and CPU, GPU and RAM in the header.
-- Gullu, Nook's own buddy, with reactions to the pointer and to status.
+- Gullu, Oleo's own buddy, with reactions to the pointer and to status.
 - The Shelf: To-do, Timer, Reminders, Media, Mirror and Projects widgets.
 - Three configurable global shortcuts, auto-hide in full-screen apps, and
   paging by swipe.

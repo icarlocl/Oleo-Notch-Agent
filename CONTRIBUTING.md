@@ -1,6 +1,6 @@
-# Contributing to Nook
+# Contributing to Oleo
 
-Nook is a Tauri 2 desktop app for Windows that shows Claude Code sessions at the
+Oleo is a Tauri 2 desktop app for Windows that shows Claude Code sessions at the
 top of the screen. All the code is in `windows/`: the Rust app in `src-tauri/`,
 the relay in `hook/`, the front end in `src/`.
 

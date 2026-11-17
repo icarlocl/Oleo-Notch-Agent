@@ -1,7 +1,7 @@
 # Screenshot stage
 
 `dev/claude-preview.html` is the real island, driven by made-up Claude Code sessions, standing on a made-up
-Windows desktop (`dev/stage/`: Nook's own wallpaper, taskbar, desktop icons, generic browser / editor / terminal
+Windows desktop (`dev/stage/`: Oleo's own wallpaper, taskbar, desktop icons, generic browser / editor / terminal
 windows; no product logos, no external assets). The URL steers everything. Dev only: not in `vite build`.
 
 ```
@@ -20,7 +20,7 @@ link. Unknown keys are ignored; invalid values fall back to the default. `shot=1
 |---|---|---|
 | `scene` | `desktop` `browser` `editor` `terminal` `none` | `browser`: the island over the tab strip |
 | `theme` | `dark` `light` | wallpaper, taskbar, windows. `light=1` still works |
-| `wallpaper` | `nook` `bloom` | `nook`: Nook's own silk-ribbon picture (committed, see below). `bloom`: the Windows 11 Bloom photo (local files, see below); Nook's shows when they are missing. `original` (old links) means `nook` |
+| `wallpaper` | `oleo` `bloom` | `oleo`: Oleo's own silk-ribbon picture (committed, see below). `bloom`: the Windows 11 Bloom photo (local files, see below); Oleo's shows when they are missing. `original` (old links) means `oleo` |
 | `taskbar` | `bottom` `top` `hidden` | docks follow the work area, as the app does |
 | `dock` | `top` `bottom` `left` `right` | island's edge; bottom/sides sit in the work area |
 | `time`, `date` | `10:09`, `10/6/2026` | taskbar clock text (`HH:MM`; any short text for the date) |
@@ -36,12 +36,12 @@ link. Unknown keys are ignored; invalid values fall back to the default. `shot=1
 Capture mode sets `<html data-ready="1">` and `window.__shotReady = true` once fonts are loaded and the island
 has settled. The `S` key does nothing in it.
 
-## Nook wallpaper
+## Oleo wallpaper
 
-`wallpaper=nook` (the default) is Nook's own art: luminous silk ribbons (mint, blue, violet, one warm amber glint)
+`wallpaper=oleo` (the default) is Oleo's own art: luminous silk ribbons (mint, blue, violet, one warm amber glint)
 sweeping up from the lower left to a crest right of centre, on a near-black sky (dark) or a pale lilac one (light).
 The top centre (island), the top-left icon column and the taskbar edge stay calm, and the subject keeps clear of
-the edges so any 16:9 crop works. The files are `dev/stage/wallpapers/nook-dark.jpg` and `nook-light.jpg`
+the edges so any 16:9 crop works. The files are `dev/stage/wallpapers/oleo-dark.jpg` and `oleo-light.jpg`
 (3840x2400, committed). They are drawn procedurally by `dev/stage/wallpaper-gen/` (one WebGL fragment shader,
 no dependency, no network) and rendered by headless Chrome or Edge with software WebGL. To regenerate, from `windows/`:
 
@@ -60,7 +60,7 @@ at the top of `gen.js` (centre curve, width, twist) and the palette next to them
  Microsoft's Windows 11 Bloom wallpaper behind the stage: dark for `theme=dark`,
 light for `theme=light`. The pictures are Microsoft's artwork, so they are NOT in the repo: `dev/stage/assets/` is
 git-ignored and nothing there is committed or shipped. Without the files (a fresh clone) the stage silently shows
-Nook's wallpaper instead, so nothing breaks. On a Windows 11 machine, set them up from `windows/`:
+Oleo's wallpaper instead, so nothing breaks. On a Windows 11 machine, set them up from `windows/`:
 
 ```
 mkdir dev/stage/assets
@@ -70,7 +70,7 @@ copy C:\Windows\Web\Wallpaper\Windows\img0.jpg  dev/stage/assets/wallpaper-light
 
 (PowerShell: `New-Item -ItemType Directory -Force dev/stage/assets`, then `Copy-Item` with the same paths.) Both are
 3840x2400, enough for 2560x1440 at dpr 2. Do not publish screenshots made with them as part of the repo or site
-without checking Microsoft's terms; `wallpaper=nook` is the free-to-share look.
+without checking Microsoft's terms; `wallpaper=oleo` is the free-to-share look.
 
 ## Scenario keys (read by `claude-preview.ts`; the sidebar lists the usual ones)
 
@@ -103,7 +103,7 @@ node scripts/shot.mjs "<query or URL>" [--size 1920x1080] [--out file.png] [--dp
 node scripts/shot.mjs --set [name,name]  [--out dir]     # the set; --list prints it
 ```
 
-`--cli` uses the plain headless CLI with a virtual-time budget instead (less exact). `--base` or `$NOOK_DEV`
+`--cli` uses the plain headless CLI with a virtual-time budget instead (less exact). `--base` or `$OLEO_DEV`
 points at another dev server; `--browser` or `$CHROME_PATH` at another executable. The set: `hero-dark`,
 `hero-light`, `dock-bottom`, `dock-left`, `dock-right`, `over-browser-tabs`, `over-editor`, `over-terminal`,
 `approval`, `approval-diff`, `question`, `session`, `home`, `shelf`, `folded-metrics(-light)`, `agents`.

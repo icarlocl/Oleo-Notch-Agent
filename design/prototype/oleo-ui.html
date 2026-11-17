@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nook island — layout prototype</title>
+<title>Oleo island — layout prototype</title>
 <style>
   :root {
     --bg: #0c0d11; --island: #000; --card: #15161b; --card-2: #1b1d23; --edge: rgba(255,255,255,.07);
@@ -184,7 +184,7 @@ const STATUS = {
   idle:     { c: "var(--idle)", words: "at rest", rank: 4 },
 };
 const seed = () => [
-  { id: 1, cwd: "D:/work/personal/nook", title: "Nook setup and planning", state: "working", doing: "Shell · cargo test --workspace" },
+  { id: 1, cwd: "D:/work/personal/oleo", title: "Oleo setup and planning", state: "working", doing: "Shell · cargo test --workspace" },
   { id: 2, cwd: "D:/work/acme/api", title: "Fix the invoice rounding bug", state: "approval", doing: "Bash · rm -rf dist && npm run build" },
   { id: 3, cwd: "D:/work/acme/web", title: "Checkout page", state: "finished", doing: "3 files changed" },
 ];
@@ -278,7 +278,7 @@ const add = (cwd, state) => sessions.push({ id: nextId++, cwd, title: "New task"
 document.querySelector(".lab").onclick = (e) => {
   const act = e.target.dataset?.do; if (!act) return;
   if (act === "add") add("D:/work/" + NAMES[nextId % NAMES.length]);
-  if (act === "same") add("D:/work/personal/nook", "thinking");
+  if (act === "same") add("D:/work/personal/oleo", "thinking");
   if (act === "long") add("D:/work/client-with-an-unreasonably-long-repository-name-2026", "working");
   if (act === "ask") { const s = sessions[sessions.length - 1]; if (s) { s.state = "approval"; s.doing = "Bash · git push --force"; } }
   if (act === "finish") { const s = sessions.find((x) => x.state === "working"); if (s) { s.state = "finished"; s.doing = "Turn finished"; } }

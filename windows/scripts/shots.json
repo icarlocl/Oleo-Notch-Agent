@@ -1,5 +1,5 @@
 {
-  "_": "Manifest of scripts/shots.mjs. See docs/screenshots.md. Fields: id, kind (auto|manual), used-in, page (stage|settings|agents), params, size (WxH), scale (percent), crop ({selector,pad} | {x,y,w,h}), variants, wallpaper, frame, alt, out, budgetKB, notes.",
+  "_": "Manifest of scripts/shots.mjs. Fields: id, kind (auto|manual), used-in, page (stage|settings|agents), params, size (WxH), scale (percent), crop ({selector,pad} | {x,y,w,h}), variants, wallpaper, frame, alt, out, budgetKB, notes.",
   "defaults": {
     "size": "1600x900",
     "scale": 100,

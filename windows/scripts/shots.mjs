@@ -1,6 +1,6 @@
-// The screenshot pipeline for the website guides and the README: reads scripts/shots.json, captures every
+// The screenshot pipeline for the README: reads scripts/shots.json, captures every
 // AUTO shot from the dev stage / the Settings fake page with a local Chrome or Edge (DevTools, Node's built-in
-// WebSocket), encodes small WebP files through the browser itself and writes them to site/assets/img/shots/.
+// WebSocket), encodes small WebP files through the browser itself and writes them to docs/assets/screens/.
 // No dependency, no network but the local dev server (reused when it answers, else started and stopped here).
 //
 //   npm run shots                           everything, dark and light
@@ -11,7 +11,7 @@
 //   npm run shots:list
 //
 // Flags: --list --only a,b --theme dark|light --size WxH --scale N (or --NNN) --out DIR --budget KB --quality N
-//        --check --base-url URL --keep-server --browser EXE. See docs/screenshots.md.
+//        --check --base-url URL --keep-server --browser EXE.
 
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -25,7 +25,7 @@ const windowsDir = resolve(here, "..");
 const repoRoot = resolve(windowsDir, "..");
 const MANIFEST = join(here, "shots.json");
 const appVersion = JSON.parse(readFileSync(join(windowsDir, "package.json"), "utf8")).version;
-const DEFAULT_OUT = join(repoRoot, "site", "assets", "img", "shots");
+const DEFAULT_OUT = join(repoRoot, "docs", "assets", "screens");
 const SHOT_TIMEOUT = 30_000;
 const QUALITY_FLOOR = 70;
 const QUALITY_STEP = 5;
